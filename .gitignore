@@ -1,0 +1,17 @@
+# Entorno y secretos
+.env
+*.pem
+*.key
+*.pfx
+infra/backup/
+*.tgz
+*.zip
+
+# SO / IDE
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/tasks.json
+
+# Node (por si en algún flujo lo usas)
+node_modules/

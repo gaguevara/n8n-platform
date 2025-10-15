@@ -1,0 +1,25 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build",
+      "type": "shell",
+      "command": "make -C ops build"
+    },
+    {
+      "label": "Run Local",
+      "type": "shell",
+      "command": "make -C ops run-local"
+    },
+    {
+      "label": "Push Registry",
+      "type": "shell",
+      "command": "make -C ops push"
+    },
+    {
+      "label": "Deploy Staging",
+      "type": "shell",
+      "command": "make -C ops deploy-staging"
+    }
+  ]
+}
