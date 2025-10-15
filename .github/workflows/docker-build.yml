@@ -39,4 +39,4 @@ jobs:
 
       - name: Summary
         run: |
-          echo "✅ Build OK de infra/Dockerfile" >> $GITHUB_STEP_SUMMARY
+          echo "✅ infra/Dockerfile build successful" >> $GITHUB_STEP_SUMMARY
