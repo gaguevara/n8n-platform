@@ -1,0 +1,42 @@
+# =============================================================================
+# NOTA: Este archivo es REFERENCIA para documentar la configuración de AWS.
+# El despliegue real en ECS usa Task Definitions, no docker-compose.
+# Para ECS Fargate, ver: docs/AWS_DEPLOYMENT.md
+# =============================================================================
+
+services:
+  n8n:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/delcop/n8n:${TAG:-latest}
+    container_name: n8n_prod
+    ports:
+      - "5678:5678"
+    environment:
+      # Secrets desde AWS Secrets Manager / Parameter Store
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_SECURE_COOKIE=true
+      - N8N_PROTOCOL=https
+      - N8N_EDITOR_BASE_URL=https://n8n.delcop.com
+      - WEBHOOK_URL=https://n8n.delcop.com/
+      - TZ=America/Bogota
+      - GENERIC_TIMEZONE=America/Bogota
+      # Base de datos externa (RDS PostgreSQL recomendado para prod)
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=${RDS_HOST}
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=${RDS_USER}
+      - DB_POSTGRESDB_PASSWORD=${RDS_PASSWORD}
+      # Queue mode para alta disponibilidad (opcional)
+      # - EXECUTIONS_MODE=queue
+      # - QUEUE_BULL_REDIS_HOST=${REDIS_HOST}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: awslogs
+      options:
+        awslogs-group: /ecs/n8n-prod
+        awslogs-region: ${AWS_REGION}
+        awslogs-stream-prefix: n8n

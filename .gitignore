@@ -1,0 +1,56 @@
+# =============================================================================
+# n8n Platform - Git Ignore
+# =============================================================================
+
+# Environment files con secrets
+.env
+.env.local
+.env.staging
+.env.prod
+
+# Datos persistentes (contiene credenciales encriptadas)
+data/
+!data/.gitkeep
+
+# Archivos compartidos temporales
+shared-files/
+!shared-files/.gitkeep
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / Editor
+.vscode/*
+!.vscode/tasks.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker
+.docker/
+
+# Backups
+*.backup
+*.bak
+*.tar.gz
+backups/
+
+# Node (si se instalan dependencias localmente)
+node_modules/
+
+# Temporal
+tmp/
+temp/
+*.tmp
+
+# AWS credentials (nunca deben estar en repo)
+.aws/
+credentials

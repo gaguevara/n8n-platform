@@ -1,0 +1,75 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🚀 Dev: Start n8n",
+      "type": "shell",
+      "command": "make -C ops dev",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "🛑 Dev: Stop n8n",
+      "type": "shell",
+      "command": "make -C ops dev-down",
+      "problemMatcher": []
+    },
+    {
+      "label": "📋 Dev: View Logs",
+      "type": "shell",
+      "command": "make -C ops dev-logs",
+      "problemMatcher": []
+    },
+    {
+      "label": "🔄 Dev: Restart",
+      "type": "shell",
+      "command": "make -C ops dev-restart",
+      "problemMatcher": []
+    },
+    {
+      "label": "📤 Export Workflows",
+      "type": "shell",
+      "command": "make -C ops export",
+      "problemMatcher": []
+    },
+    {
+      "label": "📥 Import Workflows",
+      "type": "shell",
+      "command": "make -C ops import",
+      "problemMatcher": []
+    },
+    {
+      "label": "💾 Backup",
+      "type": "shell",
+      "command": "make -C ops backup",
+      "problemMatcher": []
+    },
+    {
+      "label": "🏗️ Build Image",
+      "type": "shell",
+      "command": "make -C ops build",
+      "problemMatcher": []
+    },
+    {
+      "label": "☁️ Push to ECR",
+      "type": "shell",
+      "command": "make -C ops push-ecr",
+      "problemMatcher": []
+    },
+    {
+      "label": "🎭 Deploy Staging",
+      "type": "shell",
+      "command": "make -C ops deploy-staging",
+      "problemMatcher": []
+    },
+    {
+      "label": "🌐 Deploy Production",
+      "type": "shell",
+      "command": "make -C ops deploy-prod",
+      "problemMatcher": []
+    }
+  ]
+}
