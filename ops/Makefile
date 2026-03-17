@@ -54,7 +54,7 @@ help:
 # -----------------------------------------------------------------------------
 dev:
 	@echo ">>> Iniciando n8n local..."
-	docker compose -f infra/docker-compose.local.yml up --build -d
+	docker compose -f infra/docker-compose.local.yml up -d
 	@echo ">>> n8n disponible en http://localhost:$${N8N_PORT:-5678}"
 
 dev-down:
@@ -113,9 +113,18 @@ staging-logs:
 
 staging-status:
 	ssh $(STAGING_USER)@$(STAGING_HOST) "\
-		cd $(STAGING_PATH)/infra && \
-		docker compose -f docker-compose.staging.yml ps && \
-		docker compose -f docker-compose.staging.yml exec n8n wget -qO- http://localhost:5678/healthz"
+		cd $(STAGING_PATH) && \
+		docker compose -f infra/docker-compose.staging.yml ps && \
+		docker compose -f infra/docker-compose.staging.yml exec n8n wget -qO- http://localhost:5678/healthz"
+
+staging-import:
+	@echo ">>> Importando workflows en staging..."
+	ssh $(STAGING_USER)@$(STAGING_HOST) "\
+		cd $(STAGING_PATH) && \
+		bash scripts/import-workflows.sh n8n_staging"
+
+staging-validate: staging-status staging-import
+	@echo ">>> Validacion de staging completa."
 
 # -----------------------------------------------------------------------------
 # Deploy Production (AWS ECS)

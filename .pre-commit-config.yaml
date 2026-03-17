@@ -1,0 +1,42 @@
+# .pre-commit-config.yaml — Harness Engineering: Constraints Mecánicas
+# Instalar: pip install pre-commit && pre-commit install
+# Ejecutar manual: pre-commit run --all-files
+repos:
+  # === UNIVERSALES (siempre activos) ===
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: detect-private-key
+      - id: check-merge-conflict
+
+  # === SECRETS ===
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+
+  # === PYTHON ===
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.3.0
+    hooks:
+      - id: ruff
+      - id: ruff-format
+
+  # === DOCKER (descomentar si el proyecto usa Dockerfiles) ===
+  # - repo: https://github.com/hadolint/hadolint
+  #   rev: v2.12.0
+  #   hooks:
+  #     - id: hadolint
+
+  # === SHELL (descomentar si el proyecto tiene scripts bash) ===
+  # - repo: https://github.com/shellcheck-py/shellcheck-py
+  #   rev: v0.9.0.6
+  #   hooks:
+  #     - id: shellcheck

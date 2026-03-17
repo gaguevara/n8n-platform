@@ -60,7 +60,7 @@ for file in ${IMPORT_DIR}/*.json; do
     if [ -f "$file" ]; then
         filename=$(basename "$file")
         echo -n "  - ${filename}: "
-        
+
         if docker exec "${CONTAINER_NAME}" n8n import:workflow \
             --input="/home/node/.n8n/import-temp/${filename}" 2>/dev/null; then
             echo "OK"

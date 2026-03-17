@@ -51,6 +51,9 @@ tmp/
 temp/
 *.tmp
 
+# Framework ZIP (no versionar el distribuible)
+*.zip
+
 # AWS credentials (nunca deben estar en repo)
 .aws/
 credentials

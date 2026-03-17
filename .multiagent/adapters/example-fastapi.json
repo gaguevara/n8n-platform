@@ -1,0 +1,22 @@
+{
+  "project_name": "example-fastapi-saas",
+  "agents": [
+    {"id": "ARCHITECT", "log": "docs/logs/ARCHITECT_LOG.md"},
+    {"id": "DEVELOPER", "log": "docs/logs/DEVELOPER_LOG.md"}
+  ],
+  "paths": {
+    "log_index": "docs/LOG_INDEX.md",
+    "context": "docs/CONTEXT.md",
+    "tasks": "docs/tasks/",
+    "risk_register": "docs/RISK_REGISTER.md"
+  },
+  "validators": {
+    ".py": "ruff check {file}",
+    ".ts": "eslint {file}",
+    ".tsx": "eslint {file}",
+    ".yml": "yamllint {file}",
+    "Dockerfile*": "hadolint {file}"
+  },
+  "log_entry_pattern": "## Entry-{number}",
+  "task_file_pattern": "SPRINT_*.md"
+}

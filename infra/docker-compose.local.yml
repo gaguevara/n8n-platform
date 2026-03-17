@@ -6,12 +6,23 @@ services:
     ports:
       - "${N8N_PORT:-5678}:5678"
     env_file:
-      - ../.env
+      - path: ../.env
+        required: false
     environment:
       - N8N_SECURE_COOKIE=false
       - N8N_PROTOCOL=http
       - N8N_HOST=localhost
+      - N8N_EDITOR_BASE_URL=http://localhost:${N8N_PORT:-5678}
+      - WEBHOOK_URL=http://localhost:${N8N_PORT:-5678}/
+      - TZ=${TZ:-America/Bogota}
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-America/Bogota}
     volumes:
       - ../data:/home/node/.n8n
       - ../shared-files:/files
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

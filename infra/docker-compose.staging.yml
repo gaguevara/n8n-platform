@@ -5,7 +5,8 @@ services:
     ports:
       - "${N8N_PORT:-5678}:5678"
     env_file:
-      - ../.env
+      - path: ../.env
+        required: false
     environment:
       - N8N_SECURE_COOKIE=true
       - N8N_PROTOCOL=http

@@ -1,0 +1,33 @@
+{
+  "project_name": "n8n-platform",
+  "display_name": "n8n Platform - DELCOP",
+  "agents": [
+    {"id": "CLAUDE", "role": "governor", "log": "docs/logs/CLAUDE_LOG.md"}
+  ],
+  "paths": {
+    "log_index": "docs/governance/LOG_INDEX.md",
+    "context": "docs/governance/CONTEXT.md",
+    "project_rules": "docs/governance/PROJECT_RULES.md",
+    "agent_roles": "docs/governance/AGENT_ROLES.md"
+  },
+  "validators": {
+    ".json": "python -m json.tool {file}",
+    ".yml": "python -c \"import yaml; yaml.safe_load(open('{file}'))\"",
+    ".yaml": "python -c \"import yaml; yaml.safe_load(open('{file}'))\"",
+    ".sh": "bash -n {file}",
+    ".md": "python -c \"import os,sys; sys.exit(0 if os.path.getsize('{file}')>0 else 1)\""
+  },
+  "stack": {
+    "primary": "n8n (Node.js/Docker)",
+    "languages": ["JSON", "Shell"],
+    "containers": "Docker",
+    "ci_cd": "pre-commit + Makefile",
+    "environments": ["local", "staging", "production"],
+    "cloud": "AWS ECS Fargate",
+    "databases": {"local": "SQLite", "production": "PostgreSQL RDS"},
+    "observability": "Structured Logs (Markdown)"
+  },
+  "log_entry_pattern": "## ENTRADA-{number}",
+  "task_file_pattern": "SPEC_*.md",
+  "state": "brownfield"
+}

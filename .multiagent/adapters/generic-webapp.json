@@ -1,0 +1,25 @@
+{
+  "project_name": "Acme Web App",
+  "agents": [
+    {"id": "CLAUDE", "log": "docs/logs/claude.md"},
+    {"id": "CODEX", "log": "docs/logs/codex.md"}
+  ],
+  "paths": {
+    "log_index": "docs/LOG_INDEX.md",
+    "context": "docs/CONTEXT.md",
+    "tasks": "docs/tasks/",
+    "risk_register": "docs/RISK_REGISTER.md"
+  },
+  "validators": {
+    ".js": "eslint {file}",
+    ".ts": "eslint {file}",
+    ".tsx": "eslint {file}",
+    ".css": "prettier --check {file}",
+    ".py": "ruff check {file}",
+    ".yml": "yamllint {file}",
+    ".yaml": "yamllint {file}",
+    "Dockerfile*": "hadolint {file}"
+  },
+  "log_entry_pattern": "## Entry-{number}",
+  "task_file_pattern": "SPRINT_*.md"
+}

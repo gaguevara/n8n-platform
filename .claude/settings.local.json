@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(unzip -p multiagent-framework-v4.2.zip CLAUDE.md)",
+      "Bash(unzip -p multiagent-framework-v4.2.zip .claude/skills/adapt-project/SKILL.md)",
+      "Bash(unzip -p multiagent-framework-v4.2.zip SESSION_BOOTSTRAP.md)",
+      "Bash(unzip -p multiagent-framework-v4.2.zip docs/governance/PROJECT_RULES.md)",
+      "Bash(find . -name docker-compose* -o -name Dockerfile*)",
+      "Bash(unzip -p multiagent-framework-v4.2.zip docs/governance/AGENT_ROLES.md)",
+      "Bash(unzip -o multiagent-framework-v4.2.zip -d .)"
+    ]
+  }
+}

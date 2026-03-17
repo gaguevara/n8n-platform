@@ -1,0 +1,24 @@
+{
+  "project_name": "framework-multiagent",
+  "agents": [
+    {"id": "CLAUDE", "log": "docs/logs/CLAUDE_LOG.md"},
+    {"id": "CODEX", "log": "docs/logs/CODEX_LOG.md"},
+    {"id": "GEMINI", "log": "docs/logs/GEMINI_LOG.md"}
+  ],
+  "paths": {
+    "log_index": "docs/governance/LOG_INDEX.md",
+    "context": "docs/governance/CONTEXT.md",
+    "project_rules": "docs/governance/PROJECT_RULES.md",
+    "agent_roles": "docs/governance/AGENT_ROLES.md",
+    "risk_register": "docs/security/RISK_REGISTER.md"
+  },
+  "validators": {
+    ".py": "python -m py_compile {file}",
+    ".md": "python -c \"import os,sys; sys.exit(0 if os.path.getsize('{file}')>0 else 1)\"",
+    ".json": "python -m json.tool {file}",
+    ".sh": "python -c \"open('{file}').read()\"",
+    ".yaml": "python -c \"import yaml; yaml.safe_load(open('{file}'))\""
+  },
+  "log_entry_pattern": "## ENTRADA-{number}",
+  "task_file_pattern": "SPEC_*.md"
+}
