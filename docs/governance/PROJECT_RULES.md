@@ -121,7 +121,7 @@ n8n-platform/
 | ADR-001| Usar imagen oficial n8n sin modificaciones      | 2026-03-16 | Activa   |
 | ADR-002| Pipeline 3-entornos: local→staging→prod         | 2026-03-16 | Activa   |
 | ADR-003| Workflows versionados como JSON en Git          | 2026-03-16 | Activa   |
-| ADR-004| Adopción framework multi-agente v4.2            | 2026-03-16 | Activa   |
+| ADR-004| Adopción framework multi-agente v4.2 → upgrade v4.3 | 2026-03-17 | Activa   |
 
 ---
 

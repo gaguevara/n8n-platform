@@ -19,6 +19,7 @@ shared-files/
 # Logs
 *.log
 logs/
+!docs/logs/
 
 # OS files
 .DS_Store

@@ -10,8 +10,9 @@ Protocolo común de arranque para cualquier agente o desarrollador que inicie un
 
 ```
 1. Leer docs/governance/PROJECT_RULES.md
-2. Leer docs/governance/CONTEXT.md
-3. Leer overlay correspondiente en docs/agents/[AGENTE].md
+2. Si docs/governance/CONTEXT.md existe -> leerlo
+   Si no existe -> ejecutar/adoptar framework via skill adapt-project antes de continuar
+3. Leer overlay correspondiente en docs/governance/[AGENTE]_OVERLAY.md
 4. Leer docs/governance/LOG_INDEX.md
 5. Revisar últimas entradas relevantes en docs/logs/ de los otros agentes
 6. Si la tarea involucra código → leer docs/knowledge/DESIGN_PRINCIPLES.md
@@ -69,3 +70,17 @@ Antes de dar una tarea por terminada:
 3. Actualizar `docs/governance/CONTEXT.md` si cambió el estado del proyecto
 4. Actualizar `docs/governance/PROJECT_RULES.md` si cambió una regla o decisión estable
 5. Escalar a revisión cruzada si el cambio afecta áreas críticas (ver sección 8 de PROJECT_RULES.md)
+
+---
+
+## Fallbacks Windows
+
+Cuando el host no tenga herramientas POSIX instaladas, usar estas alternativas:
+
+- `pre-commit` -> `python -m pre_commit run --all-files`
+- `hadolint` -> `docker run --rm -i hadolint/hadolint < Dockerfile`
+- `shellcheck` -> `docker run --rm -i koalaman/shellcheck-alpine`
+- `sync-index` -> `python .multiagent/core/engine.py --config .multiagent/adapters/framework-multiagent.json --base . sync-index --write`
+- `sync-index` manual -> `powershell -ExecutionPolicy Bypass -File .multiagent/core/sync_index.ps1`
+
+Toda escritura desde scripts PowerShell debe usar `Out-File -Encoding UTF8` o equivalente.

@@ -1,4 +1,4 @@
-# CLAUDE.md — n8n Platform DELCOP (Framework Multi-Agente v4.2)
+# CLAUDE.md — n8n Platform DELCOP (Framework Multi-Agente v4.3)
 
 ## Protocolo obligatorio
 
@@ -75,6 +75,7 @@ Si hay trabajo pendiente en logs o CONTEXT.md, ejecutarlo proactivamente.
 El engine en `.multiagent/core/engine.py` provee:
 - `status` — ver última entrada de log por agente
 - `sync-index` — sincronizar LOG_INDEX automáticamente
+- Fallback Windows: `powershell -ExecutionPolicy Bypass -File .multiagent/core/sync_index.ps1`
 - `validate <file>` — sugerir/ejecutar validador para un archivo
 
 Configuración del proyecto en `.multiagent/adapters/n8n-platform.json`.

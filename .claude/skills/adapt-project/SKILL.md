@@ -31,10 +31,11 @@ orquesta todo automaticamente.
    - `.git/` existe con historial → Brownfield
    - No hay `.git/` o solo tiene initial commit → Greenfield
 
-3. **Detectar agentes disponibles** — que CLIs estan configurados?
-   - `CLAUDE.md` existe → Claude Code disponible
-   - `AGENTS.md` existe o se va a crear → Codex CLI disponible
-   - `GEMINI.md` existe o se va a crear → Gemini CLI disponible
+3. **Detectar agentes activos** — que CLIs estan realmente activos?
+   - `CLAUDE.md` existe → Claude Code activo
+   - `AGENTS.md` existe o el usuario pidio soporte Codex → Codex activo
+   - `GEMINI.md` existe o el usuario pidio soporte Gemini → Gemini activo
+   - **Regla:** no asignar tareas a agentes inactivos ni crearles backlog por defecto
 
 ### Fase 2: Generacion (automatica, sin preguntar)
 
@@ -62,6 +63,8 @@ orquesta todo automaticamente.
    docs/sdlc/         — vacio (para specs futuras)
    docs/architecture/ — vacio (para ADRs y diagramas)
    ```
+   - Crear `.gitkeep` en cada directorio nuevo que deba permanecer vacio
+   - Todo archivo generado debe escribirse con encoding UTF-8 explicito
 
 6. **Poblar documentos de gobernanza** con datos del proyecto:
    - PROJECT_RULES.md §2 (identidad) y §3 (stack) con datos detectados
@@ -70,8 +73,8 @@ orquesta todo automaticamente.
    - AGENT_ROLES.md con roles segun agentes disponibles
 
 7. **Crear archivos de agente**:
-   - `AGENTS.md` (si Codex disponible) — bootstrap + rol + reglas
-   - `GEMINI.md` (si Gemini disponible) — bootstrap + rol + reglas
+   - `AGENTS.md` (solo si Codex activo) — bootstrap + rol + reglas
+   - `GEMINI.md` (solo si Gemini activo) — bootstrap + rol + reglas
    - `CLAUDE.md` ya debe existir — verificar que apunta a SESSION_BOOTSTRAP.md
 
 8. **Configurar MCP** — crear `.mcp.json` con Context7:
@@ -101,10 +104,11 @@ orquesta todo automaticamente.
 
 13. **Escribir cola de tareas** en CONTEXT.md → seccion "Pendientes inmediatos":
     ```
-    - [ ] @GEMINI: Validar PROJECT_RULES y completar secciones pendientes
-    - [ ] @CODEX: Ejecutar tests y validacion completa del adapter
-    - [ ] @CLAUDE: Consolidar resultados cuando Gemini y Codex completen
+    - [ ] @GEMINI: Validar PROJECT_RULES y completar secciones pendientes (Autor: Claude, Fecha: YYYY-MM-DD)
+    - [ ] @CODEX: Ejecutar tests y validacion completa del adapter (Autor: Claude, Fecha: YYYY-MM-DD)
+    - [ ] @CLAUDE: Consolidar resultados cuando Gemini y Codex completen (Autor: Claude, Fecha: YYYY-MM-DD)
     ```
+   - Si un agente no esta activo, omitir su tarea y redistribuir la responsabilidad
 
 14. **Informar al usuario** que la adopcion esta completa y que tareas
     quedaron asignadas.
@@ -121,3 +125,17 @@ orquesta todo automaticamente.
 > Este skill genera TODO en una sola ejecucion. No debe requerir
 > multiples rondas de chat para completar la adopcion basica.
 > Las rondas posteriores son para refinamiento, no para setup.
+
+## Plantilla de ONBOARDING (70/30)
+
+El ONBOARDING generado debe seguir esta proporcion:
+
+- 70% tecnico:
+  - prerrequisitos reales
+  - comandos de setup/validacion
+  - estructura del repo y stack detectado
+  - como ejecutar tests, lint y validadores
+- 30% framework:
+  - protocolo multi-agente
+  - reglas de logging
+  - uso de CONTEXT.md, LOG_INDEX.md y validacion cruzada

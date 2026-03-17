@@ -50,7 +50,7 @@ Todo cambio en los flujos debe versionarse en Git como JSON:
 2. `docs/governance/CONTEXT.md` — Estado actual del proyecto
 3. `docs/governance/LOG_INDEX.md` — Índice de actividad reciente
 4. Logs recientes de los otros agentes en `docs/logs/`
-5. Overlay del agente correspondiente en `docs/agents/` (e.g., `GEMINI.md`)
+5. Overlay del agente correspondiente en `docs/governance/` (e.g., `GEMINI_OVERLAY.md`)
 6. Código fuente y configuración clave (`infra/`, `scripts/`)
 
 ---

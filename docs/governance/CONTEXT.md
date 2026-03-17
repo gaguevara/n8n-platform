@@ -13,7 +13,7 @@
 | Fase          | Multi-agente activo - 3 agentes operativos     |
 | Estabilidad   | Estable - sin cambios de produccion en curso   |
 | Bloqueantes   | Ninguno                                        |
-| Ultimo cambio | Politica `latest` validada contra upstream     |
+| Ultimo cambio | Pendientes de Codex revalidados y depurados    |
 
 ---
 
@@ -38,13 +38,17 @@
 - [x] @CLAUDE: Crear `docs/governance/CONTEXT_SECURITY.md` con inventario de secretos/variables sensibles (Completado)
 - [x] @CLAUDE: Revisar trabajo de @CODEX en scripts y docker-compose (cross-review) (Completado: aprobado con 1 aviso TAG=latest)
 - [x] @CLAUDE: Consolidar resultados cuando Codex y Gemini completen sus tareas iniciales (Completado)
-- [x] @CLAUDE: Crear ADR-005 — pipeline staging->prod formalizado (Completado: SPEC aprobada)
+- [x] @CLAUDE: Crear ADR-005 - pipeline staging->prod formalizado (Completado: SPEC aprobada)
 
-### Pendientes — siguiente ciclo
+### Pendientes - siguiente ciclo
 
 - [x] @CODEX: Ejecutar `hadolint` sobre `infra/Dockerfile` cuando Docker daemon este activo (Completado: warning `DL3007` por uso de `latest`; sin errores de sintaxis)
 - [x] @CODEX: Validar si `latest` debe mantenerse o fijarse por tag (Completado: por requerimiento de usuario se mantiene `latest`; validado contra upstream el 2026-03-17: `docker.n8n.io/n8nio/n8n:latest` resuelve a `2.12.2`)
-- [ ] @CLAUDE: Auditar ECS Task Definition en AWS — verificar uso de Secrets Manager para `N8N_ENCRYPTION_KEY` y `RDS_PASSWORD`
+- [ ] @CLAUDE: Auditar ECS Task Definition en AWS - verificar uso de Secrets Manager para `N8N_ENCRYPTION_KEY` y `RDS_PASSWORD` (bloqueado: requiere acceso AWS desde oficina)
+- [x] @CODEX: Crear `app/workflows/.gitkeep` para versionar el directorio vacio (Completado: el archivo ya existia; pendiente previo quedo obsoleto)
+- [x] @CODEX: Corregir referencia incorrecta en `docs/governance/ONBOARDING.md` - apuntaba a `docs/agents/` y ahora apunta a `docs/governance/`
+- [ ] @GEMINI: Adaptar `docs/governance/AI_GOVERNANCE.md` al proyecto n8n DELCOP (actualmente es texto generico del framework)
+- [ ] @GEMINI: Crear `docs/architecture/ADR_INDEX.md` indexando los 5 ADRs activos del proyecto
 
 ---
 
@@ -67,7 +71,7 @@ _Agregar entradas aqui cuando se creen workflows de produccion._
 
 ## Decisiones recientes
 
-| Fecha      | Decision                                 | Por    |
+| Fecha      | Decision                                  | Por    |
 |------------|-------------------------------------------|--------|
 | 2026-03-16 | Adopcion framework multi-agente v4.2      | Claude |
 | 2026-03-16 | Stack detectado: Docker + n8n + AWS ECS   | Claude |
@@ -76,8 +80,9 @@ _Agregar entradas aqui cuando se creen workflows de produccion._
 | 2026-03-17 | Validaciones iniciales de Codex completas | Codex  |
 | 2026-03-17 | Stack local de n8n levantado y validado   | Codex  |
 | 2026-03-17 | Politica latest validada contra upstream  | Codex  |
+| 2026-03-17 | Pendientes de Codex revalidados y depurados | Codex |
 | 2026-03-17 | Auditoria documental y .env.example       | Gemini |
-| 2026-03-17 | ADR-005 aprobado — SPEC_STAGING_PIPELINE  | Claude |
+| 2026-03-17 | ADR-005 aprobado - SPEC_STAGING_PIPELINE  | Claude |
 | 2026-03-17 | CONTEXT_SECURITY.md creado                | Claude |
 
 ---

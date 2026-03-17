@@ -1,8 +1,11 @@
 {
   "project_name": "n8n-platform",
   "display_name": "n8n Platform - DELCOP",
+  "framework_version": "4.3",
   "agents": [
-    {"id": "CLAUDE", "role": "governor", "log": "docs/logs/CLAUDE_LOG.md"}
+    {"id": "CLAUDE", "role": "governor", "log": "docs/logs/CLAUDE_LOG.md"},
+    {"id": "CODEX",  "role": "implementer", "log": "docs/logs/CODEX_LOG.md"},
+    {"id": "GEMINI", "role": "researcher", "log": "docs/logs/GEMINI_LOG.md"}
   ],
   "paths": {
     "log_index": "docs/governance/LOG_INDEX.md",
@@ -16,6 +19,12 @@
     ".yaml": "python -c \"import yaml; yaml.safe_load(open('{file}'))\"",
     ".sh": "bash -n {file}",
     ".md": "python -c \"import os,sys; sys.exit(0 if os.path.getsize('{file}')>0 else 1)\""
+  },
+  "windows_fallbacks": {
+    "sync-index": "powershell -ExecutionPolicy Bypass -File .multiagent/core/sync_index.ps1",
+    "pre-commit": "python -m pre_commit run --all-files",
+    "hadolint": "docker run --rm -i hadolint/hadolint < Dockerfile",
+    "shellcheck": "docker run --rm -i koalaman/shellcheck-alpine"
   },
   "stack": {
     "primary": "n8n (Node.js/Docker)",
