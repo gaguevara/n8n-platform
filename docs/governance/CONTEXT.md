@@ -1,7 +1,7 @@
 # CONTEXT.md - Estado Actual del Proyecto
 
 > **Ultima actualizacion:** 2026-03-17
-> **Actualizado por:** Codex (Implementer + DevOps)
+> **Actualizado por:** Claude (Governor — consolidacion ciclo completo)
 > **Proxima revision:** al completar cualquier tarea pendiente
 
 ---
@@ -13,7 +13,7 @@
 | Fase          | Multi-agente activo - 3 agentes operativos     |
 | Estabilidad   | Estable - sin cambios de produccion en curso   |
 | Bloqueantes   | Ninguno                                        |
-| Ultimo cambio | Pendientes de Codex revalidados y depurados    |
+| Ultimo cambio | Ciclo completo cerrado — 1 pendiente bloqueado (AWS)  |
 
 ---
 
@@ -47,8 +47,8 @@
 - [ ] @CLAUDE: Auditar ECS Task Definition en AWS - verificar uso de Secrets Manager para `N8N_ENCRYPTION_KEY` y `RDS_PASSWORD` (bloqueado: requiere acceso AWS desde oficina)
 - [x] @CODEX: Crear `app/workflows/.gitkeep` para versionar el directorio vacio (Completado: el archivo ya existia; pendiente previo quedo obsoleto)
 - [x] @CODEX: Corregir referencia incorrecta en `docs/governance/ONBOARDING.md` - apuntaba a `docs/agents/` y ahora apunta a `docs/governance/`
-- [ ] @GEMINI: Adaptar `docs/governance/AI_GOVERNANCE.md` al proyecto n8n DELCOP (actualmente es texto generico del framework)
-- [ ] @GEMINI: Crear `docs/architecture/ADR_INDEX.md` indexando los 5 ADRs activos del proyecto
+- [x] @GEMINI: Adaptar `docs/governance/AI_GOVERNANCE.md` al proyecto n8n DELCOP (Completado: Personalizado con responsables y ToS)
+- [x] @GEMINI: Crear `docs/architecture/ADR_INDEX.md` indexando los 5 ADRs activos del proyecto (Completado: Creado con detalle de decisiones)
 
 ---
 

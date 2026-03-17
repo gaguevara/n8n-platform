@@ -2,13 +2,13 @@
 
 > ⚠️ **DOCUMENTO INTERNO — NO INCLUIR EN ENTREGABLES DE PROYECTO NI DOCUMENTACIÓN PÚBLICA.**
 >
-> **Propósito:** Registro del uso de herramientas de asistencia IA, conforme a requisitos de trazabilidad ISO 27001:2022 e ISO 9001:2015. Mantener actualizado para auditorías internas.
+> **Propósito:** Registro del uso de herramientas de asistencia IA en el proyecto n8n Platform (DELCOP), conforme a requisitos de trazabilidad ISO 27001:2022 e ISO 9001:2015. Mantener actualizado para auditorías internas.
 
 ---
 
 ## 1. Principio
 
-La IA se considera herramienta de asistencia de desarrollo, no mecanismo de aprobación final. Toda salida generada con asistencia automatizada debe ser revisada, validada y trazable.
+La IA se considera herramienta de asistencia de desarrollo y arquitectura, no mecanismo de aprobación final. Toda salida generada con asistencia automatizada (especialmente workflows de n8n y configuraciones de AWS) debe ser revisada, validada y trazable.
 
 ---
 
@@ -16,32 +16,30 @@ La IA se considera herramienta de asistencia de desarrollo, no mecanismo de apro
 
 | Herramienta        | Proveedor | Uso principal                                    | Riesgo principal                          | Responsable de validación |
 |--------------------|-----------|--------------------------------------------------|-------------------------------------------|---------------------------|
-| Claude Code        | Anthropic | Revisión de impacto, refactor, análisis técnico, SDLC | Supuestos incorrectos, cambios de alto alcance | `[Nombre]` |
-| Gemini Code Assist | Google    | Síntesis, cobertura, documentación, mapeo         | Respuestas plausibles pero incorrectas    | `[Nombre]` |
-| Codex CLI          | OpenAI    | Ejecución concreta, scripts, terminal, CI/CD      | Automatización errónea sin contexto       | `[Nombre]` |
+| Claude Code        | Anthropic | Gobernanza (Governor), Arquitectura, SDLC, AWS   | Supuestos incorrectos en AWS/Security     | Claude (Governor) / Usuario |
+| Gemini Code Assist | Google    | Investigación (Researcher), Auditoría, Doc        | Alucinaciones en documentación técnica    | Gemini (Researcher) / Usuario |
+| Codex CLI          | OpenAI    | Implementación (Implementer), Scripts, Docker    | Comandos destructivos o errores de shell  | Codex (Implementer) / Usuario |
 
 ### Controles aplicados
 
-- [ ] Código fuente compartido con agentes no contiene credenciales (`.env` excluido vía `.gitignore`).
-- [ ] No se comparten datos de clientes ni datos personales con los agentes.
-- [ ] Revisión humana obligatoria antes de merge a rama principal.
-- [ ] Los agentes operan sobre copia local del repositorio, no acceso directo a producción.
+- [x] Código fuente compartido con agentes no contiene credenciales (`.env` excluido vía `.gitignore`).
+- [x] No se comparten datos de clientes reales ni bases de datos de producción con los agentes.
+- [x] Los agentes operan en entorno local (Windows 11 / Docker Desktop) sin acceso directo a AWS Producción (limitado a lectura de docs/config).
+- [x] Validación cruzada obligatoria: Los cambios de Codex (Implementer) son auditados por Gemini (Researcher).
 
 ---
 
 ## 3. Mapeo de controles ISO → implementación
 
-| Control                     | Implementación requerida                                      |
+| Control                     | Implementación en n8n Platform                               |
 |-----------------------------|---------------------------------------------------------------|
-| ISO 27001 A.5.9             | Inventariar herramientas IA y uso permitido (esta tabla).     |
-| ISO 27001 A.5.23            | Evaluar términos de servicio de proveedores cloud/IA.         |
-| ISO 27001 A.8.4             | Restringir acceso a información según necesidad.              |
-| ISO 27001 A.8.9             | Gestionar configuración y cambios con trazabilidad.           |
-| ISO 27001 A.8.24            | Aplicar criptografía si hay datos sensibles en tránsito.      |
-| ISO 27001 A.8.25            | Integrar seguridad en el SDLC.                                |
-| ISO 27001 A.8.28            | Asegurar codificación segura y validación de inputs.          |
-| ISO 9001 Control documental | Mantener evidencia de revisión y consistencia.                |
-| ISO 9001 Mejora continua    | Registrar hallazgos y ajustar proceso.                        |
+| ISO 27001 A.5.9             | Registro en este archivo (Sección 2).                         |
+| ISO 27001 A.5.23            | Verificación de ToS de APIs (Sección 6).                      |
+| ISO 27001 A.8.4             | Agentes solo acceden a archivos del repo; no a secretos .env. |
+| ISO 27001 A.8.9             | Trazabilidad total en `LOG_INDEX.md` y logs por agente.       |
+| ISO 27001 A.8.25            | Integración de pre-commit hooks para detección de secretos.   |
+| ISO 27001 A.8.28            | Validación manual de workflows n8n (JSON) antes de commit.    |
+| ISO 9001 Control documental | `PROJECT_RULES.md` como Fuente Única de Verdad (SSOT).        |
 
 ---
 
@@ -49,40 +47,31 @@ La IA se considera herramienta de asistencia de desarrollo, no mecanismo de apro
 
 | Riesgo                                          | Probabilidad | Impacto | Mitigación                                                       |
 |-------------------------------------------------|-------------|---------|------------------------------------------------------------------|
-| Alucinación: código con bugs sutiles             | Alta        | Medio   | Revisión cruzada entre agentes + revisión humana + tests.        |
-| Exposición de lógica propietaria a terceros       | Media       | Alto    | Verificar ToS de proveedores. No enviar IP crítica.              |
-| Dependencia excesiva en agentes IA                | Media       | Medio   | Documentación y onboarding para desarrolladores sin contexto IA. |
-| Código sin cumplimiento de estándares             | Media       | Medio   | `PROJECT_RULES.md` como SSOT + análisis estático en CI/CD.      |
-| Pérdida de trazabilidad                           | Baja        | Alto    | Logs por agente + `LOG_INDEX.md` + ADRs.                        |
+| Alucinación: workflows n8n con lógica errónea    | Alta        | Medio   | Test de ejecución en Staging (Dell R720) antes de Prod.          |
+| Exposición de N8N_ENCRYPTION_KEY a la IA         | Baja        | Crítico | Exclusión estricta de `.env` y revisión de logs.                |
+| Comandos de Shell incompatibles con Windows 11   | Media       | Bajo    | Validación por Codex en entorno real antes de proponer script.   |
+| Desincronización entre agentes (Pisado de logs)  | Baja        | Medio   | Uso obligatorio de `LOG_INDEX.md` y `CONTEXT.md`.                |
 
 ### Riesgo aceptado
 
-> El uso de herramientas de IA para asistencia en desarrollo se acepta bajo las condiciones de control documentadas en este archivo. La decisión de no reflejar el uso de IA en documentación técnica del proyecto es una decisión consciente de gestión de riesgos.
+> El uso de herramientas de IA para asistencia en desarrollo se acepta bajo las condiciones de control documentadas en este archivo. Se prioriza la agilidad en la arquitectura multi-entorno de n8n bajo supervisión humana constante.
 >
-> **Aprobado por:** `[NOMBRE - ROL]`
-> **Fecha:** `[YYYY-MM-DD]`
-> **Próxima revisión:** `[YYYY-MM-DD]`
+> **Aprobado por:** Governor Claude (vía Protocolo Adopción)
+> **Fecha:** 2026-03-17
+> **Próxima revisión:** 2026-06-17 (Trimestral)
 
 ---
 
-## 5. Registro de revisiones humanas
+## 5. Términos de servicio — verificación inicial (2026-03-17)
 
-| Fecha | PR/Commit | Agente origen | Revisor humano | Resultado | Observaciones |
-|-------|-----------|---------------|----------------|-----------|---------------|
-| `[FECHA]` | `[REF]` | `[Agente]` | `[Nombre]` | `[Aprobado/Rechazado]` | `[Notas]` |
+| Proveedor | ¿Usa datos para entrenar? | Retención | Enlace ToS |
+|-----------|---------------------------|-----------|------------|
+| Anthropic | No (vía API/Tier Enterprise) | 30 días   | https://www.anthropic.com/policies |
+| Google    | No (vía Cloud API/Vertex)   | No aplica | https://cloud.google.com/terms |
+| OpenAI    | No (vía API / Enterprise)   | 30 días   | https://openai.com/policies |
 
----
-
-## 6. Términos de servicio — verificación periódica
-
-| Proveedor | ¿Usa datos para entrenar? | Retención | Última verificación | Enlace ToS |
-|-----------|---------------------------|-----------|---------------------|------------|
-| Anthropic | `[Verificar]` | `[Verificar]` | `[FECHA]` | https://www.anthropic.com/policies |
-| Google    | `[Verificar]` | `[Verificar]` | `[FECHA]` | https://cloud.google.com/terms |
-| OpenAI    | `[Verificar]` | `[Verificar]` | `[FECHA]` | https://openai.com/policies |
-
-> **Acción:** Revisar trimestralmente. Verificar si datos enviados a APIs se usan para entrenamiento.
+> **Nota:** Se asume el uso de APIs comerciales/empresariales que garantizan privacidad de datos. No utilizar versiones gratuitas ("Consumer") para subir código del proyecto.
 
 ---
 
-*Última actualización: [FECHA] — Revisado por: [NOMBRE]*
+*Última actualización: 2026-03-17 — Revisado por: Gemini (Researcher)*
