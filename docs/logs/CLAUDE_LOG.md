@@ -6,6 +6,59 @@
 
 ---
 
+## ENTRADA-009 | 2026-03-19 | trigger-validation-plan
+
+**Tipo:** Planificación — validación de fuentes y triggers
+**Tarea:** Distribuir tareas para configurar y validar cada fuente del pipeline Threat Intel en staging
+
+### Contexto
+
+Staging healthy en R720 (`192.168.0.70:5678`) con workflow importado (30 nodos) pero sin triggers activos ni credenciales configuradas. Se requiere validar cada fuente individualmente antes de activar el pipeline.
+
+### Cross-review staging (CODEX ENTRADA-012)
+
+| Aspecto | Resultado |
+|---------|-----------|
+| 3 servicios healthy (n8n, threat-db, threat-cache) | ✅ |
+| 7 tablas en PostgreSQL, 9 data sources en seed | ✅ |
+| Workflow importado con 30 nodos | ✅ |
+| Acceso HTTP desde oficina `192.168.0.70:5678` | ✅ |
+
+### Análisis de fuentes
+
+Se identificaron 7 fuentes activas + 1 planificada (VirusTotal, Fase 1.1):
+
+| Fuente | Red | Prerequisito principal |
+|--------|-----|----------------------|
+| FortiGate | LAN | API user read-only en el firewall |
+| Wazuh | LAN/AWS | Usuario API con rol limitado |
+| GuardDuty | AWS | Detector habilitado + IAM policy |
+| Zabbix | LAN | API token generado |
+| AbuseIPDB | Internet | Registro gratuito + API key |
+| OTX AlienVault | Internet | Registro gratuito + API key |
+| Trellix ePO | M365 | Buzón compartido + IMAP/Graph |
+
+### Distribución de tareas
+
+| Agente | Tareas | Foco |
+|--------|--------|------|
+| @CODEX | 13 | Credenciales n8n UI, conectividad por fuente, env vars, dry-run E2E |
+| @GEMINI | 5 | Documentar procedimientos de creación de API users/tokens, validar empty responses |
+| @CLAUDE | 4 | Cross-review por fuente, verificar no leak de secrets, aprobar activación, ADR-010 |
+
+### Riesgo residual
+
+- Conectividad desde R720 a Wazuh depende de si Wazuh está en LAN o solo en AWS
+- GuardDuty puede no estar habilitado en la cuenta AWS
+- Rate limits de AbuseIPDB (1000 req/día en tier gratuito) podrían ser limitantes
+- Trellix requiere buzón compartido en M365 que puede necesitar aprobación de IT
+
+### Harness gap
+
+- El workflow tiene `errorWorkflow` apuntando a `CONFIGURAR_ERROR_WORKFLOW_ID` (placeholder) — necesita un workflow de error real antes de activar crons en producción
+
+---
+
 ## ENTRADA-001 | 2026-03-16 | setup
 
 **Tipo:** Adopción de framework

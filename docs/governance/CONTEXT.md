@@ -1,8 +1,8 @@
 # CONTEXT.md - Estado Actual del Proyecto
 
 > **Ultima actualizacion:** 2026-03-19
-> **Actualizado por:** Codex (Implementer/DevOps — staging desplegado y validado)
-> **Proxima revision:** al completar cross-review de Claude y ADR-009
+> **Actualizado por:** Claude (Governor — Fase 1.5: validación de triggers y fuentes en staging)
+> **Proxima revision:** al completar configuración de fuentes y primer dry-run del pipeline
 
 ---
 
@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 1 — Staging desplegado y validado; pendiente cross-review |
-| Estabilidad   | Local y staging validados. Producción AWS pendiente |
-| Bloqueantes   | Cross-review de Claude, aprobación formal de SPEC AWS, ADR-009 |
-| Ultimo cambio | Deploy real en R720: compose healthy, workflow importado, schema y seed validados |
+| Fase          | Fase 1.5 — Validación de triggers y fuentes de Threat Intel en staging |
+| Estabilidad   | Staging healthy (R720 `192.168.0.70:5678`). Pipeline importado, sin triggers activos |
+| Bloqueantes   | Credenciales de cada fuente, conectividad de red desde R720, canales de alerta |
+| Ultimo cambio | Distribución de tareas para configuración y validación de 7 fuentes + 3 canales de alerta |
 
 ---
 
@@ -61,9 +61,85 @@
 
 ### @CLAUDE - Governor
 
-- [ ] @CLAUDE: Cross-review del deploy de staging cuando Codex complete — validar healthchecks, schema, workflow, y conectividad LAN
+- [x] @CLAUDE: Cross-review del deploy de staging cuando Codex complete — validar healthchecks, schema, workflow, y conectividad LAN (Completado: Codex ENTRADA-012 validado — 3 servicios healthy, 7 tablas, 9 data sources, workflow importado en `192.168.0.70:5678`)
 - [x] @CLAUDE: Aprobar SPEC_AWS_PRODUCTION.md cuando Gemini lo entregue (Completado: aprobado — Secrets Manager para 4 críticos, SSM para API keys, SGs mínimo privilegio)
 - [ ] @CLAUDE: Crear ADR-009 formalizando la estrategia de infraestructura AWS (ECS + RDS + Secrets Manager + ECR)
+
+---
+
+## Pendientes activos — Fase 1.5: Validación de Triggers y Fuentes (Staging)
+
+> **Prerequisito:** Staging healthy en R720 (`192.168.0.70:5678`) ✅
+> **Objetivo:** Configurar credenciales, validar conectividad y ejecutar dry-run de cada fuente del pipeline Threat Intel
+
+### Inventario de fuentes y triggers
+
+| Fuente | Trigger | Frecuencia | API / Protocolo | Env Vars requeridas | Red |
+|--------|---------|------------|-----------------|---------------------|-----|
+| FortiGate | Cron | 5 min | REST v2 (`/api/v2/log/event/system`) | `FORTIGATE_HOST`, `FORTIGATE_API_KEY` | LAN |
+| Wazuh | Cron | 2 min | REST v4 (auth JWT → `/alerts`) | `WAZUH_API_URL`, `WAZUH_API_USER`, `WAZUH_API_PASSWORD` | LAN/AWS |
+| GuardDuty | Cron | 5 min | AWS API (`GetFindings`) | `AWS_REGION`, `GUARDDUTY_DETECTOR_ID`, IAM credentials | AWS |
+| Zabbix | Cron | 5 min | JSON-RPC 2.0 (`trigger.get`) | `ZABBIX_API_URL`, `ZABBIX_API_TOKEN` | LAN |
+| AbuseIPDB | Cron (OSINT) | 15 min | REST v2 (`/api/v2/blacklist`) | `ABUSEIPDB_API_KEY` | Internet |
+| OTX AlienVault | Cron (OSINT) | 15 min | REST v1 (`/pulses/subscribed`) | `OTX_API_KEY` | Internet |
+| Trellix ePO | IMAP/Outlook | Event-driven | Email parsing | `TRELLIX_IMAP_*` o Microsoft Graph | Internet/M365 |
+| VirusTotal | Cron (planificado) | 15 min | REST v3 | `VIRUSTOTAL_API_KEY` | Internet — **Fase 1.1, no incluir ahora** |
+
+### Canales de alerta
+
+| Canal | Tipo | Env Var | Umbral |
+|-------|------|---------|--------|
+| Slack | Webhook | `SLACK_WEBHOOK_URL` | score >= 70 |
+| Teams | Webhook | `TEAMS_WEBHOOK_URL` | score >= 70 |
+| Email | SMTP | `ALERT_EMAIL_TO`, `ALERT_EMAIL_FROM`, SMTP credential en n8n | score >= 85 |
+
+### Credenciales n8n UI requeridas
+
+| Credential | Tipo | Necesario para |
+|------------|------|----------------|
+| `postgres` | PostgreSQL | Nodos `pg-upsert` y `pg-audit-log` — conexión a threat_intel DB |
+| `smtp` | SMTP | Nodo `email-alert` — envío de alertas críticas |
+
+### @CODEX - Implementer/DevOps
+
+**Infraestructura base (hacer primero):**
+- [ ] @CODEX: Configurar credencial PostgreSQL en n8n staging UI — host: `threat-db`, port: `5432`, db: `threat_intel`, user/pass de `.env`
+- [ ] @CODEX: Configurar credencial SMTP en n8n staging UI — usar relay SMTP de DELCOP o M365
+- [ ] @CODEX: Ejecutar test manual del nodo `pg-upsert` para confirmar que n8n puede escribir en PostgreSQL
+
+**Fuentes internas (LAN):**
+- [ ] @CODEX: Validar conectividad desde R720 al FortiGate (`curl -k https://$FORTIGATE_HOST/api/v2/cmdb/system/status`) y configurar API key en `.env` staging
+- [ ] @CODEX: Validar conectividad desde R720 a Wazuh (`curl -k -u user:pass $WAZUH_API_URL/security/user/authenticate`) y configurar credenciales en `.env` staging
+- [ ] @CODEX: Validar conectividad desde R720 a Zabbix (`curl $ZABBIX_API_URL -d '{"jsonrpc":"2.0","method":"apiinfo.version","id":1}'`) y configurar token en `.env` staging
+
+**Fuentes AWS:**
+- [ ] @CODEX: Verificar si GuardDuty está habilitado en la cuenta AWS (`aws guardduty list-detectors`), obtener `DETECTOR_ID` y configurar IAM credentials para n8n
+
+**Fuentes OSINT (Internet):**
+- [ ] @CODEX: Registrar cuenta gratuita en AbuseIPDB, obtener API key y configurar `ABUSEIPDB_API_KEY` en `.env` staging
+- [ ] @CODEX: Registrar cuenta gratuita en OTX AlienVault, obtener API key y configurar `OTX_API_KEY` en `.env` staging
+
+**Canales de alerta:**
+- [ ] @CODEX: Crear webhook de Slack (o Teams) de prueba en canal `#security-alerts-test` y configurar `SLACK_WEBHOOK_URL` en `.env` staging
+
+**Validación end-to-end:**
+- [ ] @CODEX: Ejecutar dry-run manual de cada fuente configurada: trigger manual en n8n UI → verificar que los datos fluyen hasta PostgreSQL (tabla `iocs`) y que las alertas llegan al canal configurado
+- [ ] @CODEX: Reiniciar compose en R720 (`docker compose restart`) para cargar las nuevas env vars después de cada cambio en `.env`
+
+### @GEMINI - Researcher/Reviewer
+
+- [ ] @GEMINI: Documentar el procedimiento exacto para crear un API user read-only en FortiGate (perfil, trusted hosts, generación de API key) con capturas o pasos de GUI
+- [ ] @GEMINI: Documentar el procedimiento para crear un usuario Wazuh con roles limitados (`agents:read`, `alerts:read`) — API o GUI de Wazuh Dashboard
+- [ ] @GEMINI: Documentar el procedimiento para generar API token en Zabbix (Administration → API tokens) con permisos mínimos
+- [ ] @GEMINI: Investigar si GuardDuty está habilitado en la cuenta AWS `043019737945` y qué política IAM mínima necesita n8n (`guardduty:ListFindings`, `guardduty:GetFindings`)
+- [ ] @GEMINI: Validar que el workflow maneja correctamente el caso de fuente sin datos (empty response) — que no genere errores ni alertas falsas
+
+### @CLAUDE - Governor
+
+- [ ] @CLAUDE: Cross-review de cada credencial/fuente configurada antes de activar el trigger cron correspondiente
+- [ ] @CLAUDE: Verificar que las API keys y tokens NO quedaron en archivos trackeados (solo en `.env` del R720)
+- [ ] @CLAUDE: Aprobar activación del workflow en modo automático (triggers cron activos) una vez validadas todas las fuentes
+- [ ] @CLAUDE: Registrar ADR-010 con la decisión de fuentes activas vs pendientes y sus justificaciones
 
 ---
 
@@ -99,8 +175,8 @@
 | Entorno    | Estado    | URL / Host            | Notas |
 |------------|-----------|-----------------------|-------|
 | Local      | Validado  | http://localhost:5678 | Docker Desktop, SQLite, threat-db en host `5433` |
-| Staging    | Disponible| Dell R720 (LAN)       | VMware/Docker, SQLite/Volume |
-| Produccion | Configurado | AWS ECS Fargate     | PostgreSQL RDS |
+| Staging    | Healthy   | http://192.168.0.70:5678 | Dell R720, Docker, 3 servicios healthy, workflow importado |
+| Produccion | No existe | AWS ECS Fargate (planificado) | Infraestructura por crear (Fase 2) |
 
 ---
 
@@ -137,6 +213,8 @@
 | 2026-03-19 | Auditoria AWS: no existe infra n8n en ECS — replanificado como Fase 1 (staging) + Fase 2 (AWS) | Claude |
 | 2026-03-19 | Tareas distribuidas: 7 Codex, 3 Gemini, 3 Claude para Fase 1; 6 Codex, 3 Gemini, 3 Claude para Fase 2 | Claude |
 | 2026-03-19 | Deploy de staging ejecutado en R720: SSH, pull, `.env`, compose, import workflow, schema+seed y acceso HTTP validados | Codex |
+| 2026-03-19 | Cross-review staging aprobado por Claude (ENTRADA-009) | Claude |
+| 2026-03-19 | Fase 1.5: distribución de tareas para validación de 7 fuentes TI + 3 canales alerta en staging | Claude |
 
 ---
 

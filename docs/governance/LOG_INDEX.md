@@ -10,7 +10,7 @@
 
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
-| CLAUDE | ENTRADA-007 | docs/logs/CLAUDE_LOG.md | 2026-03-19 |
+| CLAUDE | ENTRADA-009 | docs/logs/CLAUDE_LOG.md | 2026-03-19 |
 | CODEX  | ENTRADA-014 | docs/logs/CODEX_LOG.md  | 2026-03-19 |
 | GEMINI | ENTRADA-005 | docs/logs/GEMINI_LOG.md | 2026-03-19 |
 
@@ -27,6 +27,8 @@
 | ENTRADA-005 | CLAUDE | integration         | Cross-review Threat Intel pipeline, ADR-006/007/008, merge al proyecto | 2026-03-18 |
 | ENTRADA-006 | CLAUDE | harness-fix         | Fix estructura CONTEXT.md para parsing correcto de tareas por agente | 2026-03-19 |
 | ENTRADA-007 | CLAUDE | replan + aws-audit  | Auditoría AWS (no existe infra n8n), replanificación Fase 1 staging + Fase 2 producción | 2026-03-19 |
+| ENTRADA-008 | CLAUDE | cross-review        | Aprobación SPEC_AWS_PRODUCTION.md de Gemini — Secrets Manager, SSM, SGs | 2026-03-19 |
+| ENTRADA-009 | CLAUDE | trigger-validation-plan | Cross-review staging + distribución de tareas Fase 1.5: 7 fuentes TI + 3 canales alerta | 2026-03-19 |
 | ENTRADA-001 | CODEX  | exploration         | Mapeo read-only del repo y superficies DevOps                     | 2026-03-17 |
 | ENTRADA-002 | CODEX  | validation          | Validacion compose/scripts/pre-commit y ajustes minimos           | 2026-03-17 |
 | ENTRADA-003 | CODEX  | runtime-validation  | Levantamiento local de n8n, healthcheck y hadolint real           | 2026-03-17 |
