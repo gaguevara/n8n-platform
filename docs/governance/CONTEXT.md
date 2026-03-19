@@ -62,7 +62,7 @@
 ### @CLAUDE - Governor
 
 - [ ] @CLAUDE: Cross-review del deploy de staging cuando Codex complete — validar healthchecks, schema, workflow, y conectividad LAN
-- [ ] @CLAUDE: Aprobar SPEC_AWS_PRODUCTION.md cuando Gemini lo entregue — verificar que cubre Secrets Manager para `N8N_ENCRYPTION_KEY` y `RDS_PASSWORD`
+- [x] @CLAUDE: Aprobar SPEC_AWS_PRODUCTION.md cuando Gemini lo entregue (Completado: aprobado — Secrets Manager para 4 críticos, SSM para API keys, SGs mínimo privilegio)
 - [ ] @CLAUDE: Crear ADR-009 formalizando la estrategia de infraestructura AWS (ECS + RDS + Secrets Manager + ECR)
 
 ---

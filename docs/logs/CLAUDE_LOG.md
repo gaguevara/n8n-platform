@@ -312,6 +312,40 @@ Se replanificó el despliegue en dos fases con prerequisitos secuenciales:
 
 ---
 
+## ENTRADA-008 | 2026-03-19 | cross-review
+
+**Tipo:** Cross-review SPEC_AWS_PRODUCTION.md
+**Tarea:** Aprobar especificación de producción AWS generada por Gemini
+
+### Archivos revisados
+
+- `docs/sdlc/SPEC_AWS_PRODUCTION.md` (Gemini ENTRADA-005)
+- `docs/logs/GEMINI_LOG.md` (evidencia)
+
+### Veredicto: APROBADO
+
+| Aspecto | Evaluación |
+|---------|-----------|
+| Secretos: Secrets Manager para 4 críticos | ✅ Correcto |
+| Secretos: SSM Parameter Store para API keys | ✅ Correcto — rotación moderada |
+| Security Groups: mínimo privilegio | ✅ ALB←Internet, ECS←ALB, RDS←ECS |
+| Storage: EFS opcional, efímero suficiente sin queue | ✅ Decisión pragmática |
+| IAM: Execution Role vs Task Role separadas | ✅ |
+| Logging: CloudWatch awslogs | ✅ |
+| IaC recomendado | ✅ |
+
+### Observación menor
+
+- `THREAT_DB_HOST_PORT` en el SPEC debería ser irrelevante en ECS (el contenedor accede al RDS por VPC, no por puerto del host). Pero no bloquea.
+
+### Riesgo residual
+
+- Permisos IAM para crear la infraestructura no verificados aún
+
+### Harness gap
+
+Ninguno.
+
 ## ENTRADA-006 | 2026-03-19 | harness-fix
 
 **Tipo:** Corrección de harness gap
