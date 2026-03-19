@@ -259,6 +259,59 @@ Pipeline integrado en el repo. Pendiente validación runtime (Docker up + import
 
 ---
 
+## ENTRADA-007 | 2026-03-19 | replan + aws-audit
+
+**Tipo:** Auditoría AWS + replanificación de despliegue
+**Tarea:** Auditar infraestructura n8n en AWS ECS y replanificar pipeline de deploy
+
+### Auditoría AWS ejecutada
+
+| Recurso verificado | Resultado |
+|---|---|
+| `aws ecs list-clusters` | 6 clusters — todos Odoo, ninguno n8n |
+| `aws ecs list-task-definitions` | Odoo, Wazuh, Zabbix — ninguna de n8n |
+| `aws secretsmanager list-secrets` | 4 secretos — todos Odoo (`/delcop*/odoo/db`) |
+| Cluster `n8n-cluster` | No existe |
+| Task Definition n8n | No existe |
+| Secretos n8n (`N8N_ENCRYPTION_KEY`, `RDS_PASSWORD`) | No existen |
+
+**Conclusión:** La documentación marcaba producción como "AWS ECS Fargate - Configurado" pero la infraestructura n8n nunca fue creada en AWS. El pendiente de auditar ECS Task Definition era prematuro.
+
+### Replanificación
+
+Se replanificó el despliegue en dos fases con prerequisitos secuenciales:
+
+**Fase 1 — Staging (Dell R720)**
+- 7 tareas @CODEX: SSH, clone/pull, .env, compose up, import workflow, validar schema, acceso navegador
+- 3 tareas @GEMINI: research AWS best practices, SPEC_AWS_PRODUCTION.md, mapeo variables→Secrets Manager
+- 3 tareas @CLAUDE: cross-review staging, aprobar SPEC AWS, crear ADR-009
+
+**Fase 2 — Producción AWS (post-staging)**
+- 6 tareas @CODEX: ECR, Secrets Manager, ECS cluster+task, RDS, build+push, deploy+validar
+- 3 tareas @GEMINI: validar secretos, review security groups, actualizar AI_GOVERNANCE
+- 3 tareas @CLAUDE: cross-review final, auditar ECS Task Definition, actualizar CONTEXT_SECURITY
+
+### Acciones ejecutadas
+
+| Acción | Resultado |
+|---|---|
+| Pendiente AWS audit cerrado como "no aplica aún" | ✅ |
+| CONTEXT.md actualizado con Fase 1 y Fase 2 | ✅ |
+| Tareas completadas movidas a sección colapsable | ✅ |
+| 25 nuevas tareas distribuidas por agente y fase | ✅ |
+
+### Riesgo residual
+
+- Acceso SSH a R720 no verificado aún desde esta PC de oficina
+- Prerequisitos Docker/Compose en R720 no confirmados
+- La infraestructura AWS requiere permisos IAM para crear ECS, RDS, ECR, Secrets Manager — no verificado
+
+### Harness gap
+
+- El Makefile referencia `n8n-cluster` y `n8n-service` en `deploy-prod` pero estos no existen en AWS — el target fallaría si se ejecutara hoy
+
+---
+
 ## ENTRADA-006 | 2026-03-19 | harness-fix
 
 **Tipo:** Corrección de harness gap

@@ -10,6 +10,29 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 IMPORT_DIR="${PROJECT_ROOT}/app/workflows"
 CONTAINER_NAME="${1:-n8n_local}"
+CONTAINER_TMP_DIR="/tmp/n8n-import-temp"
+
+docker_exec_in_container() {
+    case "$(uname -s)" in
+        MINGW*|MSYS*|CYGWIN*)
+            MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' docker exec "$@"
+            ;;
+        *)
+            docker exec "$@"
+            ;;
+    esac
+}
+
+docker_exec_root_in_container() {
+    case "$(uname -s)" in
+        MINGW*|MSYS*|CYGWIN*)
+            MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' docker exec -u 0 "$@"
+            ;;
+        *)
+            docker exec -u 0 "$@"
+            ;;
+    esac
+}
 
 echo "=== n8n Workflow Import ==="
 echo "Container: ${CONTAINER_NAME}"
@@ -45,11 +68,7 @@ echo "Found ${WORKFLOW_COUNT} workflow(s) to import"
 echo ""
 
 # Crear directorio temporal en container
-docker exec "${CONTAINER_NAME}" mkdir -p /home/node/.n8n/import-temp/
-
-# Copiar workflows al container
-echo "Copying workflows to container..."
-docker cp "${IMPORT_DIR}/." "${CONTAINER_NAME}:/home/node/.n8n/import-temp/"
+docker_exec_root_in_container "${CONTAINER_NAME}" mkdir -p "${CONTAINER_TMP_DIR}"
 
 # Importar cada workflow
 echo "Importing workflows..."
@@ -60,20 +79,21 @@ for file in ${IMPORT_DIR}/*.json; do
     if [ -f "$file" ]; then
         filename=$(basename "$file")
         echo -n "  - ${filename}: "
+        docker cp "$file" "${CONTAINER_NAME}:${CONTAINER_TMP_DIR}/${filename}"
 
-        if docker exec "${CONTAINER_NAME}" n8n import:workflow \
-            --input="/home/node/.n8n/import-temp/${filename}" 2>/dev/null; then
+        if docker_exec_in_container "${CONTAINER_NAME}" n8n import:workflow \
+            --input="${CONTAINER_TMP_DIR}/${filename}" 2>/dev/null; then
             echo "OK"
-            ((IMPORTED++))
+            IMPORTED=$((IMPORTED + 1))
         else
             echo "FAILED"
-            ((FAILED++))
+            FAILED=$((FAILED + 1))
         fi
     fi
 done
 
 # Limpiar directorio temporal
-docker exec "${CONTAINER_NAME}" rm -rf /home/node/.n8n/import-temp/
+docker_exec_root_in_container "${CONTAINER_NAME}" rm -rf "${CONTAINER_TMP_DIR}"
 
 echo ""
 echo "=== Import Complete ==="

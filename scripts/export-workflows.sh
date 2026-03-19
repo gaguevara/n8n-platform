@@ -11,6 +11,29 @@ PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 EXPORT_DIR="${PROJECT_ROOT}/app/workflows"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 CONTAINER_NAME="${1:-n8n_local}"
+CONTAINER_TMP_DIR="/tmp/n8n-export-temp"
+
+docker_exec_in_container() {
+    case "$(uname -s)" in
+        MINGW*|MSYS*|CYGWIN*)
+            MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' docker exec "$@"
+            ;;
+        *)
+            docker exec "$@"
+            ;;
+    esac
+}
+
+docker_exec_root_in_container() {
+    case "$(uname -s)" in
+        MINGW*|MSYS*|CYGWIN*)
+            MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' docker exec -u 0 "$@"
+            ;;
+        *)
+            docker exec -u 0 "$@"
+            ;;
+    esac
+}
 
 echo "=== n8n Workflow Export ==="
 echo "Container: ${CONTAINER_NAME}"
@@ -34,19 +57,19 @@ fi
 mkdir -p "${EXPORT_DIR}"
 
 # Crear directorio temporal en container
-docker exec "${CONTAINER_NAME}" mkdir -p /home/node/.n8n/export-temp/
+docker_exec_in_container "${CONTAINER_NAME}" mkdir -p "${CONTAINER_TMP_DIR}"
 
 # Exportar todos los workflows
 echo "Exporting all workflows..."
-docker exec "${CONTAINER_NAME}" n8n export:workflow --all --output=/home/node/.n8n/export-temp/ 2>/dev/null || {
+docker_exec_in_container "${CONTAINER_NAME}" n8n export:workflow --backup --output="${CONTAINER_TMP_DIR}/" 2>/dev/null || {
     echo "Warning: n8n export command returned non-zero (may be empty)"
 }
 
 # Copiar archivos exportados al host
-docker cp "${CONTAINER_NAME}:/home/node/.n8n/export-temp/." "${EXPORT_DIR}/" 2>/dev/null || true
+docker cp "${CONTAINER_NAME}:${CONTAINER_TMP_DIR}/." "${EXPORT_DIR}/" 2>/dev/null || true
 
 # Limpiar directorio temporal en container
-docker exec "${CONTAINER_NAME}" rm -rf /home/node/.n8n/export-temp/
+docker_exec_root_in_container "${CONTAINER_NAME}" rm -rf "${CONTAINER_TMP_DIR}"
 
 # Contar workflows exportados
 WORKFLOW_COUNT=$(find "${EXPORT_DIR}" -maxdepth 1 -name "*.json" -type f 2>/dev/null | wc -l)
