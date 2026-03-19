@@ -26,9 +26,11 @@
 3. `docker compose --env-file .env.staging.example -f infra/docker-compose.staging.yml config --services`
    - Resultado: `threat-cache`, `threat-db`, `n8n`.
 4. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && git pull --ff-only origin main && docker compose --env-file .env -f infra/docker-compose.staging.yml up -d"`
-   - Resultado: R720 actualizado de `14f03d8` a `8b39975`; `n8n_staging`, `n8n_threat_db` y `n8n_threat_cache` quedaron `Running/Healthy`.
+   - Resultado: R720 actualizado hasta `c338c93`; `n8n_staging`, `n8n_threat_db` y `n8n_threat_cache` quedaron `healthy`.
 5. `curl.exe -s http://192.168.0.70:5678/healthz`
    - Resultado: `{"status":"ok"}` despues del redeploy.
+6. `ssh gabo@192.168.0.70 "docker inspect n8n_staging --format ... | grep N8N_SECURE_COOKIE"`
+   - Resultado: `N8N_SECURE_COOKIE=false` efectivo dentro del contenedor.
 
 ### Estado final
 
