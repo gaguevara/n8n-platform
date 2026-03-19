@@ -67,6 +67,7 @@ Este documento es la fuente única de verdad para reglas de proyecto, criterios 
 - No introducir dependencias npm o paquetes custom en la imagen sin justificación.
 - Actualizar `.env.example` ante toda variable nueva o eliminada.
 - Cambios que afecten autenticación (`N8N_ENCRYPTION_KEY`, `N8N_BASIC_AUTH_*`) son alto riesgo: requieren plan documentado.
+- **Estructura de CONTEXT.md:** Las tareas pendientes DEBEN colocarse bajo la sección del agente asignado (`### @AGENTE - Rol`). No crear subsecciones temáticas ni agrupaciones ad-hoc que fragmenten los pendientes. Los agentes localizan sus tareas por encabezado de sección, no por contenido libre.
 
 ---
 

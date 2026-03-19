@@ -256,3 +256,26 @@ Pipeline integrado en el repo. Pendiente validación runtime (Docker up + import
 ### Harness gap
 
 - `docker compose config` no se ejecutó en esta sesión (Docker daemon no verificado)
+
+---
+
+## ENTRADA-006 | 2026-03-19 | harness-fix
+
+**Tipo:** Corrección de harness gap
+**Tarea:** Corregir estructura de CONTEXT.md que impedía a Codex detectar sus tareas pendientes
+
+### Problema
+
+Las tareas de Threat Intelligence para Codex se colocaron en una subsección llamada "Threat Intelligence — pendientes activos" separada de la sección estándar "@CODEX - Implementer/DevOps". Codex parseó solo su sección nominada y reportó "sin pendientes".
+
+### Corrección
+
+Mover todas las tareas `[ ] @CODEX` bajo el encabezado `### @CODEX - Implementer/DevOps`. Eliminar la subsección ad-hoc.
+
+### Regla derivada (failure-to-rule)
+
+> **REGLA:** Las tareas en CONTEXT.md SIEMPRE deben estar bajo la sección del agente asignado (`### @AGENTE - Rol`). No crear subsecciones temáticas que fragmenten los pendientes. Los agentes buscan su sección por nombre, no por contenido.
+
+### Harness gap
+
+- El framework no especifica que la estructura de secciones en CONTEXT.md es mecánicamente interpretada. Debería documentarse en PROJECT_RULES.md §9.

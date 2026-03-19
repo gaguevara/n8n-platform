@@ -39,6 +39,8 @@ La IA se considera herramienta de asistencia de desarrollo y arquitectura, no me
 | ISO 27001 A.8.9             | Trazabilidad total en `LOG_INDEX.md` y logs por agente.       |
 | ISO 27001 A.8.25            | Integración de pre-commit hooks para detección de secretos.   |
 | ISO 27001 A.8.28            | Validación manual de workflows n8n (JSON) antes de commit.    |
+| ISO 27001 A.12.6.1          | Gestión de vulnerabilidades técnicas vía pipeline de TI.       |
+| ISO 27001 A.16.1.2          | Reporte automático de eventos de seguridad (Wazuh/FortiGate). |
 | ISO 9001 Control documental | `PROJECT_RULES.md` como Fuente Única de Verdad (SSOT).        |
 
 ---

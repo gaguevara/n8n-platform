@@ -21,34 +21,20 @@
 
 ### @CODEX - Implementer/DevOps
 
-- [x] @CODEX: Validar que `infra/docker-compose.local.yml` es valido (`docker compose config`) (Completado: config valido tras hacer opcional `../.env` y agregar `healthcheck`)
-- [x] @CODEX: Revisar `scripts/export-workflows.sh`, `scripts/import-workflows.sh` y `scripts/backup.sh` - agregar `set -euo pipefail` si falta (Completado: los 3 scripts ya lo incluyen; sintaxis validada con Git Bash)
-- [x] @CODEX: Ejecutar `pre-commit install` y verificar que los hooks pasan en estado actual (Completado: hook instalado y `pre-commit run --all-files` en verde; se agrego `.secrets.baseline`)
-- [x] @CODEX: Validar sintaxis del `infra/Dockerfile` con `hadolint` (si disponible) o revision manual (Completado: revision manual; `hadolint` local no disponible y Docker daemon ausente)
-
-### @GEMINI - Researcher/Reviewer
-
-- [x] @GEMINI: Analizar brechas de documentacion en el repo - comparar estructura actual vs PROJECT_RULES.md section 9 (Completado: `.env.example` y staging spec identificados como gaps)
-- [x] @GEMINI: Evaluar si se necesita `docs/sdlc/SPEC_STAGING_PIPELINE.md` para documentar el pipeline staging->prod (Completado: creado en `docs/sdlc/`)
-- [x] @GEMINI: Actualizar `docs/governance/ONBOARDING.md` con setup local exacto (Completado: agregada seccion tecnica)
-- [x] @GEMINI: Mapear todas las variables de entorno del proyecto (`.env.example`, compose files) y reportar brechas (Completado: creado `.env.example`)
-
-### @CLAUDE - Governor
-
-- [x] @CLAUDE: Crear `docs/governance/CONTEXT_SECURITY.md` con inventario de secretos/variables sensibles (Completado)
-- [x] @CLAUDE: Revisar trabajo de @CODEX en scripts y docker-compose (cross-review) (Completado: aprobado con 1 aviso TAG=latest)
-- [x] @CLAUDE: Consolidar resultados cuando Codex y Gemini completen sus tareas iniciales (Completado)
-- [x] @CLAUDE: Crear ADR-005 - pipeline staging->prod formalizado (Completado: SPEC aprobada)
-
-### Threat Intelligence — pendientes activos
-
 - [ ] @CODEX: Validar `docker compose -f infra/docker-compose.local.yml config` con los nuevos servicios (threat-db, threat-cache) (Autor: Claude, Fecha: 2026-03-18)
 - [ ] @CODEX: Levantar stack completo (`docker compose up -d`) y verificar healthchecks de los 3 servicios (Autor: Claude, Fecha: 2026-03-18)
 - [ ] @CODEX: Verificar que el schema SQL se ejecuta correctamente en PostgreSQL (`01-schema.sql` + `seed_reference_data.sql`) (Autor: Claude, Fecha: 2026-03-18)
 - [ ] @CODEX: Importar `threat-intel-main.json` en n8n y verificar que los 30 nodos cargan sin errores (Autor: Claude, Fecha: 2026-03-18)
-- [ ] @GEMINI: Revisar `docs/DATA-CONTRACTS.md` y validar coherencia con el schema SQL y los code nodes (Autor: Claude, Fecha: 2026-03-18)
-- [ ] @GEMINI: Verificar que los controles ISO 27001 mapeados en EXTERNAL_REVIEW_NOTES son correctos y actualizar AI_GOVERNANCE.md (Autor: Claude, Fecha: 2026-03-18)
+
+### @GEMINI - Researcher/Reviewer
+
+- [x] @GEMINI: Revisar `docs/DATA-CONTRACTS.md` y validar coherencia con el schema SQL y los code nodes (Completado: Coherencia validada entre MD, 01-schema.sql y ioc_normalizer.js)
+- [x] @GEMINI: Verificar que los controles ISO 27001 mapeados en EXTERNAL_REVIEW_NOTES son correctos y actualizar AI_GOVERNANCE.md (Completado: Mapeados A.12.6.1 y A.16.1.2)
+
+### @CLAUDE - Governor
+
 - [ ] @CLAUDE: Cross-review de la validacion de Codex cuando complete el stack levantado (Autor: Claude, Fecha: 2026-03-18)
+- [ ] @CLAUDE: Auditar ECS Task Definition en AWS (bloqueado: requiere acceso desde oficina)
 
 ### Pendientes - siguiente ciclo
 
