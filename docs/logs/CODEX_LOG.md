@@ -6,6 +6,44 @@
 
 ---
 
+## ENTRADA-014 | 2026-03-19 | staging-cookie-fix
+
+**Tipo:** Correccion de configuracion staging
+**Tarea:** Ajustar `N8N_SECURE_COOKIE=false` en staging para que el entorno HTTP del R720 no intente usar cookies seguras.
+
+### Archivos afectados
+
+- `infra/docker-compose.staging.yml`
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+
+### Comandos ejecutados + output
+
+1. `rg -n "N8N_SECURE_COOKIE" infra/docker-compose.staging.yml`
+   - Resultado: staging seguia con `N8N_SECURE_COOKIE=true`.
+2. Actualizacion de `infra/docker-compose.staging.yml`
+   - Resultado: valor corregido a `N8N_SECURE_COOKIE=false`.
+3. `docker compose --env-file .env.staging.example -f infra/docker-compose.staging.yml config --services`
+   - Resultado: `threat-cache`, `threat-db`, `n8n`.
+4. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && git pull --ff-only origin main && docker compose --env-file .env -f infra/docker-compose.staging.yml up -d"`
+   - Resultado: R720 actualizado de `14f03d8` a `8b39975`; `n8n_staging`, `n8n_threat_db` y `n8n_threat_cache` quedaron `Running/Healthy`.
+5. `curl.exe -s http://192.168.0.70:5678/healthz`
+   - Resultado: `{"status":"ok"}` despues del redeploy.
+
+### Estado final
+
+- Staging queda alineado con despliegue HTTP: `N8N_SECURE_COOKIE=false`.
+
+### Riesgo residual
+
+- Si mas adelante staging pasa a HTTPS real detras de reverse proxy, este valor debe revisarse nuevamente.
+
+### Harness gap
+
+- La configuracion de staging mezclaba un comentario de reverse proxy/HTTPS con URLs HTTP directas al R720; eso oculto el mismatch de `N8N_SECURE_COOKIE`.
+
+---
+
 ## ENTRADA-013 | 2026-03-19 | staging-deploy-validation
 
 **Tipo:** Deploy y validacion de staging
