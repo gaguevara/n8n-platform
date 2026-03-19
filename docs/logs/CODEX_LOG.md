@@ -6,6 +6,51 @@
 
 ---
 
+## ENTRADA-015 | 2026-03-19 | staging-post-pull-validation
+
+**Tipo:** Revalidacion de staging tras avance de `main`
+**Tarea:** Actualizar `/srv/n8n-platform` al nuevo `HEAD` aprobado y confirmar que el runtime de staging sigue sano sin regresiones.
+
+### Archivos revisados
+
+- `docs/governance/CONTEXT.md`
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CLAUDE_LOG.md`
+- `docs/logs/CODEX_LOG.md`
+
+### Comandos ejecutados + output
+
+1. `git log --oneline --decorate c338c93..e520b87`
+   - Resultado: avance detectado hasta `e520b87 chore: Fase 1.5 — distribute trigger validation tasks across 3 agents`.
+2. `git diff --name-status c338c93..e520b87`
+   - Resultado: solo cambios en `docs/governance/CONTEXT.md`, `docs/governance/LOG_INDEX.md`, `docs/logs/CLAUDE_LOG.md` y `docs/logs/CODEX_LOG.md`.
+3. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && git pull --ff-only origin main && git log --oneline -3"`
+   - Resultado: staging actualizado de `c338c93` a `e520b87`.
+4. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && docker compose --env-file .env -f infra/docker-compose.staging.yml ps -a"`
+   - Resultado: `n8n_staging`, `n8n_threat_db`, `n8n_threat_cache` en `healthy`.
+5. `ssh gabo@192.168.0.70 "docker inspect n8n_staging --format ... | grep N8N_SECURE_COOKIE"`
+   - Resultado: `N8N_SECURE_COOKIE=false` sigue efectivo.
+6. `curl.exe -s http://192.168.0.70:5678/healthz`
+   - Resultado: `{"status":"ok"}`.
+7. `ssh gabo@192.168.0.70 "docker exec n8n_staging n8n export:workflow --all --pretty"`
+   - Resultado verificado via PowerShell: `1` workflow, `DELCOP Threat Intelligence - Main Pipeline`, `30` nodos.
+
+### Estado final
+
+- El R720 ya corre con el checkout actualizado a `e520b87`.
+- No hubo regresiones de runtime tras el pull.
+- Staging sigue sano y listo para las tareas de Fase 1.5 / cross-review.
+
+### Riesgo residual
+
+- El avance a `e520b87` fue solo documental y de coordinación; no sustituye una validación funcional de las nuevas tareas de Fase 1.5.
+
+### Harness gap
+
+- Cuando `main` avanza con commits de coordinación, conviene anotar explícitamente si el servidor de staging debe hacer `git pull` inmediato o puede esperar, para evitar drift entre repo y runtime.
+
+---
+
 ## ENTRADA-014 | 2026-03-19 | staging-cookie-fix
 
 **Tipo:** Correccion de configuracion staging

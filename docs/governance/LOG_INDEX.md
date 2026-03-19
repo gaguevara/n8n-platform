@@ -11,8 +11,8 @@
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
 | CLAUDE | ENTRADA-009 | docs/logs/CLAUDE_LOG.md | 2026-03-19 |
-| CODEX  | ENTRADA-014 | docs/logs/CODEX_LOG.md  | 2026-03-19 |
-| GEMINI | ENTRADA-005 | docs/logs/GEMINI_LOG.md | 2026-03-19 |
+| CODEX  | ENTRADA-015 | docs/logs/CODEX_LOG.md  | 2026-03-19 |
+| GEMINI | ENTRADA-006 | docs/logs/GEMINI_LOG.md | 2026-03-19 |
 
 ---
 
@@ -43,11 +43,13 @@
 | ENTRADA-012 | CODEX  | framework-validation | Revalidacion de actividad segun `AGENTS.md` sobre el commit aprobado actual `14f03d8` | 2026-03-19 |
 | ENTRADA-013 | CODEX  | staging-deploy-validation | Fase 1 completada en R720: SSH, pull, `.env`, compose healthy, import workflow, schema+seed y acceso HTTP | 2026-03-19 |
 | ENTRADA-014 | CODEX  | staging-cookie-fix | Ajuste de `N8N_SECURE_COOKIE=false` en staging y redeploy del R720 | 2026-03-19 |
+| ENTRADA-015 | CODEX  | staging-post-pull-validation | Pull de staging hasta `e520b87` y revalidacion del runtime healthy sin regresiones | 2026-03-19 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
 | ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |
 | ENTRADA-004 | GEMINI | validation          | Validación de Implementación (Threat Intelligence Pipeline v2.0)  | 2026-03-18 |
 | ENTRADA-005 | GEMINI | research + spec     | Investigación AWS ECS Fargate, SPEC_AWS_PRODUCTION, mapeo variables | 2026-03-19 |
+| ENTRADA-006 | GEMINI | cross-review + doc  | Validación cruzada Codex ENTRADA-010 y actualización ONBOARDING/TI | 2026-03-19 |
 
 ---
 
