@@ -6,6 +6,124 @@
 
 ---
 
+## ENTRADA-010 | 2026-03-19 | runtime-validation
+
+**Tipo:** Validacion runtime completa del Threat Intelligence stack
+**Tarea:** Ejecutar las 4 tareas pendientes de `@CODEX` en `CONTEXT.md` sobre compose, runtime, PostgreSQL e import del workflow
+
+### Archivos afectados
+
+- `infra/docker-compose.local.yml`
+- `.env.example`
+- `infra/init-db/00-create-dbs.sh`
+- `app/workflows/threat-intel-main.json`
+- `docs/governance/CONTEXT.md`
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+
+### Comandos ejecutados + output
+
+1. `docker compose -f infra/docker-compose.local.yml config`
+   - Resultado: configuracion valida con `n8n`, `threat-db` y `threat-cache`.
+2. `docker compose -f infra/docker-compose.local.yml up -d`
+   - Primer intento: fallo por `Bind for 0.0.0.0:5432 failed: port is already allocated` debido a `docaudit-db`.
+   - Accion correctiva: se parametrizo el host port de PostgreSQL a `127.0.0.1:${THREAT_DB_HOST_PORT:-5433}:5432` y se documento `THREAT_DB_HOST_PORT` en `.env.example`.
+3. `docker compose -f infra/docker-compose.local.yml up -d`
+   - Segundo intento: `threat-db` quedo `unhealthy`.
+   - Causa raiz: `infra/init-db/00-create-dbs.sh` usaba `psql` sin `--dbname postgres` y ademas duplicaba la aplicacion del schema ya montado como `01-schema.sql`.
+   - Accion correctiva: script ajustado para crear DBs contra `postgres` y dejar que `01-schema.sql` / `02-seed.sql` sean ejecutados por el entrypoint.
+4. `docker compose -f infra/docker-compose.local.yml down` + `docker volume rm -f n8n_threat_db_data`
+   - Resultado: reinicializacion limpia de la base local de Threat Intel.
+5. `docker compose -f infra/docker-compose.local.yml up -d`
+   - Resultado: `n8n_local`, `n8n_threat_db` y `n8n_threat_cache` levantados correctamente.
+6. `docker inspect --format "{{json .State.Health}}" ...`
+   - Resultado: los 3 servicios en `healthy`.
+7. `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "..."`
+   - Resultado: 7 tablas creadas (`alerts`, `audit_log`, `data_sources`, `event_iocs`, `iocs`, `security_events`, `workflow_runs`), extensiones `uuid-ossp` y `pg_trgm` presentes, `data_sources_count = 9`.
+8. `docker exec n8n_local n8n export:workflow --all`
+   - Resultado inicial: `No workflows found with specified filters`.
+9. `docker exec n8n_local n8n import:workflow --input=/home/node/.n8n/import-temp/threat-intel-main.json`
+   - Primer intento: fallo por directorio temporal ausente.
+   - Segundo intento: fallo por `SQLITE_CONSTRAINT: NOT NULL constraint failed: workflow_entity.id`.
+   - Accion correctiva: se agrego `id` raiz estable a `app/workflows/threat-intel-main.json`.
+   - Resultado final: `Successfully imported 1 workflow.`
+10. Verificacion directa en SQLite local (`data/database.sqlite`) con `python -`
+    - Resultado: `workflow_entity` contiene 1 workflow con `id=0d5f2e64-0d1b-4a8a-9e13-5fc0f2e7b8ad`, nombre `DELCOP Threat Intelligence - Main Pipeline`, `NODE_COUNT=30`; `shared_workflow` confirma asociacion al proyecto personal del usuario.
+
+### Estado final
+
+- Las 4 tareas pendientes de `@CODEX` quedaron completadas.
+- El stack local de Threat Intelligence esta arriba y sano:
+  - `n8n_local` healthy en `http://localhost:5678`
+  - `n8n_threat_db` healthy en host `127.0.0.1:5433`
+  - `n8n_threat_cache` healthy en host `127.0.0.1:6379`
+- El schema SQL y el seed se aplicaron correctamente en PostgreSQL.
+- El workflow `threat-intel-main.json` quedo importado y persistido con 30 nodos.
+
+### Riesgo residual
+
+- `docs/governance/LOG_INDEX.md` sigue en formato legado y requiere actualizacion manual; el engine v4.3 no lo puede escribir automaticamente.
+- `docker exec n8n_local n8n export:workflow --all` mostro un comportamiento inconsistente despues de la importacion (`SQLITE_CANTOPEN`), aunque la persistencia y la asociacion del workflow quedaron verificadas directamente en SQLite.
+- La validacion de staging y la auditoria ECS/AWS siguen fuera del alcance local y permanecen para Claude/oficina.
+
+### Harness gap
+
+- El repo necesitaba tres fixes de operabilidad para que la validacion runtime fuera reproducible: host port de PostgreSQL parametrizable, init script de Postgres sin doble aplicacion del schema, y `id` raiz estable en el workflow importable por CLI.
+
+---
+
+## ENTRADA-009 | 2026-03-19 | sync
+
+**Tipo:** Sincronizacion de repo y validacion de cola
+**Tarea:** Cambiar al repo correcto `n8n-platform`, ejecutar `git pull` en `main` y confirmar las tareas pendientes reales de Codex
+
+### Archivos revisados
+
+- `AGENTS.md`
+- `SESSION_BOOTSTRAP.md`
+- `docs/governance/PROJECT_RULES.md`
+- `docs/governance/CONTEXT.md`
+- `docs/governance/CODEX_OVERLAY.md`
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CLAUDE_LOG.md`
+- `docs/logs/GEMINI_LOG.md`
+
+### Comandos ejecutados + output
+
+1. `git status --short --branch`
+   - Resultado: `## main...origin/main` con unicamente `?? FRAMEWORK_PATCH_v4.4.md` no rastreado.
+2. `git remote -v`
+   - Resultado: `origin https://github.com/gaguevara/n8n-platform.git` configurado para fetch/push.
+3. `git branch -vv`
+   - Resultado: `main` rastrea `origin/main` correctamente.
+4. `git pull --ff-only`
+   - Resultado: `Already up to date.`
+5. Lectura de bootstrap, reglas, contexto, overlay, indice y logs recientes de Claude/Gemini
+   - Resultado: contexto correcto confirmado; existen 4 tareas abiertas para `@CODEX` en `docs/governance/CONTEXT.md` relacionadas con compose, stack runtime, schema PostgreSQL e import de workflow.
+6. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status`
+   - Resultado: `CLAUDE #6`, `CODEX #8`, `GEMINI #4` antes de registrar esta entrada.
+
+### Estado final
+
+- El repo correcto para esta cola es `C:\dev\projects\n8n-platform`.
+- `main` esta sincronizada con `origin/main`.
+- Quedan 4 tareas `@CODEX` abiertas y listas para ejecucion en `CONTEXT.md`:
+  - validar `docker compose ... config` con `threat-db` y `threat-cache`
+  - levantar stack completo y revisar healthchecks
+  - verificar ejecucion del schema SQL en PostgreSQL
+  - importar `threat-intel-main.json` y validar 30 nodos en n8n
+
+### Riesgo residual
+
+- El arbol tiene un archivo no rastreado `FRAMEWORK_PATCH_v4.4.md`; no bloquea el pull, pero conviene decidir si forma parte del trabajo o no.
+- Las 4 tareas pendientes implican validacion runtime con Docker/n8n/PostgreSQL; pueden requerir daemon Docker activo y n8n accesible localmente.
+
+### Harness gap
+
+- `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . sync-index --write` no puede actualizar `docs/governance/LOG_INDEX.md` porque el archivo usa `<!-- SYNC-ANCHOR -->` y no los anchors `<!-- sync_start --> / <!-- sync_end -->` esperados por el engine v4.3.
+
+---
+
 ## ENTRADA-001 | 2026-03-17 | exploration
 
 **Tipo:** Exploracion de repositorio

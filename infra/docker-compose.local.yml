@@ -54,7 +54,7 @@ services:
       - POSTGRES_DB=threat_intel
       - POSTGRES_MULTIPLE_DATABASES=threat_intel
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${THREAT_DB_HOST_PORT:-5433}:5432"
     volumes:
       - threat_db_data:/var/lib/postgresql/data
       - ./init-db/00-create-dbs.sh:/docker-entrypoint-initdb.d/00-create-dbs.sh:ro
@@ -74,7 +74,7 @@ services:
     restart: unless-stopped
     command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD:-redis_local_dev}
     ports:
-      - "127.0.0.1:6379:6379"
+      - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
     volumes:
       - threat_cache_data:/data
     networks:
