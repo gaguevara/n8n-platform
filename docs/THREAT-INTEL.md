@@ -224,7 +224,7 @@ Ver `sql/schema.sql` para DDL completo. Tablas principales:
 |---|---|
 | Secrets en .env | `.env` fuera del repo, solo `.env.example` commiteado |
 | n8n Encryption Key | `N8N_ENCRYPTION_KEY` cifra todas las credentials almacenadas en n8n |
-| PostgreSQL solo localhost | Puerto 5432 bindeado a `127.0.0.1`, no expuesto |
+| PostgreSQL port | Configurable vía `THREAT_DB_HOST_PORT` (default 5433 en local) |
 | Redis con password | `--requirepass` configurado |
 | API keys rotación | Documentar calendario de rotación (mínimo cada 90 días) |
 | FortiGate read-only | API user con perfil limitado a lectura de logs |
@@ -239,30 +239,28 @@ Internet ──► [Reverse Proxy / FortiGate] ──► n8n:5678
                                               │
                                     ┌─────────┼─────────┐
                                     ▼         ▼         ▼
-                                  postgres  redis     (futuro)
-                                  :5432     :6379
-                                  (localhost only)
+                                  threat-db  threat-cache
+                                  :5432      :6379
+                                  (interno)  (interno)
 ```
 
 **Recomendaciones críticas:**
 
 1. **n8n detrás de reverse proxy** con TLS. Nunca exponer puerto 5678 directo a internet.
-2. **Network segmentation:** El docker network `delcop-threat-network` es bridge aislado. Solo n8n tiene acceso a postgres y redis.
-3. **Webhook URL:** Si se usan webhooks entrantes (ej. para recibir alertas de Wazuh push), configurar autenticación en el webhook de n8n (header auth o HMAC).
+2. **Network segmentation:** El docker network `delcop-threat-network` es bridge aislado. Solo n8n tiene acceso a `threat-db` y `threat-cache`.
+3. **Webhook URL:** Si se usan webhooks entrantes, configurar autenticación en el webhook de n8n.
 4. **Docker socket:** Nunca montar `/var/run/docker.sock` en el contenedor de n8n.
-5. **Actualizaciones:** Fijar versiones de imágenes en producción. No usar `:latest`.
+5. **Actualizaciones:** Fijar versiones de imágenes en producción.
 
 ### 6.3 Checklist de Hardening
 
 - [ ] `.env` con permisos `600` (solo owner)
 - [ ] `N8N_ENCRYPTION_KEY` generado con `openssl rand -hex 32`
-- [ ] PostgreSQL password con mínimo 20 caracteres, generado aleatoriamente
-- [ ] FortiGate API user con trusted host configurado (solo IP del servidor n8n)
-- [ ] Wazuh API user con role limitado (solo `agents:read`, `alerts:read`)
-- [ ] AWS IAM user con policy inline, sin permisos de escritura
-- [ ] Backup automatizado de PostgreSQL (pg_dump a S3 o bucket)
-- [ ] Monitoreo de health checks de los contenedores
-- [ ] Log rotation configurado para Docker logs
+- [ ] PostgreSQL password robusto
+- [ ] FortiGate API user con trusted host configurado
+- [ ] AWS IAM user con policy inline de mínimo privilegio
+- [ ] Backup automatizado de PostgreSQL (vía `make -C ops backup`)
+- [ ] Monitoreo de health checks de los contenedores (`docker compose ps`)
 
 ## 7. Despliegue
 
@@ -272,59 +270,38 @@ Internet ──► [Reverse Proxy / FortiGate] ──► n8n:5678
 # Verificar versiones
 docker --version    # >= 20.10
 docker compose version  # >= 2.0
+make --version
 ```
 
-### 7.2 Pasos
+### 7.2 Pasos (Desarrollo Local)
 
 ```bash
-# 1. Clonar o copiar el proyecto
-cd /opt/delcop
-git clone <repo> threat-intel
-cd threat-intel
+# 1. Clonar el proyecto
+git clone https://github.com/gaguevara/n8n-platform
+cd n8n-platform
 
 # 2. Configurar environment
-cp docker/.env.example docker/.env
-chmod 600 docker/.env
-# Editar .env con valores reales
+cp .env.example .env
+# Editar .env con valores reales (especialmente N8N_ENCRYPTION_KEY)
 
-# 3. Generar encryption key
-echo "N8N_ENCRYPTION_KEY=$(openssl rand -hex 32)" >> docker/.env
+# 3. Levantar stack local
+make -C ops dev
 
-# 4. Hacer ejecutable el script de init
-chmod +x docker/create-multiple-dbs.sh
+# 4. Verificar health
+docker compose -f infra/docker-compose.local.yml ps
 
-# 5. Levantar stack
-cd docker
-docker compose -f docker-compose.threat-intel.yml up -d
-
-# 6. Verificar health
-docker compose -f docker-compose.threat-intel.yml ps
-docker compose -f docker-compose.threat-intel.yml logs -f n8n
-
-# 7. Importar workflow en n8n UI
-# Acceder a https://n8n.delcop.com.co
-# Settings → Import from file → workflows/threat-intel-main.json
-
-# 8. Configurar credenciales en n8n
-# Settings → Credentials → Crear PostgreSQL, SMTP, etc.
-
-# 9. Pegar código en Code nodes
-# Abrir cada Code node y pegar contenido de scripts/*.js
-
-# 10. Activar workflow
+# 5. Importar workflow
+make -C ops import
 ```
 
 ### 7.3 Verificación Post-Despliegue
 
 ```bash
-# Verificar PostgreSQL
-docker exec delcop-threat-db psql -U $POSTGRES_USER -d threat_intel -c "SELECT count(*) FROM data_sources;"
+# Verificar PostgreSQL (threat-db)
+docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "SELECT count(*) FROM data_sources;"
 
-# Verificar Redis
-docker exec delcop-threat-cache redis-cli -a $REDIS_PASSWORD ping
-
-# Test manual del workflow
-# En n8n UI: ejecutar manualmente y verificar que las fuentes responden
+# Verificar Redis (threat-cache)
+docker exec n8n_threat_cache redis-cli -a $REDIS_PASSWORD ping
 ```
 
 ## 8. Cumplimiento Normativo
@@ -366,19 +343,20 @@ Aunque aplica a entidades financieras vigiladas, es buena práctica seguir los l
 ## 10. Estructura del Proyecto
 
 ```
-threat-intel-project/
-├── docker/
-│   ├── docker-compose.threat-intel.yml
-│   ├── create-multiple-dbs.sh
-│   └── .env.example
-├── workflows/
-│   └── threat-intel-main.json          # Importar en n8n
+n8n-platform/
+├── app/
+│   ├── code-nodes/               # Lógica de normalización, scoring, persistencia
+│   └── workflows/                # Workflows JSON exportados (threat-intel-main.json)
+├── infra/
+│   ├── init-db/                  # DDL PostgreSQL y datos de semilla (seed)
+│   ├── docker-compose.local.yml
+│   └── Dockerfile
+├── ops/
+│   └── Makefile                  # Gestión de comandos y despliegue
 ├── scripts/
-│   ├── ioc_normalizer.js               # Code node: normalización + scoring
-│   ├── alert_dispatcher.js             # Code node: formateo de alertas
-│   └── ioc_persistence.js              # Code node: queries de persistencia
-├── sql/
-│   └── schema.sql                      # DDL PostgreSQL
+│   ├── export-workflows.sh
+│   └── import-workflows.sh
 └── docs/
-    └── README.md                       # Este documento
+    ├── THREAT-INTEL.md           # Este documento
+    └── DATA-CONTRACTS.md         # Contratos JSON y lógica de scoring
 ```

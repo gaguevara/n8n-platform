@@ -84,7 +84,8 @@
         "options": {
           "response": { "response": { "fullResponse": false } },
           "timeout": 30000
-        }
+        },
+        "continueOnFail": true
       },
       "id": "http-fortigate",
       "name": "GET FortiGate Logs",
@@ -130,7 +131,8 @@
             { "name": "q", "value": "rule.level>7" }
           ]
         },
-        "options": { "timeout": 30000 }
+        "options": { "timeout": 30000 },
+        "continueOnFail": true
       },
       "id": "http-wazuh-alerts",
       "name": "GET Wazuh Alerts",
@@ -148,7 +150,8 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ DetectorId: $env.GUARDDUTY_DETECTOR_ID, FindingCriteria: { Criterion: { 'severity': { Gte: 4 }, 'updatedAt': { GreaterThanOrEqual: Date.now() - 300000 } } }, MaxResults: 50 }) }}",
-        "options": { "timeout": 30000 }
+        "options": { "timeout": 30000 },
+        "continueOnFail": true
       },
       "id": "http-guardduty",
       "name": "GET GuardDuty Findings",
@@ -164,7 +167,8 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ jsonrpc: '2.0', method: 'trigger.get', params: { output: 'extend', selectHosts: ['host'], filter: { value: 1 }, sortfield: 'lastchange', sortorder: 'DESC', limit: 50, min_severity: 3 }, auth: $env.ZABBIX_API_TOKEN, id: 1 }) }}",
-        "options": { "timeout": 15000 }
+        "options": { "timeout": 15000 },
+        "continueOnFail": true
       },
       "id": "http-zabbix",
       "name": "GET Zabbix Triggers",
@@ -191,7 +195,8 @@
             { "name": "limit", "value": "100" }
           ]
         },
-        "options": { "timeout": 30000 }
+        "options": { "timeout": 30000 },
+        "continueOnFail": true
       },
       "id": "http-abuseipdb",
       "name": "GET AbuseIPDB Blacklist",
@@ -216,7 +221,8 @@
             { "name": "limit", "value": "20" }
           ]
         },
-        "options": { "timeout": 30000 }
+        "options": { "timeout": 30000 },
+        "continueOnFail": true
       },
       "id": "http-otx",
       "name": "GET OTX Pulses",

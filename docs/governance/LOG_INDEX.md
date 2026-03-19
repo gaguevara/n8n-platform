@@ -10,9 +10,9 @@
 
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
-| CLAUDE | ENTRADA-009 | docs/logs/CLAUDE_LOG.md | 2026-03-19 |
+| CLAUDE | ENTRADA-010 | docs/logs/CLAUDE_LOG.md | 2026-03-19 |
 | CODEX  | ENTRADA-015 | docs/logs/CODEX_LOG.md  | 2026-03-19 |
-| GEMINI | ENTRADA-006 | docs/logs/GEMINI_LOG.md | 2026-03-19 |
+| GEMINI | ENTRADA-007 | docs/logs/GEMINI_LOG.md | 2026-03-19 |
 
 ---
 
@@ -29,6 +29,7 @@
 | ENTRADA-007 | CLAUDE | replan + aws-audit  | Auditoría AWS (no existe infra n8n), replanificación Fase 1 staging + Fase 2 producción | 2026-03-19 |
 | ENTRADA-008 | CLAUDE | cross-review        | Aprobación SPEC_AWS_PRODUCTION.md de Gemini — Secrets Manager, SSM, SGs | 2026-03-19 |
 | ENTRADA-009 | CLAUDE | trigger-validation-plan | Cross-review staging + distribución de tareas Fase 1.5: 7 fuentes TI + 3 canales alerta | 2026-03-19 |
+| ENTRADA-010 | CLAUDE | cross-review + new-tasks | Cross-review Gemini Fase 1.5 aprobado + 4 nuevas tareas Gemini (error workflow, Trellix, rate limits) | 2026-03-19 |
 | ENTRADA-001 | CODEX  | exploration         | Mapeo read-only del repo y superficies DevOps                     | 2026-03-17 |
 | ENTRADA-002 | CODEX  | validation          | Validacion compose/scripts/pre-commit y ajustes minimos           | 2026-03-17 |
 | ENTRADA-003 | CODEX  | runtime-validation  | Levantamiento local de n8n, healthcheck y hadolint real           | 2026-03-17 |
@@ -50,6 +51,7 @@
 | ENTRADA-004 | GEMINI | validation          | Validación de Implementación (Threat Intelligence Pipeline v2.0)  | 2026-03-18 |
 | ENTRADA-005 | GEMINI | research + spec     | Investigación AWS ECS Fargate, SPEC_AWS_PRODUCTION, mapeo variables | 2026-03-19 |
 | ENTRADA-006 | GEMINI | cross-review + doc  | Validación cruzada Codex ENTRADA-010 y actualización ONBOARDING/TI | 2026-03-19 |
+| ENTRADA-007 | GEMINI | research + workflow-fix | Configuración fuentes (FortiGate/Wazuh/etc) y robustecimiento workflow | 2026-03-19 |
 
 ---
 

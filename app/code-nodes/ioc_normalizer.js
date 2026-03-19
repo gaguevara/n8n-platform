@@ -417,7 +417,13 @@ const NORMALIZERS = {
 };
 
 // Determinar fuente desde el nodo anterior (set via n8n Set node)
-const sourceName = $input.first().json._source_name || 'unknown';
+const firstItem = $input.first();
+if (!firstItem) {
+  // Caso: entrada vacía (Merge no recibió nada)
+  return [];
+}
+
+const sourceName = firstItem.json._source_name || 'unknown';
 const normalizer = NORMALIZERS[sourceName];
 
 if (!normalizer) {
@@ -426,7 +432,13 @@ if (!normalizer) {
 
 // Normalizar todos los items
 let allIocs = [];
-for (const item of $input.all()) {
+const allItems = $input.all();
+
+if (allItems.length === 0 || (allItems.length === 1 && Object.keys(allItems[0].json).length === 0)) {
+  return [];
+}
+
+for (const item of allItems) {
   try {
     const normalized = normalizer(item);
     allIocs.push(...normalized);

@@ -17,17 +17,23 @@ Permitir que un desarrollador o agente nuevo entienda el proyecto y pueda colabo
 1. **Configurar entorno:**
    ```bash
    cp .env.example .env
-   # Editar .env con valores locales si es necesario
+   # Generar clave de cifrado
+   openssl rand -hex 32 # Copiar este valor a N8N_ENCRYPTION_KEY en .env
    ```
-2. **Levantar n8n local:**
+2. **Levantar stack local:**
    ```bash
    make -C ops dev
    ```
-3. **Acceso:** Abrir `http://localhost:5678` en el navegador.
+   *Nota: El stack incluye `n8n`, `threat-db` (PostgreSQL) y `threat-cache` (Redis). Por defecto, `threat-db` se expone en el puerto `5433` para evitar conflictos con instalaciones locales de PostgreSQL.*
+
+3. **Verificación:** 
+   - n8n: `http://localhost:5678`
+   - Healthcheck: `docker compose -f infra/docker-compose.local.yml ps` (todos deben estar `healthy`)
 
 ### Estructura de Datos Local
-- `./data`: Persistencia de SQLite (configuración y ejecuciones de n8n).
-- `./shared-files`: Carpeta compartida con el contenedor para lectura/escritura de archivos desde n8n.
+- `./data`: Persistencia de SQLite (n8n).
+- `./shared-files`: Carpeta compartida con el contenedor.
+- `n8n_threat_db_data`: Volumen Docker para la base de datos PostgreSQL de Threat Intel.
 
 ---
 

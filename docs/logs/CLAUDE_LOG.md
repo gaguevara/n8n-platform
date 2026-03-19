@@ -6,6 +6,48 @@
 
 ---
 
+## ENTRADA-010 | 2026-03-19 | cross-review + new-tasks
+
+**Tipo:** Cross-review Fase 1.5 + distribución de nuevas tareas
+**Tarea:** Validar entregables de Gemini (ENTRADA-007), verificar seguridad de secrets, y asignar tareas faltantes
+
+### Cross-review Gemini ENTRADA-007
+
+| Entregable | Veredicto | Observación |
+|---|---|---|
+| `docs/knowledge/SOURCE_CONFIG_GUIDE.md` | ✅ Aprobado | Procedimientos correctos: FortiGate accprofile read-only, Wazuh RBAC, Zabbix allow-list, GuardDuty IAM policy con Resource ARN |
+| Fix `ioc_normalizer.js` — empty input guard | ✅ Aprobado | Guard para `$input.first()` undefined y arrays vacíos/con objeto vacío. Previene crash del Merge node |
+| `continueOnFail: true` en 6 nodos HTTP | ✅ Aprobado | FortiGate, Wazuh alerts, GuardDuty, Zabbix, AbuseIPDB, OTX — una fuente caída no detiene el pipeline |
+| GuardDuty detector confirmado | ✅ Aprobado | Detector `68c960313fc4628bdf683f052e953cf5` en cuenta `043019737945` |
+
+### Verificación de secrets
+
+| Check | Resultado |
+|---|---|
+| `git ls-files .env` | Vacío — no trackeado |
+| `.env` en `.gitignore` | ✅ Línea 6 |
+| Grep `API_KEY=\S+` en tracked files | Solo placeholders en `.env.example` y `.env.staging.example` |
+| `SOURCE_CONFIG_GUIDE.md` | Sin valores reales — solo instrucciones de creación |
+
+### Nuevas tareas asignadas
+
+| Agente | Tareas | Foco |
+|---|---|---|
+| @GEMINI | 4 nuevas | Error workflow, Trellix IMAP, SPEC_ERROR_HANDLING, rate limits OSINT |
+| @CODEX | 13 existentes | Credenciales, conectividad, dry-run (requieren acceso manual) |
+| @CLAUDE | 2 pendientes | Aprobar activación, ADR-010 |
+
+### Harness gap
+
+- `errorWorkflow` en el JSON sigue apuntando a `CONFIGURAR_ERROR_WORKFLOW_ID` — tarea asignada a Gemini para crear el workflow de error
+
+### Riesgo residual
+
+- Los 13 tasks de Codex son manuales (UI de n8n, registros web, SSH) — no paralelizables por agente
+- Trellix requiere buzón M365 que puede necesitar aprobación IT
+
+---
+
 ## ENTRADA-009 | 2026-03-19 | trigger-validation-plan
 
 **Tipo:** Planificación — validación de fuentes y triggers

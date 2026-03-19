@@ -11,9 +11,9 @@
 | Campo         | Valor |
 |---------------|-------|
 | Fase          | Fase 1.5 — Validación de triggers y fuentes de Threat Intel en staging |
-| Estabilidad   | Staging healthy (R720 `192.168.0.70:5678`). Pipeline importado, sin triggers activos |
-| Bloqueantes   | Credenciales de cada fuente, conectividad de red desde R720, canales de alerta |
-| Ultimo cambio | Distribución de tareas para configuración y validación de 7 fuentes + 3 canales de alerta |
+| Estabilidad   | Staging healthy (R720 `192.168.0.70:5678`). Workflow robusteado (continueOnFail + empty guard) |
+| Bloqueantes   | Codex: credenciales reales por fuente + dry-run E2E. Error workflow placeholder sin resolver |
+| Ultimo cambio | Cross-review Gemini aprobado. Nuevas tareas: error workflow, Trellix IMAP, rate limits |
 
 ---
 
@@ -128,16 +128,23 @@
 
 ### @GEMINI - Researcher/Reviewer
 
-- [ ] @GEMINI: Documentar el procedimiento exacto para crear un API user read-only en FortiGate (perfil, trusted hosts, generación de API key) con capturas o pasos de GUI
-- [ ] @GEMINI: Documentar el procedimiento para crear un usuario Wazuh con roles limitados (`agents:read`, `alerts:read`) — API o GUI de Wazuh Dashboard
-- [ ] @GEMINI: Documentar el procedimiento para generar API token en Zabbix (Administration → API tokens) con permisos mínimos
-- [ ] @GEMINI: Investigar si GuardDuty está habilitado en la cuenta AWS `043019737945` y qué política IAM mínima necesita n8n (`guardduty:ListFindings`, `guardduty:GetFindings`)
-- [ ] @GEMINI: Validar que el workflow maneja correctamente el caso de fuente sin datos (empty response) — que no genere errores ni alertas falsas
+- [x] @GEMINI: Documentar el procedimiento exacto para crear un API user read-only en FortiGate (perfil, trusted hosts, generación de API key) con capturas o pasos de GUI (Completado en `docs/knowledge/SOURCE_CONFIG_GUIDE.md`)
+- [x] @GEMINI: Documentar el procedimiento para crear un usuario Wazuh con roles limitados (`agents:read`, `alerts:read`) — API o GUI de Wazuh Dashboard (Completado en `docs/knowledge/SOURCE_CONFIG_GUIDE.md`)
+- [x] @GEMINI: Documentar el procedimiento para generar API token en Zabbix (Administration → API tokens) con permisos mínimos (Completado en `docs/knowledge/SOURCE_CONFIG_GUIDE.md`)
+- [x] @GEMINI: Investigar si GuardDuty está habilitado en la cuenta AWS `043019737945` y qué política IAM mínima necesita n8n (`guardduty:ListFindings`, `guardduty:GetFindings`) (Completado: Habilitado, Detector `68c960313fc4628bdf683f052e953cf5`)
+- [x] @GEMINI: Validar que el workflow maneja correctamente el caso de fuente sin datos (empty response) — que no genere errores ni alertas falsas (Completado: Fix aplicado en `ioc_normalizer.js` y `continueOnFail` en nodos HTTP)
+
+### @GEMINI - Researcher/Reviewer (nuevas tareas)
+
+- [ ] @GEMINI: Crear workflow de error (`error-handler.json`) para n8n — debe capturar fallos del pipeline principal, registrar en `workflow_runs` con status `error`, y notificar por Slack con contexto del fallo
+- [ ] @GEMINI: Documentar procedimiento de configuración de Trellix ePO via IMAP (buzón compartido M365 `trellix-alerts@delcop.com.co`) en `SOURCE_CONFIG_GUIDE.md` — incluir permisos Graph API si se usa Microsoft Outlook Trigger
+- [ ] @GEMINI: Crear `docs/sdlc/SPEC_ERROR_HANDLING.md` — especificar estrategia de retry, dead-letter, timeouts y alertas para el pipeline TI
+- [ ] @GEMINI: Revisar rate limits de cada fuente OSINT y documentar cuántas ejecuciones/día consume el pipeline con los intervalos actuales (AbuseIPDB: 96/día de 1000 free, OTX: sin límite documentado)
 
 ### @CLAUDE - Governor
 
-- [ ] @CLAUDE: Cross-review de cada credencial/fuente configurada antes de activar el trigger cron correspondiente
-- [ ] @CLAUDE: Verificar que las API keys y tokens NO quedaron en archivos trackeados (solo en `.env` del R720)
+- [x] @CLAUDE: Cross-review de cada credencial/fuente configurada antes de activar el trigger cron correspondiente (Completado: Gemini ENTRADA-007 — SOURCE_CONFIG_GUIDE.md validado, ioc_normalizer.js fix aprobado, continueOnFail en 6 nodos HTTP aprobado)
+- [x] @CLAUDE: Verificar que las API keys y tokens NO quedaron en archivos trackeados (solo en `.env` del R720) (Completado: grep confirma solo placeholders en `.env.example`/`.env.staging.example`; `.env` en `.gitignore`)
 - [ ] @CLAUDE: Aprobar activación del workflow en modo automático (triggers cron activos) una vez validadas todas las fuentes
 - [ ] @CLAUDE: Registrar ADR-010 con la decisión de fuentes activas vs pendientes y sus justificaciones
 
@@ -215,6 +222,8 @@
 | 2026-03-19 | Deploy de staging ejecutado en R720: SSH, pull, `.env`, compose, import workflow, schema+seed y acceso HTTP validados | Codex |
 | 2026-03-19 | Cross-review staging aprobado por Claude (ENTRADA-009) | Claude |
 | 2026-03-19 | Fase 1.5: distribución de tareas para validación de 7 fuentes TI + 3 canales alerta en staging | Claude |
+| 2026-03-19 | Cross-review Gemini Fase 1.5: SOURCE_CONFIG_GUIDE, ioc_normalizer fix, continueOnFail aprobados | Claude |
+| 2026-03-19 | Nuevas tareas Gemini: error workflow, Trellix IMAP, SPEC_ERROR_HANDLING, rate limits | Claude |
 
 ---
 
