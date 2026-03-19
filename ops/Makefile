@@ -102,20 +102,20 @@ deploy-staging:
 		cd $(STAGING_PATH) && \
 		git pull origin main && \
 		export TAG=$(TAG) && \
-		docker compose -f infra/docker-compose.staging.yml pull && \
-		docker compose -f infra/docker-compose.staging.yml up -d --remove-orphans && \
-		docker compose -f infra/docker-compose.staging.yml ps"
+		docker compose --env-file .env -f infra/docker-compose.staging.yml pull && \
+		docker compose --env-file .env -f infra/docker-compose.staging.yml up -d --remove-orphans && \
+		docker compose --env-file .env -f infra/docker-compose.staging.yml ps"
 
 staging-logs:
 	ssh $(STAGING_USER)@$(STAGING_HOST) "\
 		cd $(STAGING_PATH)/infra && \
-		docker compose -f docker-compose.staging.yml logs -f --tail=100"
+		docker compose --env-file ../.env -f docker-compose.staging.yml logs -f --tail=100"
 
 staging-status:
 	ssh $(STAGING_USER)@$(STAGING_HOST) "\
 		cd $(STAGING_PATH) && \
-		docker compose -f infra/docker-compose.staging.yml ps && \
-		docker compose -f infra/docker-compose.staging.yml exec n8n wget -qO- http://localhost:5678/healthz"
+		docker compose --env-file .env -f infra/docker-compose.staging.yml ps && \
+		docker compose --env-file .env -f infra/docker-compose.staging.yml exec n8n wget -qO- http://localhost:5678/healthz"
 
 staging-import:
 	@echo ">>> Importando workflows en staging..."

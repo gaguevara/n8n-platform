@@ -1,8 +1,8 @@
 # CONTEXT.md - Estado Actual del Proyecto
 
 > **Ultima actualizacion:** 2026-03-19
-> **Actualizado por:** Claude (Governor — replanificación Fase 1/2: staging + producción AWS)
-> **Proxima revision:** al completar deploy staging (Fase 1)
+> **Actualizado por:** Codex (Implementer/DevOps — staging desplegado y validado)
+> **Proxima revision:** al completar cross-review de Claude y ADR-009
 
 ---
 
@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 1 — Deploy Staging (Dell R720) |
-| Estabilidad   | Local validado. Staging y producción pendientes |
-| Bloqueantes   | Acceso SSH a R720, prerequisitos Docker en R720 |
-| Ultimo cambio | Replanificación: Local → Staging (R720) → Producción (AWS ECS) |
+| Fase          | Fase 1 — Staging desplegado y validado; pendiente cross-review |
+| Estabilidad   | Local y staging validados. Producción AWS pendiente |
+| Bloqueantes   | Cross-review de Claude, aprobación formal de SPEC AWS, ADR-009 |
+| Ultimo cambio | Deploy real en R720: compose healthy, workflow importado, schema y seed validados |
 
 ---
 
@@ -45,13 +45,13 @@
 
 ### @CODEX - Implementer/DevOps
 
-- [ ] @CODEX: Verificar acceso SSH al Dell R720 desde la PC de oficina (`ssh $STAGING_USER@$STAGING_HOST`) y confirmar prerequisitos (Docker, Docker Compose v2, Git)
-- [ ] @CODEX: Clonar repo en R720 si no existe (`/srv/n8n-platform`) o hacer `git pull origin main` si ya existe
-- [ ] @CODEX: Crear `.env` en R720 a partir de `.env.staging.example` con valores reales (generar `N8N_ENCRYPTION_KEY`, configurar IPs, passwords de threat-db y Redis)
-- [ ] @CODEX: Ejecutar `docker compose -f infra/docker-compose.staging.yml up -d` en R720 y verificar healthchecks de los 3 servicios (n8n, threat-db, threat-cache)
-- [ ] @CODEX: Importar workflow Threat Intel en staging (`make -C ops staging-import`) y verificar 30 nodos cargados
-- [ ] @CODEX: Validar que el schema SQL y seed se aplicaron correctamente en PostgreSQL de staging (7 tablas, 9 data sources)
-- [ ] @CODEX: Verificar acceso al editor n8n desde navegador de oficina (`http://<IP_R720>:5678`)
+- [x] @CODEX: Verificar acceso SSH al Dell R720 desde la PC de oficina (`ssh $STAGING_USER@$STAGING_HOST`) y confirmar prerequisitos (Completado: acceso con clave habilitado; `docker`, `docker compose v5.1.0` y `git 2.43.0` disponibles)
+- [x] @CODEX: Clonar repo en R720 si no existe (`/srv/n8n-platform`) o hacer `git pull origin main` si ya existe (Completado: repo existente actualizado de `9dc3929` a `14f03d8`)
+- [x] @CODEX: Crear `.env` en R720 a partir de `.env.staging.example` con valores reales (generar `N8N_ENCRYPTION_KEY`, configurar IPs, passwords de threat-db y Redis) (Completado: `.env` real creado en `/srv/n8n-platform`)
+- [x] @CODEX: Ejecutar `docker compose -f infra/docker-compose.staging.yml up -d` en R720 y verificar healthchecks de los 3 servicios (n8n, threat-db, threat-cache) (Completado: 3 servicios en `healthy` usando `docker compose --env-file .env`)
+- [x] @CODEX: Importar workflow Threat Intel en staging (`make -C ops staging-import`) y verificar 30 nodos cargados (Completado: import OK en `n8n_staging`; 1 workflow con 30 nodos)
+- [x] @CODEX: Validar que el schema SQL y seed se aplicaron correctamente en PostgreSQL de staging (7 tablas, 9 data sources) (Completado: `\dt` muestra 7 tablas; `data_sources=9`)
+- [x] @CODEX: Verificar acceso al editor n8n desde navegador de oficina (`http://<IP_R720>:5678`) (Completado: `healthz` OK y raíz HTTP responde `200` en `http://192.168.0.70:5678`)
 
 ### @GEMINI - Researcher/Reviewer
 
@@ -136,6 +136,7 @@
 | 2026-03-19 | Validacion runtime local completada: stack healthy, schema+seed aplicados, workflow importado | Codex |
 | 2026-03-19 | Auditoria AWS: no existe infra n8n en ECS — replanificado como Fase 1 (staging) + Fase 2 (AWS) | Claude |
 | 2026-03-19 | Tareas distribuidas: 7 Codex, 3 Gemini, 3 Claude para Fase 1; 6 Codex, 3 Gemini, 3 Claude para Fase 2 | Claude |
+| 2026-03-19 | Deploy de staging ejecutado en R720: SSH, pull, `.env`, compose, import workflow, schema+seed y acceso HTTP validados | Codex |
 
 ---
 

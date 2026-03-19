@@ -6,6 +6,120 @@
 
 ---
 
+## ENTRADA-013 | 2026-03-19 | staging-deploy-validation
+
+**Tipo:** Deploy y validacion de staging
+**Tarea:** Ejecutar las 7 tareas de Fase 1 asignadas a `@CODEX` en el Dell R720 desde la PC de oficina.
+
+### Archivos afectados
+
+- `ops/Makefile`
+- `.env.staging.example`
+- `docs/governance/CONTEXT.md`
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+
+### Comandos ejecutados + output
+
+1. `ssh gabo@192.168.0.70 "hostname && whoami"`
+   - Resultado: acceso SSH exitoso a `docker-server` como `gabo`.
+2. `ssh gabo@192.168.0.70 "docker --version && docker compose version && git --version"`
+   - Resultado: `Docker 29.3.0`, `Docker Compose v5.1.0`, `git 2.43.0`.
+3. `ssh gabo@192.168.0.70 "git config --global --add safe.directory /srv/n8n-platform"`
+   - Resultado: repositorio desbloqueado para operaciones Git bajo `gabo`.
+4. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && git restore infra/docker-compose.staging.yml && git pull --ff-only origin main"`
+   - Resultado: staging actualizado de `9dc3929` a `14f03d8`.
+5. `ssh gabo@192.168.0.70 'cd /srv/n8n-platform && ... cat > .env ...'`
+   - Resultado: `.env` real de staging creado con `N8N_ENCRYPTION_KEY`, `THREAT_DB_PASSWORD` y `REDIS_PASSWORD` generados en el servidor.
+6. `ssh gabo@192.168.0.70 "id && docker ps ..."`
+   - Resultado: `gabo` agregado al grupo `docker`; acceso al daemon confirmado.
+7. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && docker compose --env-file .env -f infra/docker-compose.staging.yml up -d"`
+   - Primer intento: fallo por conflicto con contenedor legado `n8n_staging` existente.
+   - Accion correctiva: `docker rm -f n8n_staging`.
+   - Resultado final: `n8n_staging`, `n8n_threat_db`, `n8n_threat_cache` arriba.
+8. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && docker compose --env-file .env -f infra/docker-compose.staging.yml ps -a"`
+   - Resultado: los 3 servicios en `healthy`.
+9. `curl.exe -s http://192.168.0.70:5678/healthz` y `curl.exe -I http://192.168.0.70:5678/`
+   - Resultado: `{"status":"ok"}` y `HTTP/1.1 200 OK`.
+10. `ssh gabo@192.168.0.70 "docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c '\dt'"`
+    - Resultado: 7 tablas (`alerts`, `audit_log`, `data_sources`, `event_iocs`, `iocs`, `security_events`, `workflow_runs`).
+11. `ssh gabo@192.168.0.70 "docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -tAc 'select count(1) from public.data_sources;'"`
+    - Resultado: `9`.
+12. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && bash scripts/import-workflows.sh n8n_staging"`
+    - Resultado: `Successfully imported 1 workflow.`
+13. `ssh gabo@192.168.0.70 "docker exec n8n_staging n8n export:workflow --all --pretty"`
+    - Resultado verificado via PowerShell: `1` workflow, `DELCOP Threat Intelligence - Main Pipeline`, `30` nodos.
+
+### Estado final
+
+- Las 7 tareas `@CODEX` de Fase 1 quedaron completadas en staging.
+- `http://192.168.0.70:5678` responde desde la red de oficina.
+- El stack de staging esta sano con n8n + PostgreSQL de Threat Intel + Redis.
+- El workflow principal quedo importado y validado con 30 nodos.
+
+### Riesgo residual
+
+- El cross-review de Claude sigue pendiente antes de cerrar formalmente la Fase 1.
+- El target `deploy-staging` del Makefile necesitaba `--env-file .env` para que Compose interpolara correctamente `THREAT_DB_PASSWORD` y `REDIS_PASSWORD`.
+
+### Harness gap
+
+- Docker Compose no estaba leyendo las variables criticas de staging al invocarse con `-f infra/docker-compose.staging.yml` sin `--env-file .env`. Se corrigio `ops/Makefile` y se completaron placeholders faltantes en `.env.staging.example`.
+
+---
+
+## ENTRADA-012 | 2026-03-19 | framework-validation
+
+**Tipo:** Validacion de actividad bajo framework multi-agente
+**Tarea:** Revalidar el estado del repo y del stack local manteniendo el protocolo de `AGENTS.md` sobre el commit aprobado actual.
+
+### Archivos revisados
+
+- `AGENTS.md`
+- `SESSION_BOOTSTRAP.md`
+- `docs/governance/PROJECT_RULES.md`
+- `docs/governance/CONTEXT.md`
+- `docs/governance/CODEX_OVERLAY.md`
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CLAUDE_LOG.md`
+- `docs/logs/GEMINI_LOG.md`
+
+### Comandos ejecutados + output
+
+1. `git status --short --branch`
+   - Resultado: `## main...origin/main` sin cambios locales pendientes.
+2. `git log --oneline --decorate -n 5`
+   - Resultado: `HEAD` y `origin/main` en `14f03d8 docs: approve SPEC_AWS_PRODUCTION.md — Governor cross-review (ENTRADA-008)`.
+3. `docker compose -f infra/docker-compose.local.yml ps -a`
+   - Resultado: `n8n_local`, `n8n_threat_db`, `n8n_threat_cache` en `Up ... (healthy)`.
+4. `docker compose -f infra/docker-compose.local.yml config --services`
+   - Resultado: servicios resueltos `threat-cache`, `threat-db`, `n8n`.
+5. `curl.exe -s http://localhost:5678/healthz`
+   - Resultado: `{"status":"ok"}`.
+6. `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "select count(*) ..."`
+   - Resultado: `7` tablas publicas.
+7. `docker exec n8n_threat_cache redis-cli -a redis_local_dev ping`
+   - Resultado: `PONG`.
+8. `docker exec n8n_local n8n export:workflow --all --pretty`
+   - Resultado verificado via PowerShell: `1` workflow, `DELCOP Threat Intelligence - Main Pipeline`, `30` nodos.
+
+### Estado final
+
+- Actividad revalidada siguiendo `AGENTS.md`.
+- El commit aprobado actual del repo es `14f03d8`.
+- El repo esta limpio y sincronizado con `origin/main`.
+- El stack local sigue operativo y saludable.
+
+### Riesgo residual
+
+- El stack validado corresponde al entorno local ya levantado; no cubre staging ni AWS.
+
+### Harness gap
+
+- `AGENTS.md` exige lectura de bootstrap y registro de actividad, pero no deja explicito que el commit aprobado puede avanzar entre validaciones. Conviene usar siempre hash absoluto en la instruccion operativa cuando se apruebe un estado de `main`.
+
+---
+
 ## ENTRADA-011 | 2026-03-19 | local-stack-validation
 
 **Tipo:** Validacion operativa del stack local y bootstrap de contexto
