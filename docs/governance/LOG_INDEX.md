@@ -11,8 +11,8 @@
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
 | CLAUDE | ENTRADA-004 | docs/logs/CLAUDE_LOG.md | 2026-03-17 |
-| CODEX  | ENTRADA-006 | docs/logs/CODEX_LOG.md  | 2026-03-17 |
-| GEMINI | ENTRADA-002 | docs/logs/GEMINI_LOG.md | 2026-03-17 |
+| CODEX  | ENTRADA-008 | docs/logs/CODEX_LOG.md  | 2026-03-18 |
+| GEMINI | ENTRADA-003 | docs/logs/GEMINI_LOG.md | 2026-03-17 |
 
 ---
 
@@ -30,8 +30,11 @@
 | ENTRADA-004 | CODEX  | latest-validation   | Validacion de `latest` contra upstream y cierre del pendiente de tag fijo | 2026-03-17 |
 | ENTRADA-005 | CODEX  | pending-validation  | Verificacion de pendientes actuales: sin pendientes activos de Codex | 2026-03-17 |
 | ENTRADA-006 | CODEX  | pending-remediation | Validacion de pendientes nuevos de Codex y cierre de items de documentacion | 2026-03-17 |
+| ENTRADA-007 | CODEX  | prompt-review       | Validacion de prompt Threat Intelligence: conflictos de arquitectura y alcance | 2026-03-18 |
+| ENTRADA-008 | CODEX  | self-review         | Revision critica del analisis previo: contrato, parser, scoring y compose | 2026-03-18 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
+| ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |
 
 ---
 

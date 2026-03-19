@@ -16,13 +16,79 @@ services:
       - WEBHOOK_URL=http://localhost:${N8N_PORT:-5678}/
       - TZ=${TZ:-America/Bogota}
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-America/Bogota}
+      # --- Threat Intelligence DB ---
+      - THREAT_DB_HOST=threat-db
+      - THREAT_DB_PORT=5432
+      - THREAT_DB_NAME=threat_intel
+      - THREAT_DB_USER=${THREAT_DB_USER:-delcop_threat}
+      - THREAT_DB_PASSWORD=${THREAT_DB_PASSWORD:-threat_local_dev}
+      # --- Threat Intelligence Cache ---
+      - REDIS_HOST=threat-cache
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_local_dev}
     volumes:
       - ../data:/home/node/.n8n
       - ../shared-files:/files
     restart: unless-stopped
+    depends_on:
+      threat-db:
+        condition: service_healthy
+      threat-cache:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
+    networks:
+      - n8n-net
+
+  threat-db:
+    image: postgres:16-alpine
+    container_name: n8n_threat_db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${THREAT_DB_USER:-delcop_threat}
+      - POSTGRES_PASSWORD=${THREAT_DB_PASSWORD:-threat_local_dev}
+      - POSTGRES_DB=threat_intel
+      - POSTGRES_MULTIPLE_DATABASES=threat_intel
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - threat_db_data:/var/lib/postgresql/data
+      - ./init-db/00-create-dbs.sh:/docker-entrypoint-initdb.d/00-create-dbs.sh:ro
+      - ./init-db/01-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./init-db/seed_reference_data.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    networks:
+      - n8n-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${THREAT_DB_USER:-delcop_threat} -d threat_intel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  threat-cache:
+    image: redis:7-alpine
+    container_name: n8n_threat_cache
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD:-redis_local_dev}
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - threat_cache_data:/data
+    networks:
+      - n8n-net
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD:-redis_local_dev} ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  threat_db_data:
+  threat_cache_data:
+
+networks:
+  n8n-net:
+    driver: bridge

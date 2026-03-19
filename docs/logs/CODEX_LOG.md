@@ -323,3 +323,94 @@
 ### Harness gap
 
 - Ninguno nuevo detectado en esta remediacion.
+
+---
+
+## ENTRADA-007 | 2026-03-18 | prompt-review
+
+**Tipo:** Revision de prompt
+**Tarea:** Validar prompt de implementacion para pipeline Threat Intelligence sin ejecutar cambios en el repositorio
+
+### Archivos revisados
+
+- `SESSION_BOOTSTRAP.md`
+- `docs/governance/PROJECT_RULES.md`
+- `docs/governance/CONTEXT.md`
+- `docs/governance/CODEX_OVERLAY.md`
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CLAUDE_LOG.md`
+- `docs/logs/GEMINI_LOG.md`
+- `infra/docker-compose.local.yml`
+- `infra/docker-compose.staging.yml`
+- `infra/docker-compose.prod.yml`
+- `infra/Dockerfile`
+- `ops/Makefile`
+- `.env.example`
+- `README.md`
+
+### Comandos ejecutados + output
+
+1. `Get-Content -Raw ...` sobre archivos de bootstrap y gobernanza
+   - Resultado: reglas activas confirmadas; el proyecto sigue pipeline local/staging con SQLite y produccion con PostgreSQL RDS.
+2. `Get-ChildItem -Recurse -File | Select-Object -ExpandProperty FullName`
+   - Resultado: estructura real del repo inventariada; el prompt usa un arbol parcial y omite archivos vigentes como `infra/docker-compose.prod.yml`, `docs/governance/*` y `docs/AWS_DEPLOYMENT.md`.
+3. `Get-Content -Raw infra/docker-compose.local.yml`, `infra/docker-compose.staging.yml`, `infra/docker-compose.prod.yml`
+   - Resultado: compose local/staging solo montan `data` y `shared-files`; no existe montaje actual para `app/code-nodes/`. Produccion usa ECS Task Definition como despliegue real y `docker-compose.prod.yml` queda como referencia.
+4. `Get-Content -Raw infra/Dockerfile`, `ops/Makefile`, `.env.example`, `README.md`
+   - Resultado: confirmada politica de imagen oficial n8n, estructura brownfield actual y variables ya documentadas para RDS/Redis.
+5. `Get-ChildItem -Recurse -File | Select-String -Pattern 'code-nodes|postgres|redis|queue|DB_TYPE|QUEUE_BULL_REDIS_HOST'`
+   - Resultado: PostgreSQL/Redis existen hoy como referencias de produccion/HA, no como stack activo local/staging.
+6. `rg --files`
+   - Resultado: fallo por `Acceso denegado`; se uso fallback con PowerShell sin repetir el mismo intento.
+
+### Estado final
+
+- Prompt revisado sin ejecutar implementacion.
+- Se identificaron conflictos de arquitectura, huecos de alcance y ambiguedades de runtime que conviene corregir antes de delegarlo a un agente ejecutor.
+- Hallazgos preparados para consolidacion con Claude.
+
+### Riesgo residual
+
+- Si el prompt se usa tal cual, un agente puede interpretar que debe migrar local/staging a PostgreSQL para n8n, inventar el mecanismo de carga de `app/code-nodes/` y ampliar el alcance a cambios de produccion no explicitados.
+
+### Harness gap
+
+- `rg` no fue utilizable en esta sesion por error `Acceso denegado`; el fallback con PowerShell cubrio la exploracion read-only.
+
+---
+
+## ENTRADA-008 | 2026-03-18 | self-review
+
+**Tipo:** Revision critica
+**Tarea:** Revisar criticamente el analisis previo y validar huecos tecnicos del prompt en contrato, parser, scoring y compose
+
+### Archivos revisados
+
+- `infra/docker-compose.local.yml`
+- `infra/docker-compose.staging.yml`
+- `infra/docker-compose.prod.yml`
+- `.env.example`
+- `docs/governance/PROJECT_RULES.md`
+- `docs/governance/CONTEXT.md`
+
+### Comandos ejecutados + output
+
+1. `docker compose -f infra/docker-compose.local.yml config`
+   - Resultado: compose local resuelve correctamente en el estado actual.
+2. `docker compose -f infra/docker-compose.staging.yml config`
+   - Resultado: compose staging resuelve correctamente en el estado actual.
+3. `Get-Content` con numeracion sobre compose, `.env.example`, `PROJECT_RULES.md` y `CONTEXT.md`
+   - Resultado: confirmados los conflictos entre el prompt y la arquitectura vigente (SQLite local/staging, PostgreSQL solo prod, sin montajes para `app/code-nodes/`).
+
+### Estado final
+
+- Se detectaron omisiones en el analisis previo: el contrato JSON seguia insuficientemente especificado, la relacion tablas/workflows/code nodes no quedaba cerrada, el parser de Trellix estaba subdefinido y el scoring no podia considerarse deterministico con el texto actual.
+- El estado actual de `docker-compose` es valido, pero el prompt no aporta suficiente detalle para extenderlo a PostgreSQL/Redis sin riesgo de deriva de arquitectura.
+
+### Riesgo residual
+
+- Si se delega el prompt sin endurecer estas definiciones, distintos agentes pueden producir implementaciones incompatibles entre si aunque todas "cumplan" superficialmente el pedido.
+
+### Harness gap
+
+- Ninguno nuevo; el gap principal fue de especificacion del prompt, no del entorno.

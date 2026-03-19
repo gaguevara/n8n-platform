@@ -1,0 +1,501 @@
+{
+  "name": "DELCOP Threat Intelligence - Main Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 5 }]
+        }
+      },
+      "id": "cron-fortigate",
+      "name": "Cron: FortiGate (5min)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [100, 100],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 2 }]
+        }
+      },
+      "id": "cron-wazuh",
+      "name": "Cron: Wazuh (2min)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [100, 300],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 5 }]
+        }
+      },
+      "id": "cron-guardduty",
+      "name": "Cron: GuardDuty (5min)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [100, 500],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 5 }]
+        }
+      },
+      "id": "cron-zabbix",
+      "name": "Cron: Zabbix (5min)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [100, 700],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "minutes", "minutesInterval": 15 }]
+        }
+      },
+      "id": "cron-osint",
+      "name": "Cron: OSINT Feeds (15min)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [100, 900],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.FORTIGATE_HOST }}/api/v2/log/event/system",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{ $env.FORTIGATE_API_KEY }}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "rows", "value": "100" },
+            { "name": "filter", "value": "logid=0100032001 or logid=0100032002 or logid=0419016384" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "fullResponse": false } },
+          "timeout": 30000
+        }
+      },
+      "id": "http-fortigate",
+      "name": "GET FortiGate Logs",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [350, 100],
+      "typeVersion": 4.2,
+      "notes": "FortiOS REST API - Obtiene logs de IPS, antivirus, web filter. Ajustar logids según políticas activas."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.WAZUH_API_URL }}/security/user/authenticate",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": { "timeout": 15000 }
+      },
+      "id": "http-wazuh-auth",
+      "name": "Wazuh Auth",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [350, 250],
+      "typeVersion": 4.2,
+      "notes": "Obtiene JWT token de Wazuh API"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.WAZUH_API_URL }}/alerts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{ $json.data.token }}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "limit", "value": "500" },
+            { "name": "sort", "value": "-timestamp" },
+            { "name": "q", "value": "rule.level>7" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "id": "http-wazuh-alerts",
+      "name": "GET Wazuh Alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [550, 300],
+      "typeVersion": 4.2,
+      "notes": "Filtra alertas nivel > 7 (medium+). Wazuh levels: 0-3 info, 4-7 low, 8-11 high, 12-15 critical"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://guardduty.{{ $env.AWS_REGION }}.amazonaws.com",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpCustomAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ DetectorId: $env.GUARDDUTY_DETECTOR_ID, FindingCriteria: { Criterion: { 'severity': { Gte: 4 }, 'updatedAt': { GreaterThanOrEqual: Date.now() - 300000 } } }, MaxResults: 50 }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "id": "http-guardduty",
+      "name": "GET GuardDuty Findings",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [350, 500],
+      "typeVersion": 4.2,
+      "notes": "Usa AWS SDK auth. Alternativa: usar nodo AWS Lambda que invoque GetFindings"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ZABBIX_API_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ jsonrpc: '2.0', method: 'trigger.get', params: { output: 'extend', selectHosts: ['host'], filter: { value: 1 }, sortfield: 'lastchange', sortorder: 'DESC', limit: 50, min_severity: 3 }, auth: $env.ZABBIX_API_TOKEN, id: 1 }) }}",
+        "options": { "timeout": 15000 }
+      },
+      "id": "http-zabbix",
+      "name": "GET Zabbix Triggers",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [350, 700],
+      "typeVersion": 4.2,
+      "notes": "JSON-RPC 2.0 API. min_severity 3 = Average+"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.abuseipdb.com/api/v2/blacklist",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Key", "value": "={{ $env.ABUSEIPDB_API_KEY }}" },
+            { "name": "Accept", "value": "application/json" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "confidenceMinimum", "value": "80" },
+            { "name": "limit", "value": "100" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "id": "http-abuseipdb",
+      "name": "GET AbuseIPDB Blacklist",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [350, 850],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://otx.alienvault.com/api/v1/pulses/subscribed",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-OTX-API-KEY", "value": "={{ $env.OTX_API_KEY }}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "modified_since", "value": "={{ new Date(Date.now() - 900000).toISOString() }}" },
+            { "name": "limit", "value": "20" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "id": "http-otx",
+      "name": "GET OTX Pulses",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [350, 950],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [{ "name": "_source_name", "value": "fortigate" }]
+        }
+      },
+      "id": "set-source-fg",
+      "name": "Set Source: FortiGate",
+      "type": "n8n-nodes-base.set",
+      "position": [550, 100],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [{ "name": "_source_name", "value": "wazuh" }]
+        }
+      },
+      "id": "set-source-wazuh",
+      "name": "Set Source: Wazuh",
+      "type": "n8n-nodes-base.set",
+      "position": [750, 300],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [{ "name": "_source_name", "value": "guardduty" }]
+        }
+      },
+      "id": "set-source-gd",
+      "name": "Set Source: GuardDuty",
+      "type": "n8n-nodes-base.set",
+      "position": [550, 500],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [{ "name": "_source_name", "value": "zabbix" }]
+        }
+      },
+      "id": "set-source-zabbix",
+      "name": "Set Source: Zabbix",
+      "type": "n8n-nodes-base.set",
+      "position": [550, 700],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [{ "name": "_source_name", "value": "abuseipdb" }]
+        }
+      },
+      "id": "set-source-abuse",
+      "name": "Set Source: AbuseIPDB",
+      "type": "n8n-nodes-base.set",
+      "position": [550, 850],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [{ "name": "_source_name", "value": "otx" }]
+        }
+      },
+      "id": "set-source-otx",
+      "name": "Set Source: OTX",
+      "type": "n8n-nodes-base.set",
+      "position": [550, 950],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {},
+      "id": "merge-all",
+      "name": "Merge All Sources",
+      "type": "n8n-nodes-base.merge",
+      "position": [800, 500],
+      "typeVersion": 3,
+      "notes": "Merge mode: Append. Todas las fuentes convergen aquí."
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// === COPIAR CONTENIDO DE scripts/ioc_normalizer.js AQUÍ ===\n// El código completo del normalizador va en este nodo.\n// Ver archivo: scripts/ioc_normalizer.js\n\n// Placeholder - reemplazar con código completo\nreturn $input.all();"
+      },
+      "id": "code-normalizer",
+      "name": "IoC Normalizer & Scorer",
+      "type": "n8n-nodes-base.code",
+      "position": [1000, 500],
+      "typeVersion": 2,
+      "notes": "Normaliza, deduplica, y calcula threat score. Código en scripts/ioc_normalizer.js"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{ $json._should_persist }}", "value2": true }
+          ]
+        }
+      },
+      "id": "if-persist",
+      "name": "Should Persist?",
+      "type": "n8n-nodes-base.if",
+      "position": [1200, 400],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            { "value1": "={{ $json._should_alert }}", "value2": true }
+          ]
+        }
+      },
+      "id": "if-alert",
+      "name": "Should Alert?",
+      "type": "n8n-nodes-base.if",
+      "position": [1200, 600],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// === COPIAR CONTENIDO DE scripts/ioc_persistence.js AQUÍ ===\nreturn $input.all();"
+      },
+      "id": "code-persist",
+      "name": "Generate Persistence Queries",
+      "type": "n8n-nodes-base.code",
+      "position": [1400, 400],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "={{ $json.query }}",
+        "options": {}
+      },
+      "id": "pg-upsert",
+      "name": "PostgreSQL: Upsert IoC",
+      "type": "n8n-nodes-base.postgres",
+      "position": [1600, 400],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": { "id": "CONFIGURAR", "name": "Threat Intel DB" }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// === COPIAR CONTENIDO DE scripts/alert_dispatcher.js AQUÍ ===\nreturn $input.all();"
+      },
+      "id": "code-alert",
+      "name": "Alert Dispatcher",
+      "type": "n8n-nodes-base.code",
+      "position": [1400, 600],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            { "value1": "={{ $json._channel }}", "operation": "equals", "value2": "slack" }
+          ]
+        }
+      },
+      "id": "switch-channel",
+      "name": "Route by Channel",
+      "type": "n8n-nodes-base.switch",
+      "position": [1600, 600],
+      "typeVersion": 3,
+      "notes": "Rutas: slack, teams, email"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json._webhook_url }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "webhook-slack",
+      "name": "POST Slack Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1800, 550],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json._webhook_url }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "webhook-teams",
+      "name": "POST Teams Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1800, 650],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $json.payload.from }}",
+        "toEmail": "={{ $json.payload.to }}",
+        "subject": "={{ $json.payload.subject }}",
+        "html": "={{ $json.payload.html }}",
+        "options": {}
+      },
+      "id": "email-alert",
+      "name": "Send Email Alert",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [1800, 750],
+      "typeVersion": 2.1,
+      "credentials": {
+        "smtp": { "id": "CONFIGURAR", "name": "DELCOP SMTP" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO workflow_runs (workflow_name, status, events_ingested, iocs_created, alerts_sent, finished_at) VALUES ('threat-intel-main', 'success', {{ $json._stats.ingested }}, {{ $json._stats.created }}, {{ $json._stats.alerted }}, NOW())",
+        "options": {}
+      },
+      "id": "pg-audit-log",
+      "name": "PostgreSQL: Audit Log",
+      "type": "n8n-nodes-base.postgres",
+      "position": [2000, 500],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": { "id": "CONFIGURAR", "name": "Threat Intel DB" }
+      }
+    }
+  ],
+  "connections": {
+    "Cron: FortiGate (5min)": { "main": [[{ "node": "GET FortiGate Logs", "type": "main", "index": 0 }]] },
+    "Cron: Wazuh (2min)": { "main": [[{ "node": "Wazuh Auth", "type": "main", "index": 0 }]] },
+    "Wazuh Auth": { "main": [[{ "node": "GET Wazuh Alerts", "type": "main", "index": 0 }]] },
+    "Cron: GuardDuty (5min)": { "main": [[{ "node": "GET GuardDuty Findings", "type": "main", "index": 0 }]] },
+    "Cron: Zabbix (5min)": { "main": [[{ "node": "GET Zabbix Triggers", "type": "main", "index": 0 }]] },
+    "Cron: OSINT Feeds (15min)": { "main": [[{ "node": "GET AbuseIPDB Blacklist", "type": "main", "index": 0 }, { "node": "GET OTX Pulses", "type": "main", "index": 0 }]] },
+    "GET FortiGate Logs": { "main": [[{ "node": "Set Source: FortiGate", "type": "main", "index": 0 }]] },
+    "GET Wazuh Alerts": { "main": [[{ "node": "Set Source: Wazuh", "type": "main", "index": 0 }]] },
+    "GET GuardDuty Findings": { "main": [[{ "node": "Set Source: GuardDuty", "type": "main", "index": 0 }]] },
+    "GET Zabbix Triggers": { "main": [[{ "node": "Set Source: Zabbix", "type": "main", "index": 0 }]] },
+    "GET AbuseIPDB Blacklist": { "main": [[{ "node": "Set Source: AbuseIPDB", "type": "main", "index": 0 }]] },
+    "GET OTX Pulses": { "main": [[{ "node": "Set Source: OTX", "type": "main", "index": 0 }]] },
+    "Set Source: FortiGate": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Set Source: Wazuh": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Set Source: GuardDuty": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Set Source: Zabbix": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Set Source: AbuseIPDB": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Set Source: OTX": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
+    "Merge All Sources": { "main": [[{ "node": "IoC Normalizer & Scorer", "type": "main", "index": 0 }]] },
+    "IoC Normalizer & Scorer": { "main": [[{ "node": "Should Persist?", "type": "main", "index": 0 }, { "node": "Should Alert?", "type": "main", "index": 0 }]] },
+    "Should Persist?": { "main": [[{ "node": "Generate Persistence Queries", "type": "main", "index": 0 }], []] },
+    "Should Alert?": { "main": [[{ "node": "Alert Dispatcher", "type": "main", "index": 0 }], []] },
+    "Generate Persistence Queries": { "main": [[{ "node": "PostgreSQL: Upsert IoC", "type": "main", "index": 0 }]] },
+    "Alert Dispatcher": { "main": [[{ "node": "Route by Channel", "type": "main", "index": 0 }]] },
+    "Route by Channel": { "main": [[{ "node": "POST Slack Webhook", "type": "main", "index": 0 }], [{ "node": "POST Teams Webhook", "type": "main", "index": 0 }], [{ "node": "Send Email Alert", "type": "main", "index": 0 }]] },
+    "PostgreSQL: Upsert IoC": { "main": [[{ "node": "PostgreSQL: Audit Log", "type": "main", "index": 0 }]] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "CONFIGURAR_ERROR_WORKFLOW_ID"
+  },
+  "tags": [
+    { "name": "threat-intelligence" },
+    { "name": "sgsi" },
+    { "name": "security" }
+  ]
+}

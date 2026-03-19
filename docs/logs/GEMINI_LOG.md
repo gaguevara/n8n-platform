@@ -1,6 +1,6 @@
 # GEMINI_LOG.md — Researcher/Reviewer Log
 
-> Agente: Gemini Code Assist (Researcher + Reviewer)
+> Agente: Gemini 2.0 Flash (Researcher + Reviewer)
 > Proyecto: n8n Platform — DELCOP
 > Formato de entradas: `## ENTRADA-{número} | {fecha} | {tipo}`
 
@@ -11,31 +11,30 @@
 **Tipo:** Auditoría de contexto y documentación
 **Tarea:** Analizar brechas documentales, mapear variables, crear especificación de pipeline y actualizar onboarding técnico
 
-### Análisis de brechas (ISO A.8.25)
+...
 
-| Control ISO | Estado | Evidencia | Brecha | Recomendación |
-|-------------|--------|-----------|--------|---------------|
-| `A.8.25` (Conf. Management) | `⚠️` | `.gitignore` | Falta `.env.example` y `.secrets.baseline` | Crear archivos para estandarizar setup |
-| `A.12.1.2` (Change Mgmt) | `❌` | `docs/sdlc/` | No hay definición formal del pipeline multi-entorno | Crear `SPEC_STAGING_PIPELINE.md` |
-| `A.18.2.2` (Compliance) | `⚠️` | `ONBOARDING.md` | Guía orientada a agentes, no a setup técnico real | Incluir requisitos de Windows 11/Docker |
+---
 
-### Acciones ejecutadas
+## ENTRADA-002 | 2026-03-17 | governance
 
-1. **Mapeo de Variables:** Identificadas variables para Local, Staging y Prod.
-2. **Creación de `.env.example`:** Centralización de configuración necesaria para onboarding técnico.
-3. **Creación de `docs/sdlc/SPEC_STAGING_PIPELINE.md`:** Formalización del flujo Local → Dell R720 (Staging) → AWS ECS (Prod).
-4. **Actualización de `docs/governance/ONBOARDING.md`:** Integración de sección técnica (make, docker, workflow export).
+**Tipo:** Adaptación de gobernanza
+**Tarea:** Personalizar AI Governance y crear ADR Index
 
-### Hallazgos técnicos relevantes
+...
 
-- **Contradicción en Imagen Docker:** `ADR-001` pide imagen oficial, pero `infra/Dockerfile` existe y `docker-compose.prod.yml` usa imagen de ECR. Se asume que el `Dockerfile` es un wrapper mínimo para cumplimiento corporativo.
-- **Entornos:** Se confirmó que Staging (Dell R720) usa SQLite mientras Prod (AWS) usa RDS PostgreSQL. Esta discrepancia es aceptable para n8n si los workflows se versionan como JSON.
+---
 
-### Riesgo residual
+## ENTRADA-003 | 2026-03-17 | validation
 
-- Falta de `.secrets.baseline` (Tarea de Codex/Claude).
-- Los scripts shell (`scripts/*.sh`) pueden requerir Git Bash o WSL en Windows 11 para ejecutarse según lo documentado en el nuevo ONBOARDING.
+**Tipo:** Validación de Propuesta Técnica (Prompt "Threat Intelligence Automation")
+**Tarea:** Evaluar viabilidad de pipeline de Threat Intel sobre la arquitectura actual de n8n-platform.
 
-### Harness gap
+### Hallazgos y Fricciones Detectadas
 
-- `LOG_INDEX.md` tiene instrucciones contradictorias (usar engine vs actualización manual). Se optó por actualización manual para mantener trazabilidad inmediata.
+1. **Infraestructura (Breaking Change):** La propuesta exige PostgreSQL y Redis en Local. Esto invalida el **ADR-002** (SQLite en desarrollo). Se debe aceptar el upgrade de stack local como una decisión deliberada de "Fase 2".
+2. **Estructura de Archivos (Code Nodes):** n8n no referencia archivos `.js` externos nativamente. La propuesta de `app/code-nodes/` requerirá un mecanismo de inyección (Build Script) o quedará como duplicación de código en el JSON del workflow.
+3. **Escalabilidad:** El uso de Redis para deduplicación es un acierto técnico frente al volumen esperado de IoCs de fuentes como Wazuh y Zabbix.
+4. **Seguridad (Trellix/IMAP):** El uso de IMAP es preferible en Staging (R720) por restricciones de conectividad para OAuth2/Microsoft Graph.
+
+### Veredicto Técnico
+**Propuesta Viable con Riesgos Documentados.** La base de datos relacional y el contrato JSON propuesto son fundamentales para la posterior fase de RAG/LLM. Se recomienda proceder una vez se aclare el manejo de los `code-nodes` externos.

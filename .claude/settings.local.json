@@ -7,7 +7,29 @@
       "Bash(unzip -p multiagent-framework-v4.2.zip docs/governance/PROJECT_RULES.md)",
       "Bash(find . -name docker-compose* -o -name Dockerfile*)",
       "Bash(unzip -p multiagent-framework-v4.2.zip docs/governance/AGENT_ROLES.md)",
-      "Bash(unzip -o multiagent-framework-v4.2.zip -d .)"
+      "Bash(unzip -o multiagent-framework-v4.2.zip -d .)",
+      "Bash(ls c:/dev/projects/n8n-platform/*.zip)",
+      "Bash(unzip -l multiagent-framework-v4.3.zip)",
+      "Bash(unzip -p multiagent-framework-v4.3.zip .multiagent/core/sync_index.ps1)",
+      "Bash(unzip -p multiagent-framework-v4.3.zip update-agent-context.sh)",
+      "Bash(unzip -p multiagent-framework-v4.3.zip SESSION_BOOTSTRAP.md)",
+      "Bash(unzip -p multiagent-framework-v4.3.zip .claude/skills/adapt-project/SKILL.md)",
+      "Bash(unzip -p multiagent-framework-v4.3.zip docs/governance/PROJECT_RULES.md)",
+      "Bash(unzip -p multiagent-framework-v4.3.zip docs/governance/ONBOARDING.md)",
+      "Bash(unzip -o multiagent-framework-v4.3.zip \".multiagent/core/sync_index.ps1\" \"update-agent-context.sh\" \"SESSION_BOOTSTRAP.md\" \".claude/skills/adapt-project/SKILL.md\")",
+      "Bash(rm multiagent-framework-v4.2.zip)",
+      "Bash(ls *.zip)",
+      "Bash(unzip -l threat-intel-merge-package.zip)",
+      "Bash(unzip -o threat-intel-merge-package.zip -d /tmp/threat-intel-review)",
+      "Bash(python3 -c \"import json,sys; wf=json.load\\(sys.stdin\\); print\\(''''Workflow:'''', wf.get\\(''''name'''',''''''''\\)\\); print\\(''''Nodes:'''', len\\(wf.get\\(''''nodes'''',[]\\)\\)\\); [print\\(f\"\"  - {n[''''name'''']} \\({n[''''type'''']}\\)\"\"\\) for n in wf.get\\(''''nodes'''',[]\\)]\")",
+      "Bash(node -e \"const wf=JSON.parse\\(require\\(''fs''\\).readFileSync\\(''/tmp/threat-intel-review/merge-package/new-files/app/workflows/threat-intel-main.json'',''utf8''\\)\\); console.log\\(''Workflow:'', wf.name\\); console.log\\(''Nodes:'', wf.nodes.length\\); wf.nodes.forEach\\(n => console.log\\(''  -'', n.name, ''\\(''+n.type+''\\)''\\)\\);\")",
+      "Bash(unzip -o threat-intel-merge-package.zip -d threat-intel-review)",
+      "Bash(node -e \"const wf=JSON.parse\\(require\\(''fs''\\).readFileSync\\(''threat-intel-review/merge-package/new-files/app/workflows/threat-intel-main.json'',''utf8''\\)\\); console.log\\(''Workflow:'', wf.name\\); console.log\\(''Nodes:'', wf.nodes.length\\); wf.nodes.forEach\\(n => console.log\\(''  -'', n.name, ''\\(''+n.type+''\\)''\\)\\);\")",
+      "Bash(mkdir -p app/code-nodes infra/init-db)",
+      "Bash(cp threat-intel-review/merge-package/new-files/app/code-nodes/*.js app/code-nodes/)",
+      "Bash(cp threat-intel-review/merge-package/new-files/app/workflows/threat-intel-main.json app/workflows/)",
+      "Bash(cp threat-intel-review/merge-package/new-files/infra/init-db/* infra/init-db/)",
+      "Bash(cp threat-intel-review/merge-package/new-files/docs/DATA-CONTRACTS.md docs/)"
     ]
   }
 }

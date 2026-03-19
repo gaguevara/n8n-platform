@@ -193,3 +193,66 @@ Ninguno — solo redistribución de responsabilidades.
 ### Harness gap
 
 Ninguno.
+
+---
+
+## ENTRADA-005 | 2026-03-18 | integration
+
+**Tipo:** Integración de pipeline — Threat Intelligence
+**Tarea:** Cross-review del paquete threat-intel-merge-package.zip, decisión Governor, merge al proyecto
+
+### Archivos creados/modificados
+
+**Nuevos (del paquete):**
+- `app/code-nodes/ioc_normalizer.js` (477 líneas)
+- `app/code-nodes/ioc_scorer.js` (133 líneas)
+- `app/code-nodes/alert_dispatcher.js` (172 líneas — ajustado: emails a env vars)
+- `app/code-nodes/ioc_persistence.js` (37 líneas)
+- `app/code-nodes/trellix_email_parser.js` (367 líneas)
+- `app/workflows/threat-intel-main.json` (30 nodos n8n)
+- `infra/init-db/00-create-dbs.sh`
+- `infra/init-db/01-schema.sql` (DDL completo con funciones PL/pgSQL)
+- `infra/init-db/seed_reference_data.sql` (9 data sources)
+- `docs/DATA-CONTRACTS.md`
+- `docs/THREAT-INTEL.md`
+- `docs/THREAT-INTEL-TRELLIX.md`
+- `docs/sdlc/SPEC_THREAT_INTEL.md`
+
+**Modificados:**
+- `infra/docker-compose.local.yml` — agregados servicios threat-db (PostgreSQL 16) y threat-cache (Redis 7)
+- `infra/docker-compose.staging.yml` — ídem para staging
+- `.env.example` — variables de threat intel, API keys, notificaciones
+
+### Cross-review ejecutado
+
+| Agente | Entrada | Hallazgo | Resolución |
+|--------|---------|----------|------------|
+| Codex | 007-008 | Contrato JSON subdefinido, PostgreSQL/Redis break vs SQLite, code-nodes sin inyección | Resuelto: PostgreSQL es separada, code-nodes son source of truth versionado |
+| Gemini | 003 | Breaking change vs ADR-002, IMAP correcto para Trellix | Resuelto: ADR-006 documenta que threat DB es independiente de n8n |
+
+### Ajustes aplicados por Governor
+
+1. `alert_dispatcher.js` líneas 19-20: emails hardcoded → `$env.ALERT_EMAIL_TO` / `$env.ALERT_EMAIL_FROM` con fallback
+2. `seed_reference_data.sql` agregado al mount de docker-compose (no estaba en el merge plan original)
+3. `.env.example` actualizado con `ALERT_EMAIL_TO`, `ALERT_EMAIL_FROM` como env vars
+
+### Validación ejecutada
+
+- Schema SQL revisado: funciones PL/pgSQL para dedup, upsert, cleanup — sin SQL injection
+- Code nodes: 0 dependencias externas, solo built-in JS + $input n8n
+- Scoring determinístico confirmado: `min(100, round(severity × trust × recency + type_bonus + context_bonus))`
+- Workflow JSON: 30 nodos, 5 cron triggers, 6 HTTP requests, 3 code nodes, 2 PostgreSQL nodes
+
+### Estado final
+
+Pipeline integrado en el repo. Pendiente validación runtime (Docker up + import workflow + healthchecks).
+
+### Riesgo residual
+
+- Stack no levantado aún — requiere Docker Desktop activo para validación local
+- Staging requiere deploy desde oficina (R720)
+- Trellix parser es frágil a cambios de formato de email (documentado en EXTERNAL_REVIEW_NOTES)
+
+### Harness gap
+
+- `docker compose config` no se ejecutó en esta sesión (Docker daemon no verificado)
