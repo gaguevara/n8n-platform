@@ -1,8 +1,8 @@
 # CONTEXT.md - Estado Actual del Proyecto
 
 > **Ultima actualizacion:** 2026-03-19
-> **Actualizado por:** Codex (Implementer/DevOps - validacion runtime local completada)
-> **Proxima revision:** al completar cualquier tarea pendiente
+> **Actualizado por:** Claude (Governor — replanificación Fase 1/2: staging + producción AWS)
+> **Proxima revision:** al completar deploy staging (Fase 1)
 
 ---
 
@@ -10,41 +10,87 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Threat Intelligence pipeline integrado (Fase 1.0) |
-| Estabilidad   | Validado localmente - stack levantado, schema aplicado, workflow importado |
-| Bloqueantes   | Cross-review de Claude + validacion staging/AWS desde oficina |
-| Ultimo cambio | Validacion runtime local completa + fixes minimos en compose/init/workflow |
+| Fase          | Fase 1 — Deploy Staging (Dell R720) |
+| Estabilidad   | Local validado. Staging y producción pendientes |
+| Bloqueantes   | Acceso SSH a R720, prerequisitos Docker en R720 |
+| Ultimo cambio | Replanificación: Local → Staging (R720) → Producción (AWS ECS) |
 
 ---
 
-## Pendientes inmediatos
+## Pendientes completados (Fase 0 — Local)
+
+<details>
+<summary>Ver tareas completadas de desarrollo local y Threat Intel</summary>
+
+- [x] @CODEX: Validar `docker compose -f infra/docker-compose.local.yml config` con los nuevos servicios (threat-db, threat-cache)
+- [x] @CODEX: Levantar stack completo (`docker compose up -d`) y verificar healthchecks de los 3 servicios
+- [x] @CODEX: Verificar que el schema SQL se ejecuta correctamente en PostgreSQL (`01-schema.sql` + `seed_reference_data.sql`)
+- [x] @CODEX: Importar `threat-intel-main.json` en n8n y verificar que los 30 nodos cargan sin errores
+- [x] @CODEX: Ejecutar `hadolint` sobre `infra/Dockerfile` cuando Docker daemon este activo
+- [x] @CODEX: Validar si `latest` debe mantenerse o fijarse por tag
+- [x] @CODEX: Crear `app/workflows/.gitkeep` para versionar el directorio vacio
+- [x] @CODEX: Corregir referencia incorrecta en `docs/governance/ONBOARDING.md`
+- [x] @GEMINI: Revisar `docs/DATA-CONTRACTS.md` y validar coherencia con el schema SQL y los code nodes
+- [x] @GEMINI: Verificar que los controles ISO 27001 mapeados en EXTERNAL_REVIEW_NOTES son correctos y actualizar AI_GOVERNANCE.md
+- [x] @GEMINI: Adaptar `docs/governance/AI_GOVERNANCE.md` al proyecto n8n DELCOP
+- [x] @GEMINI: Crear `docs/architecture/ADR_INDEX.md` indexando los 5 ADRs activos del proyecto
+- [x] @CLAUDE: Cross-review de la validacion de Codex cuando complete el stack levantado
+- [x] @CLAUDE: Auditar ECS Task Definition en AWS → **Cerrado: no existe infraestructura n8n en AWS aún. Replanificado como Fase 2 (producción)**
+
+</details>
+
+---
+
+## Pendientes activos — Fase 1: Deploy Staging (Dell R720)
 
 ### @CODEX - Implementer/DevOps
 
-- [x] @CODEX: Validar `docker compose -f infra/docker-compose.local.yml config` con los nuevos servicios (threat-db, threat-cache) (Completado: config valida; `threat-db` parametrizado a host port `5433` por conflicto local en `5432`)
-- [x] @CODEX: Levantar stack completo (`docker compose up -d`) y verificar healthchecks de los 3 servicios (Completado: `n8n_local`, `n8n_threat_db`, `n8n_threat_cache` en `healthy`)
-- [x] @CODEX: Verificar que el schema SQL se ejecuta correctamente en PostgreSQL (`01-schema.sql` + `seed_reference_data.sql`) (Completado: 7 tablas creadas, extensiones `uuid-ossp` y `pg_trgm`, `data_sources=9`)
-- [x] @CODEX: Importar `threat-intel-main.json` en n8n y verificar que los 30 nodos cargan sin errores (Completado: workflow persistido en SQLite con `id` estable, `shared_workflow` asociado y `30` nodos)
+- [ ] @CODEX: Verificar acceso SSH al Dell R720 desde la PC de oficina (`ssh $STAGING_USER@$STAGING_HOST`) y confirmar prerequisitos (Docker, Docker Compose v2, Git)
+- [ ] @CODEX: Clonar repo en R720 si no existe (`/srv/n8n-platform`) o hacer `git pull origin main` si ya existe
+- [ ] @CODEX: Crear `.env` en R720 a partir de `.env.staging.example` con valores reales (generar `N8N_ENCRYPTION_KEY`, configurar IPs, passwords de threat-db y Redis)
+- [ ] @CODEX: Ejecutar `docker compose -f infra/docker-compose.staging.yml up -d` en R720 y verificar healthchecks de los 3 servicios (n8n, threat-db, threat-cache)
+- [ ] @CODEX: Importar workflow Threat Intel en staging (`make -C ops staging-import`) y verificar 30 nodos cargados
+- [ ] @CODEX: Validar que el schema SQL y seed se aplicaron correctamente en PostgreSQL de staging (7 tablas, 9 data sources)
+- [ ] @CODEX: Verificar acceso al editor n8n desde navegador de oficina (`http://<IP_R720>:5678`)
 
 ### @GEMINI - Researcher/Reviewer
 
-- [x] @GEMINI: Revisar `docs/DATA-CONTRACTS.md` y validar coherencia con el schema SQL y los code nodes (Completado: Coherencia validada entre MD, 01-schema.sql y ioc_normalizer.js)
-- [x] @GEMINI: Verificar que los controles ISO 27001 mapeados en EXTERNAL_REVIEW_NOTES son correctos y actualizar AI_GOVERNANCE.md (Completado: Mapeados A.12.6.1 y A.16.1.2)
+- [x] @GEMINI: Investigar best practices de AWS ECS Fargate para n8n — networking, storage (EFS vs bind), secrets injection, logging (CloudWatch)
+- [x] @GEMINI: Documentar requisitos de infraestructura AWS para n8n en `docs/sdlc/SPEC_AWS_PRODUCTION.md`: cluster ECS, task definition, RDS PostgreSQL, ECR repo, Secrets Manager, security groups, ALB
+- [x] @GEMINI: Mapear todas las variables de `.env.example` a su mecanismo de inyección en ECS (Secrets Manager para criticas, SSM Parameter Store para sensibles, env vars para config)
 
 ### @CLAUDE - Governor
 
-- [x] @CLAUDE: Cross-review de la validacion de Codex cuando complete el stack levantado (Completado: 4 cambios aprobados — port 5433, --dbname postgres, workflow ID, env vars)
-- [ ] @CLAUDE: Auditar ECS Task Definition en AWS (bloqueado: requiere acceso desde oficina)
+- [ ] @CLAUDE: Cross-review del deploy de staging cuando Codex complete — validar healthchecks, schema, workflow, y conectividad LAN
+- [ ] @CLAUDE: Aprobar SPEC_AWS_PRODUCTION.md cuando Gemini lo entregue — verificar que cubre Secrets Manager para `N8N_ENCRYPTION_KEY` y `RDS_PASSWORD`
+- [ ] @CLAUDE: Crear ADR-009 formalizando la estrategia de infraestructura AWS (ECS + RDS + Secrets Manager + ECR)
 
-### Pendientes - siguiente ciclo
+---
 
-- [x] @CODEX: Ejecutar `hadolint` sobre `infra/Dockerfile` cuando Docker daemon este activo (Completado: warning `DL3007` por uso de `latest`; sin errores de sintaxis)
-- [x] @CODEX: Validar si `latest` debe mantenerse o fijarse por tag (Completado: por requerimiento de usuario se mantiene `latest`; validado contra upstream el 2026-03-17: `docker.n8n.io/n8nio/n8n:latest` resuelve a `2.12.2`)
-- [ ] @CLAUDE: Auditar ECS Task Definition en AWS - verificar uso de Secrets Manager para `N8N_ENCRYPTION_KEY` y `RDS_PASSWORD` (bloqueado: requiere acceso AWS desde oficina)
-- [x] @CODEX: Crear `app/workflows/.gitkeep` para versionar el directorio vacio (Completado: el archivo ya existia; pendiente previo quedo obsoleto)
-- [x] @CODEX: Corregir referencia incorrecta en `docs/governance/ONBOARDING.md` - apuntaba a `docs/governance/`
-- [x] @GEMINI: Adaptar `docs/governance/AI_GOVERNANCE.md` al proyecto n8n DELCOP (Completado: Personalizado con responsables y ToS)
-- [x] @GEMINI: Crear `docs/architecture/ADR_INDEX.md` indexando los 5 ADRs activos del proyecto (Completado: Creado con detalle de decisiones)
+## Pendientes — Fase 2: Infraestructura AWS y Deploy Producción
+
+> **Prerequisito:** Fase 1 completada y validada en staging
+
+### @CODEX - Implementer/DevOps
+
+- [ ] @CODEX: Crear repositorio ECR en AWS para la imagen n8n-delcop
+- [ ] @CODEX: Crear secretos en AWS Secrets Manager: `N8N_ENCRYPTION_KEY`, `RDS_PASSWORD`, `THREAT_DB_PASSWORD`, `REDIS_PASSWORD`
+- [ ] @CODEX: Crear cluster ECS `n8n-cluster` y task definition con referencias a Secrets Manager (no env vars planas)
+- [ ] @CODEX: Crear instancia RDS PostgreSQL para n8n producción (aplicar schema + seed)
+- [ ] @CODEX: Build + push de imagen a ECR (`make -C ops push-ecr`) y deploy inicial (`make -C ops deploy-prod`)
+- [ ] @CODEX: Verificar healthcheck de n8n en ECS, importar workflow y validar operación
+
+### @GEMINI - Researcher/Reviewer
+
+- [ ] @GEMINI: Validar que los secretos en Secrets Manager no tienen valores por defecto ni placeholders
+- [ ] @GEMINI: Revisar security groups y networking del ECS service vs RDS vs internet (principio de minimo privilegio)
+- [ ] @GEMINI: Actualizar AI_GOVERNANCE.md con controles de producción AWS (A.9.4.1 acceso, A.10.1.1 cifrado, A.12.1.2 gestión de cambios)
+
+### @CLAUDE - Governor
+
+- [ ] @CLAUDE: Cross-review final de infraestructura AWS antes del primer deploy a producción
+- [ ] @CLAUDE: Auditar ECS Task Definition — confirmar que `N8N_ENCRYPTION_KEY` y `RDS_PASSWORD` usan Secrets Manager (no env vars planas)
+- [ ] @CLAUDE: Actualizar CONTEXT_SECURITY.md con el estado real de protección de secretos en producción
 
 ---
 
@@ -88,6 +134,8 @@
 | 2026-03-19 | `00-create-dbs.sh` corregido para usar `postgres` como maintenance DB y evitar doble aplicacion del schema | Codex |
 | 2026-03-19 | `threat-intel-main.json` actualizado con `id` raiz estable para import CLI reproducible | Codex |
 | 2026-03-19 | Validacion runtime local completada: stack healthy, schema+seed aplicados, workflow importado | Codex |
+| 2026-03-19 | Auditoria AWS: no existe infra n8n en ECS — replanificado como Fase 1 (staging) + Fase 2 (AWS) | Claude |
+| 2026-03-19 | Tareas distribuidas: 7 Codex, 3 Gemini, 3 Claude para Fase 1; 6 Codex, 3 Gemini, 3 Claude para Fase 2 | Claude |
 
 ---
 

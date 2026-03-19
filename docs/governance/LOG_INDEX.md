@@ -10,9 +10,9 @@
 
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
-| CLAUDE | ENTRADA-004 | docs/logs/CLAUDE_LOG.md | 2026-03-17 |
-| CODEX  | ENTRADA-010 | docs/logs/CODEX_LOG.md  | 2026-03-19 |
-| GEMINI | ENTRADA-003 | docs/logs/GEMINI_LOG.md | 2026-03-17 |
+| CLAUDE | ENTRADA-007 | docs/logs/CLAUDE_LOG.md | 2026-03-19 |
+| CODEX  | ENTRADA-011 | docs/logs/CODEX_LOG.md  | 2026-03-19 |
+| GEMINI | ENTRADA-005 | docs/logs/GEMINI_LOG.md | 2026-03-19 |
 
 ---
 
@@ -24,6 +24,9 @@
 | ENTRADA-002 | CLAUDE | governance          | Activacion Codex+Gemini, distribucion de tareas                   | 2026-03-17 |
 | ENTRADA-003 | CLAUDE | cross-review        | Cross-review Codex+Gemini, CONTEXT_SECURITY, ADR-005              | 2026-03-17 |
 | ENTRADA-004 | CLAUDE | upgrade             | Upgrade framework v4.2 → v4.3; sync_index.ps1; update-agent-context.sh | 2026-03-17 |
+| ENTRADA-005 | CLAUDE | integration         | Cross-review Threat Intel pipeline, ADR-006/007/008, merge al proyecto | 2026-03-18 |
+| ENTRADA-006 | CLAUDE | harness-fix         | Fix estructura CONTEXT.md para parsing correcto de tareas por agente | 2026-03-19 |
+| ENTRADA-007 | CLAUDE | replan + aws-audit  | Auditoría AWS (no existe infra n8n), replanificación Fase 1 staging + Fase 2 producción | 2026-03-19 |
 | ENTRADA-001 | CODEX  | exploration         | Mapeo read-only del repo y superficies DevOps                     | 2026-03-17 |
 | ENTRADA-002 | CODEX  | validation          | Validacion compose/scripts/pre-commit y ajustes minimos           | 2026-03-17 |
 | ENTRADA-003 | CODEX  | runtime-validation  | Levantamiento local de n8n, healthcheck y hadolint real           | 2026-03-17 |
@@ -34,17 +37,21 @@
 | ENTRADA-008 | CODEX  | self-review         | Revision critica del analisis previo: contrato, parser, scoring y compose | 2026-03-18 |
 | ENTRADA-009 | CODEX  | sync                | Cambio al repo correcto, `git pull` en `main` y confirmacion de 4 tareas pendientes activas | 2026-03-19 |
 | ENTRADA-010 | CODEX  | runtime-validation  | Stack Threat Intel validado localmente: compose, healthchecks, schema PostgreSQL e import del workflow | 2026-03-19 |
+| ENTRADA-011 | CODEX  | local-stack-validation | Confirmacion de commit `3cbd110`, bootstrap de contexto y revalidacion del stack local healthy | 2026-03-19 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
 | ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |
+| ENTRADA-004 | GEMINI | validation          | Validación de Implementación (Threat Intelligence Pipeline v2.0)  | 2026-03-18 |
+| ENTRADA-005 | GEMINI | research + spec     | Investigación AWS ECS Fargate, SPEC_AWS_PRODUCTION, mapeo variables | 2026-03-19 |
 
 ---
 
 ## Discrepancias abiertas
 
-- `LOG_INDEX.md` sigue en formato legado con `<!-- SYNC-ANCHOR -->`; el engine v4.3 espera `<!-- sync_start --> / <!-- sync_end -->` y no puede escribir automaticamente.
+- `LOG_INDEX.md` actualizado al formato de engine v4.3 con `<!-- sync_start --> / <!-- sync_end -->`.
 
 ---
 
-> **Anchor de sincronizacion:** `<!-- SYNC-ANCHOR -->`
-<!-- SYNC-ANCHOR -->
+> **Anchor de sincronizacion:**
+<!-- sync_start -->
+<!-- sync_end -->

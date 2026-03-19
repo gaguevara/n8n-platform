@@ -6,6 +6,65 @@
 
 ---
 
+## ENTRADA-011 | 2026-03-19 | local-stack-validation
+
+**Tipo:** Validacion operativa del stack local y bootstrap de contexto
+**Tarea:** Confirmar el estado real del proyecto en `main`, ejecutar la validacion del stack local (`compose`, `healthz`, PostgreSQL, Redis, workflow importado) y releer el contexto del framework multi-agente.
+
+### Archivos revisados
+
+- `SESSION_BOOTSTRAP.md`
+- `docs/governance/PROJECT_RULES.md`
+- `docs/governance/CONTEXT.md`
+- `docs/governance/CODEX_OVERLAY.md`
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CLAUDE_LOG.md`
+- `docs/logs/GEMINI_LOG.md`
+- `.env`
+
+### Comandos ejecutados + output
+
+1. `git log --oneline -1`
+   - Resultado: `3cbd110 chore: Codex runtime validation + Governor cross-review + framework patch`.
+2. `git log --oneline -5`
+   - Resultado: secuencia confirmada `3cbd110`, `053872b`, `be61a0e`, `90e8366`, `8148474`.
+3. `docker compose -f infra/docker-compose.local.yml config --services`
+   - Resultado: servicios resueltos `threat-cache`, `threat-db`, `n8n`.
+4. `docker compose -f infra/docker-compose.local.yml up -d`
+   - Resultado: servicios ya existentes; `threat-cache` y `threat-db` reportados `Healthy`.
+5. `docker compose -f infra/docker-compose.local.yml ps -a`
+   - Resultado: `n8n_local`, `n8n_threat_db`, `n8n_threat_cache` en `Up ... (healthy)`.
+6. `curl.exe -s http://localhost:5678/healthz`
+   - Resultado: `{"status":"ok"}`.
+7. `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "\dt"`
+   - Resultado: 7 tablas presentes: `alerts`, `audit_log`, `data_sources`, `event_iocs`, `iocs`, `security_events`, `workflow_runs`.
+8. `docker exec n8n_threat_cache redis-cli -a redis_local_dev ping`
+   - Resultado: `PONG`.
+9. `docker exec n8n_local n8n export:workflow --all --pretty`
+   - Resultado verificado via PowerShell: `1` workflow cargado, nombre `DELCOP Threat Intelligence - Main Pipeline`, `30` nodos.
+10. Lectura de `SESSION_BOOTSTRAP.md`, `PROJECT_RULES.md`, `CONTEXT.md`, `CODEX_OVERLAY.md`, `LOG_INDEX.md`, ultimas entradas de `CLAUDE_LOG.md` y `GEMINI_LOG.md`
+    - Resultado: bootstrap de contexto completado.
+
+### Estado final
+
+- El repo sigue en `main` sobre el commit esperado `3cbd110`.
+- El stack local esta arriba y sano.
+- n8n responde correctamente en `http://localhost:5678/healthz`.
+- PostgreSQL de Threat Intel tiene el schema esperado de 7 tablas.
+- Redis responde `PONG`.
+- El workflow principal esta cargado en n8n con 30 nodos.
+
+### Riesgo residual
+
+- El archivo `.env` actual no define `THREAT_DB_PASSWORD` ni `REDIS_PASSWORD`; el stack local funciona porque `infra/docker-compose.local.yml` aplica defaults (`threat_local_dev` y `redis_local_dev`).
+- `docs/governance/CONTEXT.md` ya no coincide con la instruccion historica de "unico pendiente abierto"; hoy refleja multiples tareas abiertas para staging y AWS tras la replanificacion de Claude.
+
+### Harness gap
+
+- La instruccion operativa asumia secretos definidos en `.env`, pero el compose local vigente resuelve credenciales por defecto desde el YAML. Conviene documentar explicitamente esta diferencia para evitar validaciones inconsistentes entre operadores.
+
+---
+
 ## ENTRADA-010 | 2026-03-19 | runtime-validation
 
 **Tipo:** Validacion runtime completa del Threat Intelligence stack
