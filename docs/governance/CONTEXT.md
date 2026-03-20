@@ -144,9 +144,9 @@
 
 ### @GEMINI - Researcher/Reviewer (tareas paralelas — no dependen de credenciales)
 
-- [ ] @GEMINI: Crear runbook de operación del pipeline TI en `docs/knowledge/RUNBOOK_THREAT_INTEL.md` — procedimientos para: fuente caída, rotación de API keys, escalación de alertas, reinicio de pipeline
-- [ ] @GEMINI: Revisar `docker-compose.prod.yml` vs `SPEC_AWS_PRODUCTION.md` — documentar gaps y preparar template de Task Definition ECS (JSON) basado en el compose de producción
-- [ ] @GEMINI: Investigar alternativa al `n8n execute` CLI para dry-run en staging — documentar si la API REST de n8n (`POST /api/v1/workflows/{id}/run`) funciona como alternativa
+- [x] @GEMINI: Crear runbook de operación del pipeline TI en `docs/knowledge/RUNBOOK_THREAT_INTEL.md` — procedimientos para: fuente caída, rotación de API keys, escalación de alertas, reinicio de pipeline (Completado en `docs/knowledge/RUNBOOK_THREAT_INTEL.md`)
+- [x] @GEMINI: Revisar `docker-compose.prod.yml` vs `SPEC_AWS_PRODUCTION.md` — documentar gaps y preparar template de Task Definition ECS (JSON) basado en el compose de producción (Completado: template en `docs/architecture/ECS_TASK_DEFINITION_TEMPLATE.json` y gap analysis en `SPEC_AWS_PRODUCTION.md`)
+- [x] @GEMINI: Investigar alternativa al `n8n execute` CLI para dry-run en staging — documentar si la API REST de n8n (`POST /api/v1/workflows/{id}/run`) funciona como alternativa (Completado: Documentado en `docs/knowledge/DRY_RUN_ALTERNATIVES.md` — se recomienda Webhook node)
 
 ### @CLAUDE - Governor
 

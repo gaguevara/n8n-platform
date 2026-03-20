@@ -63,11 +63,16 @@ La siguiente tabla define cómo se debe inyectar cada variable definida en el `.
 
 *Nota sobre AWS Variables (`AWS_ACCOUNT_ID`, `AWS_REGION`, `TAG`, `ECR_REGISTRY`):* Estas variables son para el pipeline de CI/CD (Makefile) y no necesitan ser inyectadas directamente en el contenedor de n8n, a menos que n8n use un nodo nativo de AWS que requiera el SDK. Si es así, se recomienda proveer acceso mediante la **Task Role** de IAM de ECS, no mediante variables de entorno.
 
-## 5. Resumen de Creación de Recursos
-Para pasar de Staging a Producción AWS, se deben crear (preferiblemente vía IaC, ej. Terraform/CloudFormation):
-1. **Redes:** VPC, Subnets Públicas/Privadas, Security Groups (ALB, ECS, RDS).
-2. **ALB:** Load Balancer, Target Group (puerto 5678), Listener TLS.
-3. **IAM:** ECS Task Execution Role (permisos ECR, CloudWatch, Secrets Manager/SSM) y Task Role.
-4. **Almacenamiento:** Instancia RDS PostgreSQL (Multi-AZ opcional). EFS si se requiere persistencia de disco compartida.
-5. **Secretos:** Entradas en AWS Secrets Manager para contraseñas.
-6. **ECS:** Cluster, Task Definition (con configuración de logs e inyección de secretos), ECS Service.
+## 6. Análisis de Brechas (docker-compose.prod.yml vs Task Definition)
+
+Al revisar `infra/docker-compose.prod.yml`, se detectan los siguientes gaps que deben ser resueltos en el despliegue real de ECS:
+
+1. **Gestión de Secretos:** El compose utiliza interpolación de variables `${VAR}`, mientras que ECS debe usar `secrets` con `valueFrom` (ARNs de Secrets Manager/SSM) para evitar que los secretos residan en la definición de la tarea en texto plano.
+2. **Fuentes de Threat Intel:** El compose de producción no incluye las variables para FortiGate, Wazuh, Zabbix y OSINT mapeadas en la Sección 4. Estas deben agregarse a la Task Definition.
+3. **Servicios Adicionales:** El pipeline requiere `threat-cache` (Redis) y acceso a una segunda DB (`threat_intel`). En AWS, esto se traduce en:
+    - Redis: Instancia AWS ElastiCache o contenedor sidecar en el cluster.
+    - DB: La instancia RDS debe albergar ambas bases de datos (`n8n` y `threat_intel`).
+4. **Plantilla de Referencia:** Se ha generado una plantilla JSON completa en `docs/architecture/ECS_TASK_DEFINITION_TEMPLATE.json` que resuelve estos gaps.
+
+## 7. Resumen de Creación de Recursos
+... (resto del contenido)

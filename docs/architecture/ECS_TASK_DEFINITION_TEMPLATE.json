@@ -1,0 +1,64 @@
+{
+  "family": "n8n-prod-task",
+  "networkMode": "awsvpc",
+  "executionRoleArn": "arn:aws:iam::<AWS_ACCOUNT_ID>:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::<AWS_ACCOUNT_ID>:role/n8nTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "n8n",
+      "image": "<AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/delcop/n8n:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 5678,
+          "hostPort": 5678,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/n8n-prod",
+          "awslogs-region": "<AWS_REGION>",
+          "awslogs-stream-prefix": "n8n"
+        }
+      },
+      "environment": [
+        { "name": "TZ", "value": "America/Bogota" },
+        { "name": "GENERIC_TIMEZONE", "value": "America/Bogota" },
+        { "name": "N8N_PORT", "value": "5678" },
+        { "name": "N8N_SECURE_COOKIE", "value": "true" },
+        { "name": "N8N_PROTOCOL", "value": "https" },
+        { "name": "N8N_EDITOR_BASE_URL", "value": "https://n8n.delcop.com" },
+        { "name": "WEBHOOK_URL", "value": "https://n8n.delcop.com/" },
+        { "name": "DB_TYPE", "value": "postgresdb" },
+        { "name": "DB_POSTGRESDB_PORT", "value": "5432" },
+        { "name": "DB_POSTGRESDB_DATABASE", "value": "n8n" },
+        { "name": "ALERT_EMAIL_TO", "value": "seguridad@delcop.com.co" },
+        { "name": "ALERT_EMAIL_FROM", "value": "n8n-threatintel@delcop.com.co" }
+      ],
+      "secrets": [
+        { "name": "N8N_ENCRYPTION_KEY", "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT>:secret:n8n/encryption_key" },
+        { "name": "DB_POSTGRESDB_HOST", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/n8n/db_host" },
+        { "name": "DB_POSTGRESDB_USER", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/n8n/db_user" },
+        { "name": "DB_POSTGRESDB_PASSWORD", "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT>:secret:n8n/db_password" },
+        { "name": "THREAT_DB_PASSWORD", "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT>:secret:threat_intel/db_password" },
+        { "name": "REDIS_PASSWORD", "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT>:secret:threat_intel/redis_password" },
+        { "name": "FORTIGATE_API_KEY", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/fortigate_key" },
+        { "name": "WAZUH_API_PASSWORD", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/wazuh_pass" },
+        { "name": "ABUSEIPDB_API_KEY", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/abuseipdb_key" },
+        { "name": "OTX_API_KEY", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/otx_key" }
+      ],
+      "healthCheck": {
+        "command": [ "CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1" ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      }
+    }
+  ],
+  "requiresCompatibilities": [ "FARGATE" ],
+  "cpu": "1024",
+  "memory": "2048"
+}

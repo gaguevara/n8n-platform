@@ -157,3 +157,30 @@ Superficie de configuración de fuentes completada al 100%. Sistema de gestión 
 
 ### Estado Final
 Gobernanza IA alineada con los requisitos de producción. Se cierran las tareas documentales preventivas de la Fase 2. El agente queda a la espera de la creación de la infraestructura para validación técnica de secretos y networking.
+
+---
+
+## ENTRADA-010 | 2026-03-20 | operational-docs + cloud-design
+
+**Tipo:** Documentación operativa e investigación de arquitectura cloud
+**Tarea:** Crear runbook de operación, preparar plantilla de Task Definition ECS e investigar alternativas de dry-run.
+
+### Documentación Operativa (RUNBOOK_THREAT_INTEL.md)
+Se generó el manual de procedimientos para el pipeline:
+- Monitoreo vía UI y logs SQL.
+- SOPs para fuentes caídas, errores de auth y rotación de claves.
+- Matriz de escalación de alertas y plan de Disaster Recovery.
+
+### Diseño Cloud (ECS_TASK_DEFINITION_TEMPLATE.json)
+Se realizó el análisis de brechas contra `docker-compose.prod.yml`:
+- **Secrets:** Se migró de variables de entorno planas a referencias `valueFrom` en Secrets Manager/SSM.
+- **Fuentes TI:** Se incluyeron todas las API Keys y tokens faltantes en la especificación.
+- **Sidecars:** Se documentó la necesidad de sidecar de Redis o instancia ElastiCache para el pipeline en producción.
+
+### Investigación de Dry-Run (DRY_RUN_ALTERNATIVES.md)
+Se analizó la API de n8n para suplir el fallo de `n8n execute` en staging:
+- **Hallazgo:** No existe endpoint nativo en la API v1 para ejecutar por ID.
+- **Solución:** Se recomienda el uso de nodos `Webhook` configurados específicamente para triggers de validación externa vía `curl`.
+
+### Estado Final
+Fase 1.5 finalizada al 100% desde la perspectiva de Gemini. Superficie operativa y de diseño cloud lista para implementación. Se detectó y documentó la alternativa técnica para validaciones automatizadas.

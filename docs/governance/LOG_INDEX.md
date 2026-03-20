@@ -12,7 +12,7 @@
 |--------|-------------|-------------------------|------------|
 | CLAUDE | ENTRADA-012 | docs/logs/CLAUDE_LOG.md | 2026-03-20 |
 | CODEX  | ENTRADA-017 | docs/logs/CODEX_LOG.md  | 2026-03-20 |
-| GEMINI | ENTRADA-008 | docs/logs/GEMINI_LOG.md | 2026-03-19 |
+| GEMINI | ENTRADA-010 | docs/logs/GEMINI_LOG.md | 2026-03-20 |
 
 ---
 
@@ -30,7 +30,7 @@
 | ENTRADA-008 | CLAUDE | cross-review        | Aprobación SPEC_AWS_PRODUCTION.md de Gemini — Secrets Manager, SSM, SGs | 2026-03-19 |
 | ENTRADA-009 | CLAUDE | trigger-validation-plan | Cross-review staging + distribución de tareas Fase 1.5: 7 fuentes TI + 3 canales alerta | 2026-03-19 |
 | ENTRADA-010 | CLAUDE | cross-review + new-tasks | Cross-review Gemini Fase 1.5 aprobado + 4 nuevas tareas Gemini (error workflow, Trellix, rate limits) | 2026-03-19 |
-| ENTRADA-011 | CLAUDE | cross-review + ADR-009 | Cross-review Gemini ENTRADA-008 + ADR-009 (AWS: ECS+RDS+SM+ECR) + ADR-006/007/008 en index | 2026-03-20 |
+| ENTRADA-011 | CLAUDE | cross-review + ADR-009 | Cross-review Gemini ENTRADA-008 + ADR-009 (AWS: ECS+RDS+SM+ECR) + ADR-006/007/008 in index | 2026-03-20 |
 | ENTRADA-012 | CLAUDE | cross-review + new-tasks | Cross-review Codex ENTRADA-017 (staging remediation) + 3 nuevas tareas Gemini paralelas | 2026-03-20 |
 | ENTRADA-001 | CODEX  | exploration         | Mapeo read-only del repo y superficies DevOps                     | 2026-03-17 |
 | ENTRADA-002 | CODEX  | validation          | Validacion compose/scripts/pre-commit y ajustes minimos           | 2026-03-17 |
@@ -57,6 +57,8 @@
 | ENTRADA-006 | GEMINI | cross-review + doc  | Validación cruzada Codex ENTRADA-010 y actualización ONBOARDING/TI | 2026-03-19 |
 | ENTRADA-007 | GEMINI | research + workflow-fix | Configuración fuentes (FortiGate/Wazuh/etc) y robustecimiento workflow | 2026-03-19 |
 | ENTRADA-008 | GEMINI | governance + workflow | Error workflow, Trellix IMAP, SPEC_ERROR_HANDLING, rate limits OSINT | 2026-03-19 |
+| ENTRADA-009 | GEMINI | governance          | Actualización AI_GOVERNANCE.md con controles de producción AWS | 2026-03-19 |
+| ENTRADA-010 | GEMINI | operational-docs + cloud-design | Runbook TI, template ECS Task Definition y dry-run research | 2026-03-20 |
 
 ---
 
