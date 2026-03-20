@@ -59,14 +59,18 @@ Este documento es la fuente única de verdad para reglas de proyecto, criterios 
 
 ---
 
-## 6. Reglas de implementación
+## 6. Reglas de implementación (v4.4+)
 
-- Todo cambio en workflows debe exportarse a JSON antes de commitear.
+- Realizar `git pull` obligatorio antes de iniciar cualquier sesión o tarea relevante.
+- Toda tarea en `docs/governance/CONTEXT.md` DEBE ir bajo el encabezado de su agente (`### @AGENTE - Rol`).
+- Prohibido el uso de subsecciones temáticas en la lista de pendientes de `CONTEXT.md` para evitar desorden.
+- Todo cambio en workflows debe exportarse a JSON antes de commit.
 - No modificar `docker-compose.prod.yml` sin plan documentado y validación cruzada.
 - Cambios en `infra/Dockerfile` requieren rebuild y test de imagen antes de push.
 - No introducir dependencias npm o paquetes custom en la imagen sin justificación.
 - Actualizar `.env.example` ante toda variable nueva o eliminada.
 - Cambios que afecten autenticación (`N8N_ENCRYPTION_KEY`, `N8N_BASIC_AUTH_*`) son alto riesgo: requieren plan documentado.
+
 - **Estructura de CONTEXT.md:** Las tareas pendientes DEBEN colocarse bajo la sección del agente asignado (`### @AGENTE - Rol`). No crear subsecciones temáticas ni agrupaciones ad-hoc que fragmenten los pendientes. Los agentes localizan sus tareas por encabezado de sección, no por contenido libre.
 
 ---

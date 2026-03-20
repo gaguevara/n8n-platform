@@ -55,12 +55,12 @@ La IA se considera herramienta de asistencia de desarrollo y arquitectura, no me
 | Alucinación: workflows n8n con lógica errónea    | Alta        | Medio   | Test de ejecución en Staging (Dell R720) antes de Prod.          |
 | Exposición de N8N_ENCRYPTION_KEY a la IA         | Baja        | Crítico | Exclusión estricta de `.env` y revisión de logs.                |
 | Comandos de Shell incompatibles con Windows 11   | Media       | Bajo    | Validación por Codex en entorno real antes de proponer script.   |
-| Desincronización entre agentes (Pisado de logs)  | Baja        | Medio   | Uso obligatorio de `LOG_INDEX.md` y `CONTEXT.md`.                |
+| Desincronización entre agentes (Pisado de logs)  | Baja        | Medio   | Uso obligatorio de `LOG_INDEX.md`, `CONTEXT.md`, Context7 y skills.sh (v4.4). |
 | Configuración de Infraestructura (IaC/Manual)    | Media       | Crítico | Auditoría de `SPEC_AWS_PRODUCTION.md` por Governor Claude.       |
 
 ### Riesgo aceptado
 
-> El uso de herramientas de IA para asistencia en desarrollo se acepta bajo las condiciones de control documentadas en este archivo. Se prioriza la agilidad en la arquitectura multi-entorno de n8n bajo supervisión humana constante.
+> El uso de herramientas de IA para asistencia en desarrollo se acepta bajo las condiciones de control documentadas en este archivo. Se prioriza la agilidad en la arquitectura multi-entorno de n8n bajo supervisión humana constante. El uso del Framework v4.4 (Context7 + skills.sh) asegura la coherencia del proyecto.
 >
 > **Aprobado por:** Governor Claude (vía Protocolo Adopción)
 > **Fecha:** 2026-03-19 (Revisión de Producción AWS)

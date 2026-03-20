@@ -12,7 +12,7 @@
 |--------|-------------|-------------------------|------------|
 | CLAUDE | ENTRADA-012 | docs/logs/CLAUDE_LOG.md | 2026-03-20 |
 | CODEX  | ENTRADA-017 | docs/logs/CODEX_LOG.md  | 2026-03-20 |
-| GEMINI | ENTRADA-010 | docs/logs/GEMINI_LOG.md | 2026-03-20 |
+| GEMINI | ENTRADA-012 | docs/logs/GEMINI_LOG.md | 2026-03-20 |
 
 ---
 
@@ -59,6 +59,8 @@
 | ENTRADA-008 | GEMINI | governance + workflow | Error workflow, Trellix IMAP, SPEC_ERROR_HANDLING, rate limits OSINT | 2026-03-19 |
 | ENTRADA-009 | GEMINI | governance          | Actualización AI_GOVERNANCE.md con controles de producción AWS | 2026-03-19 |
 | ENTRADA-010 | GEMINI | operational-docs + cloud-design | Runbook TI, template ECS Task Definition y dry-run research | 2026-03-20 |
+| ENTRADA-011 | GEMINI | upgrade             | Upgrade Framework v4.4, re-estructuración de CONTEXT.md           | 2026-03-20 |
+| ENTRADA-012 | GEMINI | governance          | Activación v4.4 (Context7+skills) y finalización AI_GOVERNANCE.md | 2026-03-20 |
 
 ---
 

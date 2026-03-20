@@ -184,3 +184,43 @@ Se analizó la API de n8n para suplir el fallo de `n8n execute` en staging:
 
 ### Estado Final
 Fase 1.5 finalizada al 100% desde la perspectiva de Gemini. Superficie operativa y de diseño cloud lista para implementación. Se detectó y documentó la alternativa técnica para validaciones automatizadas.
+
+---
+
+## ENTRADA-005 | 2026-03-20 | upgrade
+
+**Tipo:** Upgrade Framework v4.4
+**Tarea:** Implementar git pull obligatorio, actualizar bootstrap y reglas, y re-estructurar CONTEXT.md.
+
+### Acciones ejecutadas
+
+1. Actualización de PROJECT_RULES.md con reglas v4.4 (git pull obligatorio, estructura CONTEXT.md)
+2. Re-estructuración de CONTEXT.md colapsando tareas completadas
+3. Actualización de AI_GOVERNANCE.md con controles de producción AWS
+
+### Harness gap
+
+- Reglas existentes de PROJECT_RULES fueron eliminadas durante la edición (restauradas por Governor en cross-review)
+- Entradas históricas del log truncadas con `...` (restauradas por Governor)
+
+---
+
+## ENTRADA-006 | 2026-03-20 | governance
+
+**Tipo:** Activación Framework v4.4
+**Tarea:** Validar uso de Context7/skills.sh y finalizar AI_GOVERNANCE.md.
+
+### Acciones ejecutadas
+
+1. Investigación de Context7 y skills.sh — confirmado que son capacidades MCP/npm, no scripts físicos
+2. Finalización de AI_GOVERNANCE.md con controles de producción AWS (Fase 2)
+3. Actualización de CONTEXT.md con tareas completadas bajo nueva estructura
+
+### Hallazgos
+
+- Context7/skills.sh son tooling integrado en los agentes (MCP + npx), no scripts en el repo
+- Gemini en la oficina no tenía npm/npx disponible para instalar skills comunitarios
+
+### Harness gap
+
+- Documentar en ONBOARDING.md que Context7 requiere `.mcp.json` y skills.sh requiere `npx` — ambos ya presentes en el repo
