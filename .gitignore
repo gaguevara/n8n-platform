@@ -74,6 +74,10 @@ __pycache__/
 .agents/
 .continue/
 skills-lock.json
+# Community skill symlinks in .claude/skills/ (installed, not framework-native)
+.claude/skills/docker-security-guide
+.claude/skills/aws-ecs-fargate
+.claude/skills/postgres-patterns
 
 # Secrets extras (nunca commitear)
 *.pem
