@@ -77,40 +77,67 @@ orquesta todo automaticamente.
    - `GEMINI.md` (solo si Gemini activo) — bootstrap + rol + reglas
    - `CLAUDE.md` ya debe existir — verificar que apunta a SESSION_BOOTSTRAP.md
 
-8. **Configurar MCP** — crear `.mcp.json` con Context7:
+8. **Configurar Context7 (MCP)** — documentacion actualizada del stack:
+   - Context7 provee documentacion en tiempo real de las librerias del proyecto
+   - Los agentes lo usan para consultar APIs, parametros y ejemplos actualizados
+   - Crear `.mcp.json`:
    ```json
    {"mcpServers": {"context7": {"command": "npx", "args": ["-y", "@upstash/context7-mcp@latest"]}}}
    ```
+   - Uso: `resolve-library-id` para encontrar libreria, `query-docs` para consultar
 
-9. **Evaluar skills necesarios** segun el stack:
+9. **Evaluar skills propios** segun el stack:
    - Python detectado → validate-change incluye ruff/pytest
    - Node detectado → validate-change incluye eslint/vitest
    - Docker detectado → security-scan incluye trivy/hadolint
    - Siempre: bootstrap-repo, validate-change, failure-to-rule, cross-review
 
-10. **Activar pre-commit** si `.pre-commit-config.yaml` existe:
+10. **Instalar skills comunitarios (skills.sh)** — mejores practicas y seguridad:
+    - skills.sh provee habilidades de buenas practicas, seguridad y calidad de codigo
+    - Los agentes los usan para aplicar guidelines, patrones y hardening al proyecto
+    - Buscar skills relevantes: `npx skills search "<stack> security"`, `npx skills search "<stack> best practices"`
+    - Instalar con formato: `npx skills add -y <owner/repo@skill-name>`
+    - Los skills se instalan en `.agents/skills/` con symlink a `.claude/skills/`
+    - Segun stack detectado, buscar e instalar skills relevantes a:
+      - **Seguridad** del stack (ej: OWASP, dependency audit, secrets management)
+      - **Buenas practicas** del lenguaje/framework (ej: react-best-practices, python patterns)
+      - **Calidad** (ej: testing guidelines, accessibility, performance)
+    - Si `npx` no esta disponible, omitir y documentar en ONBOARDING
+
+    > **Distincion clave:** Context7 = *que hace* cada libreria (docs).
+    > skills.sh = *como usarla bien* (practicas, seguridad, calidad).
+
+11. **Activar pre-commit** si `.pre-commit-config.yaml` existe:
     - Descomentar hooks relevantes al stack detectado
     - Generar `.secrets.baseline` si detect-secrets disponible
 
 ### Fase 3: Registro
 
-11. **Registrar ENTRADA-001** en el log del Governor:
+12. **Registrar ENTRADA-001** en el log del Governor:
     - Stack detectado, adapter generado, archivos creados
+    - Skills comunitarios instalados (si aplica)
     - Lista de decisiones tomadas automaticamente
 
-12. **Actualizar LOG_INDEX** con primera entrada
+13. **Actualizar LOG_INDEX** con primera entrada
 
 ### Fase 4: Tareas iniciales (escritas en CONTEXT.md)
 
-13. **Escribir cola de tareas** en CONTEXT.md → seccion "Pendientes inmediatos":
+14. **Escribir cola de tareas** en CONTEXT.md → seccion "Pendientes inmediatos":
+    - Cada tarea DEBE ir bajo `### @AGENTE - Rol` correspondiente
+    - NO crear subsecciones tematicas — los agentes parsean por encabezado
     ```
+    ### @GEMINI - Researcher/Reviewer
     - [ ] @GEMINI: Validar PROJECT_RULES y completar secciones pendientes (Autor: Claude, Fecha: YYYY-MM-DD)
+
+    ### @CODEX - Implementer/DevOps
     - [ ] @CODEX: Ejecutar tests y validacion completa del adapter (Autor: Claude, Fecha: YYYY-MM-DD)
+
+    ### @CLAUDE - Governor
     - [ ] @CLAUDE: Consolidar resultados cuando Gemini y Codex completen (Autor: Claude, Fecha: YYYY-MM-DD)
     ```
-   - Si un agente no esta activo, omitir su tarea y redistribuir la responsabilidad
+   - Si un agente no esta activo, omitir su seccion completa y redistribuir la responsabilidad
 
-14. **Informar al usuario** que la adopcion esta completa y que tareas
+15. **Informar al usuario** que la adopcion esta completa y que tareas
     quedaron asignadas.
 
 ## Decision del usuario requerida SOLO si:

@@ -58,3 +58,25 @@ temp/
 # AWS credentials (nunca deben estar en repo)
 .aws/
 credentials
+
+# Python (framework multi-agente engine)
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+.mypy_cache/
+
+# Claude Code (session-specific, not project config)
+.claude/settings.local.json
+
+# Community skills (installed per-project via npx skills add)
+.agents/
+.continue/
+skills-lock.json
+
+# Secrets extras (nunca commitear)
+*.pem
+*.key
+credentials.json
+secrets.yaml

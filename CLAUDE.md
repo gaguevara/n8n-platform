@@ -1,4 +1,4 @@
-# CLAUDE.md — n8n Platform DELCOP (Framework Multi-Agente v4.3)
+# CLAUDE.md — n8n Platform DELCOP (Framework Multi-Agente v4.4)
 
 ## Protocolo obligatorio
 
@@ -57,8 +57,16 @@ Si hay trabajo pendiente en logs o CONTEXT.md, ejecutarlo proactivamente.
 - [ ] @CLAUDE: [tarea de gobernanza o consolidacion]
 ```
 
+## Fuentes de conocimiento externo
+
+| Fuente | Propósito | Uso |
+|--------|-----------|-----|
+| Context7 (MCP) | Documentación de librerías en tiempo real | `resolve-library-id` → `query-docs` |
+| skills.sh | Mejores prácticas y seguridad (+89K skills) | `npx skills add -y <owner/repo@skill-name>` |
+
 ## Reglas esenciales
 
+- **git pull obligatorio** antes de iniciar cualquier sesión (Paso 0 del bootstrap).
 - Framework multi-agente: multiples agentes pueden trabajar en el mismo repo.
 - No modificar archivos sin leer contexto primero (Pattern 07).
 - Investigar antes de cambiar (Pattern 01).

@@ -534,3 +534,47 @@ Mover todas las tareas `[ ] @CODEX` bajo el encabezado `### @CODEX - Implementer
 ### Harness gap
 
 - El framework no especifica que la estructura de secciones en CONTEXT.md es mecánicamente interpretada. Debería documentarse en PROJECT_RULES.md §9.
+
+---
+
+## ENTRADA-009 | 2026-03-20 | upgrade
+
+**Tipo:** Upgrade framework multi-agente v4.3 → v4.4
+**Tarea:** Aplicar cambios de v4.4, merge con customizaciones del proyecto
+
+### Archivos actualizados
+
+| Archivo | Acción |
+|---------|--------|
+| `SESSION_BOOTSTRAP.md` | Reemplazado — agrega Paso 0 (git pull obligatorio), fuentes externas (Context7 + skills.sh) |
+| `.claude/skills/adapt-project/SKILL.md` | Reemplazado — agrega skills comunitarios, Context7, estructura CONTEXT.md por agente |
+| `docs/skills/SKILLS.md` | Nuevo — catálogo de habilidades por rol |
+| `.gitignore` | Merge manual — agregadas entradas de Python, community skills, secrets extras |
+| `CLAUDE.md` | Actualizado v4.3→v4.4, agregada sección fuentes externas, regla git pull |
+
+### Archivos NO sobrescritos (customizados para n8n)
+
+- `docs/governance/PROJECT_RULES.md` — ya tiene regla git pull de sesión anterior
+- `docs/governance/ONBOARDING.md` — customizado por Gemini para n8n
+- `.gitignore` — merge manual, no reemplazo
+
+### Cambios clave de v4.4
+
+1. **Paso 0 bootstrap:** `git pull` obligatorio — resuelve bug de agentes desincronizados
+2. **Context7 MCP:** documentación de librerías en tiempo real formalizada
+3. **skills.sh:** +89K skills comunitarios de mejores prácticas y seguridad
+4. **SKILLS.md:** catálogo formal de habilidades esperadas por rol
+5. **.gitignore:** exclusiones para Python cache, community skills, secrets
+
+### Evidencia
+
+- Diff v4.3→v4.4 verificado: 5 archivos nuevos/modificados, 52 sin cambios
+- Customizaciones del proyecto preservadas (no sobrescritas)
+
+### Riesgo residual
+
+Ninguno.
+
+### Harness gap
+
+Ninguno.

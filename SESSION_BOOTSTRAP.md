@@ -9,6 +9,7 @@ Protocolo común de arranque para cualquier agente o desarrollador que inicie un
 ## Secuencia obligatoria de inicio
 
 ```
+0. Sincronizar con remote (si existe): `git pull origin main` (o `git stash && git pull && git stash pop` si hay cambios locales). Si no hay remote configurado, omitir.
 1. Leer docs/governance/PROJECT_RULES.md
 2. Si docs/governance/CONTEXT.md existe -> leerlo
    Si no existe -> ejecutar/adoptar framework via skill adapt-project antes de continuar
@@ -68,8 +69,30 @@ Antes de dar una tarea por terminada:
 1. Registrar en `docs/logs/[AGENTE]_LOG.md`
 2. Actualizar `docs/governance/LOG_INDEX.md` con el último LOG-ID
 3. Actualizar `docs/governance/CONTEXT.md` si cambió el estado del proyecto
+   - Las tareas DEBEN estar bajo la sección del agente asignado (`### @AGENTE - Rol`)
+   - No crear subsecciones temáticas que fragmenten los pendientes
 4. Actualizar `docs/governance/PROJECT_RULES.md` si cambió una regla o decisión estable
 5. Escalar a revisión cruzada si el cambio afecta áreas críticas (ver sección 8 de PROJECT_RULES.md)
+
+---
+
+## Fuentes de conocimiento externo
+
+El framework integra dos fuentes complementarias para que los agentes trabajen con informacion actualizada:
+
+### Context7 (MCP) — documentacion de librerias
+- Provee documentacion en tiempo real de las librerias del stack del proyecto
+- Uso: `resolve-library-id` para encontrar libreria, `query-docs` para consultar
+- Configurado en `.mcp.json`
+- **Para que:** saber *que hace* cada libreria (APIs, parametros, ejemplos)
+
+### skills.sh — mejores practicas y seguridad
+- Provee +89K skills comunitarios de buenas practicas, seguridad y calidad
+- Instalacion: `npx skills add -y <owner/repo@skill-name>`
+- `find-skills` se instala durante adapt-project para descubrir skills relevantes
+- **Para que:** saber *como usar bien* cada tecnologia (guidelines, hardening, patrones)
+
+Los skills propios del framework estan en `.claude/skills/`. Los skills comunitarios los complementan, no los reemplazan.
 
 ---
 
