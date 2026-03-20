@@ -29,7 +29,17 @@
       "Bash(cp threat-intel-review/merge-package/new-files/app/code-nodes/*.js app/code-nodes/)",
       "Bash(cp threat-intel-review/merge-package/new-files/app/workflows/threat-intel-main.json app/workflows/)",
       "Bash(cp threat-intel-review/merge-package/new-files/infra/init-db/* infra/init-db/)",
-      "Bash(cp threat-intel-review/merge-package/new-files/docs/DATA-CONTRACTS.md docs/)"
+      "Bash(cp threat-intel-review/merge-package/new-files/docs/DATA-CONTRACTS.md docs/)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npx skills:*)",
+      "Bash(python -m ruff check .multiagent/core .multiagent/tests)",
+      "Bash(python -m pytest .multiagent/tests -q)",
+      "Bash(python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status)",
+      "mcp__context7__resolve-library-id",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)"
     ]
   }
 }

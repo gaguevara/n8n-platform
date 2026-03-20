@@ -11,7 +11,7 @@
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
 | CLAUDE | ENTRADA-012 | docs/logs/CLAUDE_LOG.md | 2026-03-20 |
-| CODEX  | ENTRADA-017 | docs/logs/CODEX_LOG.md  | 2026-03-20 |
+| CODEX  | ENTRADA-018 | docs/logs/CODEX_LOG.md  | 2026-03-20 |
 | GEMINI | ENTRADA-012 | docs/logs/GEMINI_LOG.md | 2026-03-20 |
 
 ---
@@ -49,6 +49,7 @@
 | ENTRADA-015 | CODEX  | staging-post-pull-validation | Pull de staging hasta `e520b87` y revalidacion del runtime healthy sin regresiones | 2026-03-19 |
 | ENTRADA-016 | CODEX  | trigger-validation | Validacion Fase 1.5: credenciales n8n ausentes, GuardDuty confirmado, env de staging actualizado y egress OSINT verificado | 2026-03-19 |
 | ENTRADA-017 | CODEX  | staging-runtime-remediation | Reimport de workflows en staging sin placeholders criticos; 2 workflows presentes y bloqueo de dry-run aislado a `n8n execute` | 2026-03-20 |
+| ENTRADA-018 | CODEX  | framework-review | Validacion de `FRAMEWORK_REVIEW_v4.4.md` y comentarios de Codex sobre v4.4 desde ejecucion real | 2026-03-20 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
 | ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |

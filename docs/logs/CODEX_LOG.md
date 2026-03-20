@@ -6,6 +6,44 @@
 
 ---
 
+## ENTRADA-018 | 2026-03-20 | framework-review
+
+**Tipo:** Validacion documental del framework v4.4
+**Tarea:** Revisar `FRAMEWORK_REVIEW_v4.4.md`, contrastarlo con la gobernanza activa del repo y dejar observaciones de Codex en el documento.
+
+### Archivos afectados
+
+- `FRAMEWORK_REVIEW_v4.4.md`
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+
+### Comandos ejecutados + output
+
+1. `git pull --ff-only origin main`
+   - Resultado: fast-forward de `d4ea442` a `44b0963`; se recibio `FRAMEWORK_REVIEW_v4.4.md`.
+2. `Get-Content FRAMEWORK_REVIEW_v4.4.md`
+   - Resultado: reporte de campo v4.2→v4.4 cargado; seccion `### Codex (Implementer)` aun estaba en `_(pendiente)_`.
+3. `Get-Content docs/governance/PROJECT_RULES.md`, `docs/governance/CONTEXT.md`, `docs/governance/LOG_INDEX.md`
+   - Resultado: validacion cruzada del reporte contra las reglas v4.4 y el estado actual del backlog/logs.
+4. Actualizacion de `FRAMEWORK_REVIEW_v4.4.md`
+   - Resultado: se agregaron observaciones de Codex sobre fortalezas reales de v4.4 y dos mejoras concretas: manejo de drift runtime-vs-git y un dry-run soportado para n8n vivo.
+
+### Estado final
+
+- `FRAMEWORK_REVIEW_v4.4.md` ya no tiene pendiente la seccion de Codex.
+- La validacion de Codex confirma que v4.4 mejora materialmente la operacion multi-agente, especialmente por `git pull` obligatorio y backlog por agente.
+- Quedan documentadas dos mejoras practicas para la siguiente iteracion del framework.
+
+### Riesgo residual
+
+- El reporte sigue siendo una fotografia de campo de un momento concreto; algunas metricas pueden seguir derivando conforme avance el proyecto.
+
+### Harness gap
+
+- El framework aun no define un patron estandar para remediaciones de runtime que no deben quedar versionadas de inmediato.
+
+---
+
 ## ENTRADA-017 | 2026-03-20 | staging-runtime-remediation
 
 **Tipo:** Remediacion de runtime en staging

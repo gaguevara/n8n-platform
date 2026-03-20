@@ -178,11 +178,26 @@ Los bugs encontrados (B-006 a B-009) son todos de la categoria "agente malinterp
 
 ### Codex (Implementer)
 
-> _(pendiente)_
+> Validado desde la perspectiva de ejecucion real. El framework v4.4 mejora de forma tangible respecto a v4.3 en dos puntos que para Codex son criticos: `git pull` obligatorio al inicio y backlog unificado por agente en `CONTEXT.md`. Ambos reducen mucho el riesgo de trabajar con contexto viejo o de "perder" tareas por estructura ambigua.
+>
+> En uso de campo, la separacion de roles si funciono como promete: pude ejecutar ciclos largos de staging sin duplicar trabajo con Gemini ni Claude, y los cross-reviews corrigieron fallos reales antes de consolidarlos. El patron de harness gap tambien aguanto bien en runtime: cuando `n8n execute` colisiono con el Task Broker, el framework favorecio documentar el bloqueo y no insistir a ciegas.
+>
+> Mi validacion deja dos comentarios practicos para la siguiente iteracion del framework:
+> 1. Hace falta una regla explicita para distinguir cambios de **runtime no versionados** vs cambios **Git-trackeados**. En staging fue util remediar con archivos temporales, pero luego hay que reflejar o descartar esa divergencia de forma gobernada.
+> 2. El framework necesita una via estandar de **dry-run en entornos n8n vivos**. `n8n execute` dentro del contenedor activo no fue reutilizable en este caso por colision con el broker en `5679`, asi que hoy el runbook depende demasiado de UI/manual.
+>
+> Con esas dos mejoras, mi evaluacion es positiva: v4.4 ya es suficientemente operativo para trabajo multi-maquina y multi-agente en un repo real, y los fallos observados son de mecanica del harness, no de colaboracion entre agentes.
 
 ### Gemini (Researcher)
 
-> _(pendiente)_
+> Desde la perspectiva de análisis y documentación, el framework v4.4 es un salto cualitativo en **coherencia técnica**. La cadena de valor `SPEC` -> `Código` -> `Validación` permite que el Researcher actúe como un control de calidad preventivo, detectando Gaps de diseño (como la falta de Redis en el compose de producción) antes de que el Implementador gaste tokens en un despliegue fallido.
+>
+> Mis observaciones para la evolución del framework son:
+> 1. **Riesgo del Tooling de Edición:** Al no tener una herramienta nativa de `append` en archivos Markdown, el uso de `replace` en archivos grandes (Logs, CONTEXT.md) es propenso a errores de truncado (Bug B-006). El framework ganaría robustez con una regla o herramienta de "Insert after anchor" que no requiera reescribir bloques grandes.
+> 2. **Visibilidad de Infraestructura Interna:** Como se observó en mi análisis inicial, hay una curva de aprendizaje sobre las capacidades del propio framework (skills, engine, etc.). Sugiero que `adapt-project` genere un `FRAMEWORK_CAPABILITIES.md` local que describa qué herramientas MCP o scripts están disponibles, para que el Researcher no intente "redescubrirlos".
+> 3. **Validación Cruzada como SSOT:** La capacidad de auditar el trabajo de Codex en Staging desde el rol de Researcher asegura que la documentación (Runbooks, SPECs) no sea solo teórica, sino empírica. Este "cierre de ciclo" es lo que realmente previene la degradación del repositorio a largo plazo.
+>
+> En resumen, v4.4 permite un nivel de profundidad arquitectónica que sería imposible en un modelo de agente único, siempre que se mitiguen los riesgos de manipulación de archivos extensos.
 
 ---
 
