@@ -11,9 +11,9 @@
 | Campo         | Valor |
 |---------------|-------|
 | Fase          | Fase 1.5 — Validación de triggers y fuentes de Threat Intel en staging |
-| Estabilidad   | Staging healthy (R720 `192.168.0.70:5678`). Workflow robusteado. Error Handler listo para importar. |
-| Bloqueantes   | Usuario configurando credenciales reales en n8n UI. Codex: dry-run E2E post-config |
-| Ultimo cambio | Cross-review Gemini aprobado. Nuevas tareas: error workflow, Trellix IMAP, rate limits |
+| Estabilidad   | Staging healthy. 2 workflows importados (main + error handler). PostgreSQL + SMTP credentials activas. |
+| Bloqueantes   | Credenciales de fuentes (FortiGate, Wazuh, Zabbix, OSINT) y webhook de alerta — usuario configurando |
+| Ultimo cambio | Codex: remediación staging (code-nodes embebidos, errorWorkflow vinculado, placeholders eliminados) |
 
 ---
 
@@ -102,29 +102,30 @@
 
 ### @CODEX - Implementer/DevOps
 
-**Infraestructura base (hacer primero):**
-- [ ] @CODEX: Configurar credencial PostgreSQL en n8n staging UI — host: `threat-db`, port: `5432`, db: `threat_intel`, user/pass de `.env`
-- [ ] @CODEX: Configurar credencial SMTP en n8n staging UI — usar relay SMTP de DELCOP o M365
-- [ ] @CODEX: Ejecutar test manual del nodo `pg-upsert` para confirmar que n8n puede escribir en PostgreSQL
+**Infraestructura base — completado:**
+- [x] @CODEX: Configurar credencial PostgreSQL en n8n staging UI (Completado: `Postgres account` ID `a0K3DCm6QM9FVDAx` — Codex ENTRADA-017)
+- [x] @CODEX: Configurar credencial SMTP en n8n staging UI (Completado: `SMTP account` ID `cFZPbwEu9RSx0KY9` — Codex ENTRADA-017)
+- [x] @CODEX: Importar error-handler.json en staging y vincular al workflow principal via `errorWorkflow` (Completado: `e7c2a3b1...` vinculado, 2 workflows activos — Codex ENTRADA-017)
+- [ ] @CODEX: Ejecutar test manual del nodo `pg-upsert` para confirmar que n8n puede escribir en PostgreSQL (Bloqueado: `n8n execute` colisiona con Task Broker port 5679 — usar n8n UI en su lugar)
 
-**Fuentes internas (LAN):**
-- [ ] @CODEX: Validar conectividad desde R720 al FortiGate (`curl -k https://$FORTIGATE_HOST/api/v2/cmdb/system/status`) y configurar API key en `.env` staging
-- [ ] @CODEX: Validar conectividad desde R720 a Wazuh (`curl -k -u user:pass $WAZUH_API_URL/security/user/authenticate`) y configurar credenciales en `.env` staging
-- [ ] @CODEX: Validar conectividad desde R720 a Zabbix (`curl $ZABBIX_API_URL -d '{"jsonrpc":"2.0","method":"apiinfo.version","id":1}'`) y configurar token en `.env` staging
+**Fuentes internas (LAN) — pendiente credenciales del usuario:**
+- [ ] @CODEX: Validar conectividad desde R720 al FortiGate y configurar API key en `.env` staging
+- [ ] @CODEX: Validar conectividad desde R720 a Wazuh y configurar credenciales en `.env` staging
+- [ ] @CODEX: Validar conectividad desde R720 a Zabbix y configurar token en `.env` staging
 
 **Fuentes AWS:**
-- [ ] @CODEX: Verificar si GuardDuty está habilitado en la cuenta AWS (`aws guardduty list-detectors`), obtener `DETECTOR_ID` y configurar IAM credentials para n8n
+- [x] @CODEX: Verificar GuardDuty habilitado y `DETECTOR_ID` (Completado: Detector `68c960313fc4628bdf683f052e953cf5`, env vars cargadas — Codex ENTRADA-016)
 
-**Fuentes OSINT (Internet):**
-- [ ] @CODEX: Registrar cuenta gratuita en AbuseIPDB, obtener API key y configurar `ABUSEIPDB_API_KEY` en `.env` staging
-- [ ] @CODEX: Registrar cuenta gratuita en OTX AlienVault, obtener API key y configurar `OTX_API_KEY` en `.env` staging
+**Fuentes OSINT (Internet) — pendiente registros del usuario:**
+- [ ] @CODEX: Registrar AbuseIPDB y configurar `ABUSEIPDB_API_KEY` en `.env` staging
+- [ ] @CODEX: Registrar OTX AlienVault y configurar `OTX_API_KEY` en `.env` staging
 
-**Canales de alerta:**
-- [ ] @CODEX: Crear webhook de Slack (o Teams) de prueba en canal `#security-alerts-test` y configurar `SLACK_WEBHOOK_URL` en `.env` staging
+**Canales de alerta — pendiente webhook del usuario:**
+- [ ] @CODEX: Crear webhook Slack/Teams de prueba y configurar en `.env` staging
 
 **Validación end-to-end:**
-- [ ] @CODEX: Ejecutar dry-run manual de cada fuente configurada: trigger manual en n8n UI → verificar que los datos fluyen hasta PostgreSQL (tabla `iocs`) y que las alertas llegan al canal configurado
-- [ ] @CODEX: Reiniciar compose en R720 (`docker compose restart`) para cargar las nuevas env vars después de cada cambio en `.env`
+- [ ] @CODEX: Ejecutar dry-run vía n8n UI (trigger manual) de cada fuente → verificar PostgreSQL + alertas
+- [ ] @CODEX: Reiniciar compose en R720 para cargar nuevas env vars después de cada cambio
 
 ### @GEMINI - Researcher/Reviewer
 
@@ -141,10 +142,17 @@
 - [x] @GEMINI: Crear `docs/sdlc/SPEC_ERROR_HANDLING.md` — especificar estrategia de retry, dead-letter, timeouts y alertas para el pipeline TI (Completado en `docs/sdlc/SPEC_ERROR_HANDLING.md`)
 - [x] @GEMINI: Revisar rate limits de cada fuente OSINT y documentar cuántas ejecuciones/día consume el pipeline con los intervalos actuales (AbuseIPDB: 96/día de 1000 free, OTX: sin límite documentado) (Completado en `docs/knowledge/SOURCE_CONFIG_GUIDE.md`)
 
+### @GEMINI - Researcher/Reviewer (tareas paralelas — no dependen de credenciales)
+
+- [ ] @GEMINI: Crear runbook de operación del pipeline TI en `docs/knowledge/RUNBOOK_THREAT_INTEL.md` — procedimientos para: fuente caída, rotación de API keys, escalación de alertas, reinicio de pipeline
+- [ ] @GEMINI: Revisar `docker-compose.prod.yml` vs `SPEC_AWS_PRODUCTION.md` — documentar gaps y preparar template de Task Definition ECS (JSON) basado en el compose de producción
+- [ ] @GEMINI: Investigar alternativa al `n8n execute` CLI para dry-run en staging — documentar si la API REST de n8n (`POST /api/v1/workflows/{id}/run`) funciona como alternativa
+
 ### @CLAUDE - Governor
 
 - [x] @CLAUDE: Cross-review de cada credencial/fuente configurada antes de activar el trigger cron correspondiente (Completado: Gemini ENTRADA-007 — SOURCE_CONFIG_GUIDE.md validado, ioc_normalizer.js fix aprobado, continueOnFail en 6 nodos HTTP aprobado)
 - [x] @CLAUDE: Verificar que las API keys y tokens NO quedaron en archivos trackeados (solo en `.env` del R720) (Completado: grep confirma solo placeholders en `.env.example`/`.env.staging.example`; `.env` en `.gitignore`)
+- [x] @CLAUDE: Cross-review Codex ENTRADA-017 — remediación staging: code-nodes embebidos, errorWorkflow vinculado, credenciales PostgreSQL+SMTP confirmadas (Completado: 2 workflows activos, placeholders eliminados, harness gap documentado)
 - [ ] @CLAUDE: Aprobar activación del workflow en modo automático (triggers cron activos) una vez validadas todas las fuentes
 - [ ] @CLAUDE: Registrar ADR-010 con la decisión de fuentes activas vs pendientes y sus justificaciones
 
@@ -191,7 +199,8 @@
 
 | Workflow | Archivo | Estado |
 |----------|---------|--------|
-| DELCOP Threat Intelligence - Main Pipeline | `app/workflows/threat-intel-main.json` | Importado y validado localmente - 30 nodos |
+| DELCOP Threat Intelligence - Main Pipeline | `app/workflows/threat-intel-main.json` | Importado en local + staging — 30 nodos, code-nodes embebidos, errorWorkflow vinculado |
+| DELCOP n8n Error Handler | `app/workflows/error-handler.json` | Importado en staging — 6 nodos, PostgreSQL + Slack + Email critical |
 
 ---
 
@@ -228,6 +237,8 @@
 | 2026-03-19 | Codex trigger-validation: GuardDuty confirmado, egress OSINT verificado, credenciales n8n pendientes | Codex |
 | 2026-03-20 | Cross-review Gemini ENTRADA-008 aprobado: error workflow, SPEC_ERROR_HANDLING, rate limits | Claude |
 | 2026-03-20 | ADR-009 creado: ECS Fargate + RDS + Secrets Manager + ECR + ALB + CloudWatch | Claude |
+| 2026-03-20 | Codex staging remediation: code-nodes embebidos, errorWorkflow vinculado, 2 workflows activos | Codex |
+| 2026-03-20 | Cross-review Codex ENTRADA-017 aprobado. Nuevas tareas Gemini: runbook, Task Definition template, dry-run alternativa | Claude |
 
 ---
 

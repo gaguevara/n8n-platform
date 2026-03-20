@@ -6,6 +6,41 @@
 
 ---
 
+## ENTRADA-012 | 2026-03-20 | cross-review + new-tasks
+
+**Tipo:** Cross-review Codex ENTRADA-017 + nuevas tareas paralelas
+**Tarea:** Validar remediación de staging y asignar tareas que no dependen de credenciales del usuario
+
+### Cross-review Codex ENTRADA-017
+
+| Aspecto | Veredicto | Observación |
+|---|---|---|
+| Credenciales PostgreSQL + SMTP en n8n UI | ✅ | IDs confirmados: `a0K3DCm6QM9FVDAx`, `cFZPbwEu9RSx0KY9` |
+| Error handler importado y vinculado | ✅ | `errorWorkflow: e7c2a3b1...` cableado en el workflow principal |
+| Code-nodes embebidos (normalizer, persistence, dispatcher) | ✅ | Placeholders `jsCode` reemplazados con código real |
+| 2 workflows activos en staging | ✅ | Main Pipeline + Error Handler |
+| Placeholders `CONFIGURAR` eliminados | ✅ | Export post-import confirmado sin placeholders |
+| `n8n execute` CLI bloqueado por Task Broker | ⚠️ Documentado | Harness gap: port 5679 colisiona. Dry-run debe hacerse vía UI o API REST |
+
+### Nuevas tareas asignadas (no dependen de credenciales)
+
+| Agente | Tareas | Foco |
+|---|---|---|
+| @GEMINI | 3 | Runbook operativo, Task Definition ECS template, alternativa dry-run |
+| @CODEX | 7 pendientes | Bloqueados por credenciales del usuario (fuentes LAN, OSINT, webhook) |
+| @CLAUDE | 2 | Aprobar activación + ADR-010 (post dry-run) |
+
+### Riesgo residual
+
+- 7 tareas de Codex dependen de credenciales que el usuario está configurando manualmente
+- El dry-run E2E requiere alternativa al `n8n execute` CLI
+
+### Harness gap
+
+Ninguno nuevo (el de `n8n execute` ya fue documentado por Codex).
+
+---
+
 ## ENTRADA-011 | 2026-03-20 | cross-review + ADR-009
 
 **Tipo:** Cross-review Gemini ENTRADA-008 + creación ADR-009

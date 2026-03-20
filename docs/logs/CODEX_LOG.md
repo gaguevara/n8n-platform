@@ -6,6 +6,64 @@
 
 ---
 
+## ENTRADA-017 | 2026-03-20 | staging-runtime-remediation
+
+**Tipo:** Remediacion de runtime en staging
+**Tarea:** Revalidar pendientes de `@CODEX` en Fase 1.5 y ejecutar una correccion de bajo blast radius para dejar el workflow de staging sin placeholders criticos.
+
+### Archivos afectados
+
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+- `.tmp/codex-staging/error-handler.staging.json` (temporal, no versionado)
+- `.tmp/codex-staging/threat-intel-main.staging.json` (temporal, no versionado)
+- Runtime de n8n en R720 (`n8n_staging`)
+
+### Comandos ejecutados + output
+
+1. `curl.exe -s http://192.168.0.70:5678/healthz`
+   - Resultado: `{"status":"ok"}`.
+2. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && git rev-parse --short HEAD && docker compose --env-file .env -f infra/docker-compose.staging.yml ps -a && grep -E '^(AWS_REGION|GUARDDUTY_DETECTOR_ID|...)=' .env || true"`
+   - Resultado: staging sigue en `8b1a3eb`; los 3 servicios siguen `healthy`; `AWS_REGION` y `GUARDDUTY_DETECTOR_ID` siguen cargados en `.env`.
+3. `ssh gabo@192.168.0.70 "docker exec n8n_staging n8n export:credentials --all --pretty"`
+   - Resultado: aparecen 2 credenciales reales en staging: `Postgres account` (`a0K3DCm6QM9FVDAx`) y `SMTP account` (`cFZPbwEu9RSx0KY9`).
+4. `ssh gabo@192.168.0.70 "docker exec n8n_staging n8n export:workflow --all --pretty"`
+   - Resultado: el workflow principal seguia cargado, pero aun contenia `CONFIGURAR`, `CONFIGURAR_ERROR_WORKFLOW_ID` y placeholders de `jsCode`.
+5. `python -m json.tool app/workflows/threat-intel-main.json` y `python -m json.tool app/workflows/error-handler.json`
+   - Resultado: ambos JSON locales validos.
+6. Generacion de `.tmp/codex-staging/*.staging.json`
+   - Resultado: se embebieron los contenidos de `app/code-nodes/ioc_normalizer.js`, `app/code-nodes/ioc_persistence.js` y `app/code-nodes/alert_dispatcher.js`; se cablearon las credenciales reales de staging y `errorWorkflow=e7c2a3b1-4d5e-6f7a-8b9c-0d1e2f3a4b5c`.
+7. `scp ... error-handler.staging.json`, `scp ... threat-intel-main.staging.json`
+   - Resultado: archivos temporales copiados al R720.
+8. `ssh gabo@192.168.0.70 "docker cp ... && docker exec n8n_staging n8n import:workflow --input=..."`
+   - Resultado: `Successfully imported 1 workflow.` para `error-handler` y para `threat-intel-main`.
+9. `ssh gabo@192.168.0.70 "docker exec n8n_staging n8n list:workflow"`
+   - Resultado: staging ahora muestra `2` workflows: `DELCOP Threat Intelligence - Main Pipeline` y `DELCOP n8n Error Handler`.
+10. Validacion local del export post-import (`.tmp/codex-staging/workflows-after-2026-03-20.json`)
+    - Resultado: ya no aparecen `CONFIGURAR` ni `Placeholder - reemplazar con código completo`; si aparecen `Postgres account`, `SMTP account` y `errorWorkflow` apuntando a `e7c2a3b1-4d5e-6f7a-8b9c-0d1e2f3a4b5c`.
+11. `ssh gabo@192.168.0.70 "docker exec n8n_staging n8n execute --id=0d5f2e64-0d1b-4a8a-9e13-5fc0f2e7b8ad --rawOutput"`
+    - Resultado: fallo con `n8n Task Broker's port 5679 is already in use`.
+12. `ssh gabo@192.168.0.70 "docker exec -e N8N_RUNNERS_ENABLED=false n8n_staging n8n execute --id=0d5f2e64-0d1b-4a8a-9e13-5fc0f2e7b8ad --rawOutput"`
+    - Resultado: mismo error `n8n Task Broker's port 5679 is already in use`; se detuvo aqui por regla anti-loop.
+
+### Estado final
+
+- Validado: staging sigue sano y ahora ya tiene `2` workflows importados.
+- Ejecutado: el runtime del workflow principal en staging quedo remediado sin placeholders criticos de credenciales, `jsCode` ni `errorWorkflow`.
+- Confirmado: las credenciales `postgres` y `smtp` ya existen en n8n staging.
+- Bloqueado aun: el dry-run manual por CLI queda impedido por el comportamiento de `n8n execute` dentro del contenedor activo (Task Broker port `5679` ocupado), y siguen faltando las credenciales/valores reales de fuentes y canales para un E2E funcional.
+
+### Riesgo residual
+
+- La remediacion aplicada hoy fue de runtime en staging usando archivos temporales de despliegue; el repo versionado todavia no refleja ese cableado final de staging.
+- Aun sin `FORTIGATE_*`, `WAZUH_*`, `ZABBIX_*`, `ABUSEIPDB_API_KEY`, `OTX_API_KEY`, webhook y credenciales AWS para n8n, el E2E real sigue incompleto.
+
+### Harness gap
+
+- `n8n execute` no es reutilizable directamente dentro del contenedor activo en esta version/runtime porque colisiona con el Task Broker (`5679`) incluso forzando `N8N_RUNNERS_ENABLED=false`. Hace falta una via soportada de dry-run para staging (API/UI o contenedor temporal de ejecucion) documentada en el harness.
+
+---
+
 ## ENTRADA-016 | 2026-03-19 | trigger-validation
 
 **Tipo:** Validacion operativa de pendientes Fase 1.5
