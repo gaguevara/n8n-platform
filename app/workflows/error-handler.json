@@ -1,0 +1,102 @@
+{
+  "id": "e7c2a3b1-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
+  "name": "DELCOP n8n Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "position": [100, 100],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "jsCode": "// Normalización de errores de n8n\nconst error = $json.execution?.error || $json.error;\nconst execution = $json.execution;\nconst workflow = $json.workflow;\n\nreturn {\n  workflow_id: workflow.id,\n  workflow_name: workflow.name,\n  node_name: error?.node?.name || 'Unknown',\n  error_message: error?.message || 'No error message provided',\n  error_stack: error?.stack || 'No stack trace available',\n  execution_id: execution.id,\n  execution_mode: execution.mode,\n  execution_url: `https://n8n.delcop.com.co/execution/${execution.id}`,\n  severity: (error?.message?.toLowerCase().includes('db') || error?.message?.toLowerCase().includes('auth')) ? 'critical' : 'warning',\n  _timestamp: new Date().toISOString()\n};"
+      },
+      "id": "normalize-error",
+      "name": "Normalize Error Data",
+      "type": "n8n-nodes-base.code",
+      "position": [300, 100],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO audit_log (entity_type, entity_id, action, actor, details) VALUES ('workflow', '{{ $json.execution_id }}', 'error', '{{ $json.workflow_name }}', '{{ JSON.stringify({ node: $json.node_name, message: $json.error_message, stack: $json.error_stack, mode: $json.execution_mode }) }}'::jsonb)",
+        "options": {}
+      },
+      "id": "pg-log-error",
+      "name": "PostgreSQL: Log Error",
+      "type": "n8n-nodes-base.postgres",
+      "position": [500, 100],
+      "typeVersion": 2.5,
+      "credentials": {
+        "postgres": { "id": "CONFIGURAR", "name": "Threat Intel DB" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.ERROR_SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"*🚨 n8n Workflow Error - {{ $json.severity.toUpperCase() }}*\",\n  \"blocks\": [\n    {\n      \"type\": \"section\",\n      \"text\": {\n        \"type\": \"mrkdwn\",\n        \"text\": \"*Workflow:* {{ $json.workflow_name }}\\n*Node:* {{ $json.node_name }}\\n*Error:* `{{ $json.error_message }}`\"\n      }\n    },\n    {\n      \"type\": \"actions\",\n      \"elements\": [\n        {\n          \"type\": \"button\",\n          \"text\": { \"type\": \"plain_text\", \"text\": \"View Execution\" },\n          \"url\": \"{{ $json.execution_url }}\",\n          \"style\": \"{{ $json.severity === 'critical' ? 'danger' : 'primary' }}\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": { "timeout": 10000 }
+      },
+      "id": "slack-alert",
+      "name": "Slack: Alert Error",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [700, 100],
+      "typeVersion": 4.2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            { "value1": "={{ $json.severity }}", "operation": "equals", "value2": "critical" }
+          ]
+        }
+      },
+      "id": "if-critical",
+      "name": "Is Critical?",
+      "type": "n8n-nodes-base.if",
+      "position": [700, 250],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "fromEmail": "n8n-errors@delcop.com.co",
+        "toEmail": "={{ $env.ERROR_EMAIL_RECIPIENT }}",
+        "subject": "🚨 CRITICAL: n8n Workflow Error in {{ $json.workflow_name }}",
+        "html": "<h3>Critical n8n Error Detected</h3>\n<p><b>Workflow:</b> {{ $json.workflow_name }}</p>\n<p><b>Node:</b> {{ $json.node_name }}</p>\n<p><b>Error:</b> {{ $json.error_message }}</p>\n<p><b>Execution ID:</b> {{ $json.execution_id }}</p>\n<p><a href=\"{{ $json.execution_url }}\">Click here to view execution</a></p>\n<hr/>\n<p><b>Stack Trace:</b></p>\n<pre>{{ $json.error_stack }}</pre>",
+        "options": {}
+      },
+      "id": "email-alert",
+      "name": "Email: Alert Critical Error",
+      "type": "n8n-nodes-base.emailSend",
+      "position": [900, 250],
+      "typeVersion": 2.1,
+      "credentials": {
+        "smtp": { "id": "CONFIGURAR", "name": "DELCOP SMTP" }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": { "main": [[{ "node": "Normalize Error Data", "type": "main", "index": 0 }]] },
+    "Normalize Error Data": { "main": [[{ "node": "PostgreSQL: Log Error", "type": "main", "index": 0 }]] },
+    "PostgreSQL: Log Error": { "main": [[{ "node": "Slack: Alert Error", "type": "main", "index": 0 }]] },
+    "Slack: Alert Error": { "main": [[{ "node": "Is Critical?", "type": "main", "index": 0 }]] },
+    "Is Critical?": { "main": [[{ "node": "Email: Alert Critical Error", "type": "main", "index": 0 }], []] }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "tags": [
+    { "name": "governance" },
+    { "name": "errors" },
+    { "name": "security" }
+  ]
+}

@@ -115,3 +115,35 @@ Asignar esta política al usuario/rol que consumirá n8n:
 1. Registrarse en [otx.alienvault.com](https://otx.alienvault.com/).
 2. Ir a **Settings** → **API Key**.
 3. Suscribirse a pulses (ej. "Malware", "Botnet") para recibir datos en el feed de `subscribed`.
+
+### 5.3 VirusTotal
+1. Registrarse en [virustotal.com](https://www.virustotal.com/).
+2. Ir a su perfil → **API Key**.
+3. **Límites Tier Gratuito:** 4 peticiones por minuto, 500 peticiones por día. El pipeline debe usar un nodo `Wait` o `Throttle` si se procesan batches grandes.
+
+---
+
+## 6. Trellix (Email/IMAP)
+
+Trellix ePO envía alertas en formato de texto plano que n8n debe parsear.
+
+### 6.1 Configuración del Buzón (M365)
+1. Crear un **Shared Mailbox** (ej. `trellix-alerts@delcop.com.co`).
+2. Habilitar **IMAP** para el buzón si se usa el nodo IMAP, o crear una **App Registration** en Azure con permisos `Mail.Read` si se usa el nodo Microsoft Outlook.
+3. Asegurar que ePO tiene configurado este buzón como destinatario en sus reglas de notificación.
+
+### 6.2 Reglas de Notificación en ePO
+1. **Automation** → **Automatic Responses**.
+2. Crear/Editar respuesta para eventos críticos (ej. `ENDPATP_1070`).
+3. En **Actions**, seleccionar **Send Email**.
+4. **Formato:** Texto plano (es vital para el parser `trellix_email_parser.js`).
+
+---
+
+## 7. Resumen de Límites de API (OSINT)
+
+| Fuente | Límite (Gratuito) | Estrategia en n8n |
+|---|---|---|
+| **AbuseIPDB** | 1,000 / día | Cron cada 15 min (batch de 100 IPs max) |
+| **AlienVault OTX** | 10,000 / hora | Cron cada 15 min (pulses recientes) |
+| **VirusTotal** | 4 / min \| 500 / día | Nodo `Wait` entre peticiones de enriquecimiento |

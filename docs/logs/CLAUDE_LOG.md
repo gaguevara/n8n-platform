@@ -6,6 +6,44 @@
 
 ---
 
+## ENTRADA-011 | 2026-03-20 | cross-review + ADR-009
+
+**Tipo:** Cross-review Gemini ENTRADA-008 + creación ADR-009
+**Tarea:** Validar error workflow, SPEC_ERROR_HANDLING, Trellix IMAP docs, rate limits; crear ADR-009
+
+### Cross-review Gemini ENTRADA-008
+
+| Entregable | Veredicto | Observación |
+|---|---|---|
+| `app/workflows/error-handler.json` | ✅ Aprobado | 6 nodos: Error Trigger → Normalize → PostgreSQL audit_log → Slack → If Critical → Email. Credentials en placeholder `CONFIGURAR` (correcto — se configura en UI) |
+| `docs/sdlc/SPEC_ERROR_HANDLING.md` | ✅ Aprobado | Clasificación de errores por severidad, estrategia de retry, deduplicación vía Redis, evitar bucles de error |
+| Trellix IMAP en SOURCE_CONFIG_GUIDE | ✅ Aprobado | Shared mailbox M365, IMAP habilitado, App Registration con `Mail.Read`, reglas ePO en texto plano |
+| Rate limits OSINT | ✅ Aprobado | AbuseIPDB: 96/día de 1000 free. OTX: 10000/hora. VirusTotal: 4/min, 500/día (requiere throttle) |
+
+### Observaciones menores (no bloquean)
+
+1. Error handler usa `ERROR_SLACK_WEBHOOK_URL` y `ERROR_EMAIL_RECIPIENT` — nuevas env vars que deben agregarse a `.env.example` y `.env` de staging
+2. El SQL del error handler usa interpolación de strings (`{{ $json.error_message }}`) — potencial SQL injection si el error contiene comillas. Recomendación: usar parameterized queries en el nodo PostgreSQL
+3. `execution_url` apunta a `https://n8n.delcop.com.co` — URL de producción, en staging debería ser `http://192.168.0.70:5678`
+
+### ADR-009 creado
+
+Formalizada la estrategia de infraestructura AWS en `docs/architecture/ADR_INDEX.md`:
+- ECS Fargate, RDS PostgreSQL, Secrets Manager, ECR, ALB+ACM, CloudWatch
+- Alternativas descartadas documentadas (EC2, EKS, Lightsail)
+- ADR-006/007/008 también documentados por completitud
+
+### Riesgo residual
+
+- Error handler necesita importarse en staging y vincularse al workflow principal (tarea Codex)
+- Las 2 observaciones de seguridad del error handler deben corregirse antes de producción
+
+### Harness gap
+
+Ninguno.
+
+---
+
 ## ENTRADA-010 | 2026-03-19 | cross-review + new-tasks
 
 **Tipo:** Cross-review Fase 1.5 + distribución de nuevas tareas

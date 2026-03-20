@@ -6,6 +6,59 @@
 
 ---
 
+## ENTRADA-016 | 2026-03-19 | trigger-validation
+
+**Tipo:** Validacion operativa de pendientes Fase 1.5
+**Tarea:** Verificar el estado real de los pendientes de `@CODEX` en staging, ejecutar lo automatizable y dejar evidencia de los bloqueos vigentes.
+
+### Archivos afectados
+
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+- `/srv/n8n-platform/.env` (R720, no versionado)
+
+### Comandos ejecutados + output
+
+1. `git status --short --branch`, `git log --oneline -3`
+   - Resultado: `main` con cambios locales ajenos en `.claude/settings.local.json`, `docs/governance/CONTEXT.md`, `docs/knowledge/SOURCE_CONFIG_GUIDE.md` y archivos nuevos `app/workflows/error-handler.json`, `docs/sdlc/SPEC_ERROR_HANDLING.md`.
+2. `curl.exe -s http://192.168.0.70:5678/healthz`
+   - Resultado: `{"status":"ok"}`.
+3. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && docker compose --env-file .env -f infra/docker-compose.staging.yml ps -a && grep -E '^(FORTIGATE_HOST|...|TEAMS_WEBHOOK_URL)=' .env || true"`
+   - Resultado: `n8n_staging`, `n8n_threat_db` y `n8n_threat_cache` en `healthy`; `.env` de staging sin variables cargadas para FortiGate, Wazuh, Zabbix, AbuseIPDB, OTX, Slack/Teams ni Trellix.
+4. `ssh gabo@192.168.0.70 "docker exec n8n_staging n8n export:credentials --all --pretty"`
+   - Resultado: `No credentials found with specified filters`; no existen aun credenciales `postgres` ni `smtp` en n8n staging.
+5. `aws sts get-caller-identity`
+   - Resultado: acceso valido desde la PC de oficina a la cuenta AWS `043019737945` como `arn:aws:iam::043019737945:user/gaguevara`.
+6. `aws ec2 describe-regions ...` + `aws guardduty list-detectors --region <region>`
+   - Resultado: GuardDuty solo aparece habilitado en `us-east-1` con detector `68c960313fc4628bdf683f052e953cf5`.
+7. `aws guardduty get-detector --region us-east-1 --detector-id 68c960313fc4628bdf683f052e953cf5`
+   - Resultado: detector en estado `ENABLED`.
+8. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && ... actualizar .env con AWS_REGION y GUARDDUTY_DETECTOR_ID ... && docker compose --env-file .env -f infra/docker-compose.staging.yml restart"`
+   - Resultado: staging actualizado con `AWS_REGION=us-east-1` y `GUARDDUTY_DETECTOR_ID=68c960313fc4628bdf683f052e953cf5`; restart exitoso.
+9. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && docker compose --env-file .env -f infra/docker-compose.staging.yml ps -a"`
+   - Resultado: los 3 servicios volvieron a `healthy`.
+10. `ssh gabo@192.168.0.70 "curl -s -o /dev/null -w 'abuseipdb:%{http_code}\n' https://api.abuseipdb.com/api/v2/blacklist; curl -s -o /dev/null -w 'otx:%{http_code}\n' https://otx.alienvault.com/api/v1/pulses/subscribed"`
+   - Resultado: `abuseipdb:401`, `otx:403`; hay salida a Internet desde el R720 y los endpoints responden, pero faltan API keys validas.
+11. `ssh gabo@192.168.0.70 "docker exec n8n_staging n8n export:workflow --all --pretty"`
+   - Resultado: el workflow principal sigue presente en staging (`1` workflow, `DELCOP Threat Intelligence - Main Pipeline`).
+
+### Estado final
+
+- Validado: el conteo exacto visible en `CONTEXT.md` para `@CODEX` en Fase 1.5 es de `12` tareas explicitas, no `13`.
+- Ejecutado: verificacion de salud de staging, evidencia de ausencia de credenciales n8n, validacion real de GuardDuty en AWS, carga de `AWS_REGION` y `GUARDDUTY_DETECTOR_ID` en el `.env` del R720, restart exitoso y verificacion de salida a Internet hacia AbuseIPDB/OTX.
+- Bloqueado aun: creacion de credenciales `postgres`/`smtp` en la UI de n8n, configuracion de FortiGate/Wazuh/Zabbix por falta de valores reales, registro/obtencion de API keys de AbuseIPDB y OTX, webhook Slack/Teams y el dry-run E2E completo.
+
+### Riesgo residual
+
+- El workflow sigue dependiendo de placeholders/credenciales no resueltas para completar el dry-run de extremo a extremo.
+- No actualice `docs/governance/CONTEXT.md` en este ciclo porque ya tenia cambios locales abiertos ajenos y mezclar esa edicion seria riesgoso.
+
+### Harness gap
+
+- Para Fase 1.5 falta una superficie automatizable para crear/validar credenciales n8n (`postgres`, `smtp`) sin depender de la UI; hoy eso deja a Codex bloqueado aunque el runtime y el acceso shell esten sanos.
+
+---
+
 ## ENTRADA-015 | 2026-03-19 | staging-post-pull-validation
 
 **Tipo:** Revalidacion de staging tras avance de `main`

@@ -10,9 +10,9 @@
 
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
-| CLAUDE | ENTRADA-010 | docs/logs/CLAUDE_LOG.md | 2026-03-19 |
-| CODEX  | ENTRADA-015 | docs/logs/CODEX_LOG.md  | 2026-03-19 |
-| GEMINI | ENTRADA-007 | docs/logs/GEMINI_LOG.md | 2026-03-19 |
+| CLAUDE | ENTRADA-011 | docs/logs/CLAUDE_LOG.md | 2026-03-20 |
+| CODEX  | ENTRADA-016 | docs/logs/CODEX_LOG.md  | 2026-03-19 |
+| GEMINI | ENTRADA-008 | docs/logs/GEMINI_LOG.md | 2026-03-19 |
 
 ---
 
@@ -30,6 +30,7 @@
 | ENTRADA-008 | CLAUDE | cross-review        | Aprobación SPEC_AWS_PRODUCTION.md de Gemini — Secrets Manager, SSM, SGs | 2026-03-19 |
 | ENTRADA-009 | CLAUDE | trigger-validation-plan | Cross-review staging + distribución de tareas Fase 1.5: 7 fuentes TI + 3 canales alerta | 2026-03-19 |
 | ENTRADA-010 | CLAUDE | cross-review + new-tasks | Cross-review Gemini Fase 1.5 aprobado + 4 nuevas tareas Gemini (error workflow, Trellix, rate limits) | 2026-03-19 |
+| ENTRADA-011 | CLAUDE | cross-review + ADR-009 | Cross-review Gemini ENTRADA-008 + ADR-009 (AWS: ECS+RDS+SM+ECR) + ADR-006/007/008 en index | 2026-03-20 |
 | ENTRADA-001 | CODEX  | exploration         | Mapeo read-only del repo y superficies DevOps                     | 2026-03-17 |
 | ENTRADA-002 | CODEX  | validation          | Validacion compose/scripts/pre-commit y ajustes minimos           | 2026-03-17 |
 | ENTRADA-003 | CODEX  | runtime-validation  | Levantamiento local de n8n, healthcheck y hadolint real           | 2026-03-17 |
@@ -41,10 +42,11 @@
 | ENTRADA-009 | CODEX  | sync                | Cambio al repo correcto, `git pull` en `main` y confirmacion de 4 tareas pendientes activas | 2026-03-19 |
 | ENTRADA-010 | CODEX  | runtime-validation  | Stack Threat Intel validado localmente: compose, healthchecks, schema PostgreSQL e import del workflow | 2026-03-19 |
 | ENTRADA-011 | CODEX  | local-stack-validation | Confirmacion de commit `3cbd110`, bootstrap de contexto y revalidacion del stack local healthy | 2026-03-19 |
-| ENTRADA-012 | CODEX  | framework-validation | Revalidacion de actividad segun `AGENTS.md` sobre el commit aprobado actual `14f03d8` | 2026-03-19 |
+| ENTRADA-012 | CODEX  | framework-validation | Revalidacion de activity segun `AGENTS.md` sobre el commit approved actual `14f03d8` | 2026-03-19 |
 | ENTRADA-013 | CODEX  | staging-deploy-validation | Fase 1 completada en R720: SSH, pull, `.env`, compose healthy, import workflow, schema+seed y acceso HTTP | 2026-03-19 |
 | ENTRADA-014 | CODEX  | staging-cookie-fix | Ajuste de `N8N_SECURE_COOKIE=false` en staging y redeploy del R720 | 2026-03-19 |
 | ENTRADA-015 | CODEX  | staging-post-pull-validation | Pull de staging hasta `e520b87` y revalidacion del runtime healthy sin regresiones | 2026-03-19 |
+| ENTRADA-016 | CODEX  | trigger-validation | Validacion Fase 1.5: credenciales n8n ausentes, GuardDuty confirmado, env de staging actualizado y egress OSINT verificado | 2026-03-19 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
 | ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |
@@ -52,6 +54,7 @@
 | ENTRADA-005 | GEMINI | research + spec     | Investigación AWS ECS Fargate, SPEC_AWS_PRODUCTION, mapeo variables | 2026-03-19 |
 | ENTRADA-006 | GEMINI | cross-review + doc  | Validación cruzada Codex ENTRADA-010 y actualización ONBOARDING/TI | 2026-03-19 |
 | ENTRADA-007 | GEMINI | research + workflow-fix | Configuración fuentes (FortiGate/Wazuh/etc) y robustecimiento workflow | 2026-03-19 |
+| ENTRADA-008 | GEMINI | governance + workflow | Error workflow, Trellix IMAP, SPEC_ERROR_HANDLING, rate limits OSINT | 2026-03-19 |
 
 ---
 

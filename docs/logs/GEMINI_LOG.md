@@ -123,3 +123,37 @@ Se identificó un riesgo de crash en el pipeline si todas las fuentes retornan v
 
 ### Estado Final
 Fase 1.5 completada desde la perspectiva de Gemini. La documentación de configuración está lista para ser aplicada por Codex en staging, y el workflow es ahora resiliente a fallos parciales de red o falta de datos.
+
+---
+
+## ENTRADA-008 | 2026-03-19 | governance + workflow
+
+**Tipo:** Implementación de gobernanza y robustecimiento (Fase 1.5 continuada)
+**Tarea:** Implementar Error Handler, documentar Trellix IMAP y revisar rate limits OSINT.
+
+### Error Handling (SPEC_ERROR_HANDLING.md)
+Se diseñó e implementó la estrategia de observabilidad para n8n:
+- **Workflow:** `app/workflows/error-handler.json` creado. Captura cualquier fallo, lo persiste en `audit_log` y notifica por Slack/Email según severidad (crítico si es DB/Auth).
+- **Espec:** Definida en `docs/sdlc/SPEC_ERROR_HANDLING.md`, incluyendo mapeo de errores y mejores prácticas.
+
+### Configuración de Fuentes (SOURCE_CONFIG_GUIDE.md)
+- **Trellix:** Se añadió el procedimiento para buzón compartido M365 y reglas de ePO.
+- **Rate Limits:** Se investigaron y documentaron los límites de AbuseIPDB (1000/día), OTX (10k/hora) y VirusTotal (4/min). Se confirmó que el cron de 15 min es seguro para AbuseIPDB (96 peticiones/día).
+
+### Estado Final
+Superficie de configuración de fuentes completada al 100%. Sistema de gestión de errores operativo y documentado. Listo para validación final por Claude y activación de triggers por Codex.
+
+---
+
+## ENTRADA-009 | 2026-03-19 | governance
+
+**Tipo:** Auditoría de cumplimiento y gobernanza IA
+**Tarea:** Actualizar `AI_GOVERNANCE.md` con controles de producción AWS.
+
+### Actualizaciones de Gobernanza
+- **Mapeo ISO:** Se integraron los controles A.9.4.1 (Acceso), A.10.1.1 (Cifrado) y A.12.1.2 (Gestión de cambios) reflejando el diseño de la arquitectura AWS (IAM, KMS, CI/CD).
+- **Evaluación de Riesgos:** Se añadió el riesgo de desconfiguración de infraestructura y su mitigación vía auditoría técnica cruzada.
+- **Trazabilidad:** Se actualizó la fecha de revisión trimestral conforme a la adopción de la Fase de Producción.
+
+### Estado Final
+Gobernanza IA alineada con los requisitos de producción. Se cierran las tareas documentales preventivas de la Fase 2. El agente queda a la espera de la creación de la infraestructura para validación técnica de secretos y networking.

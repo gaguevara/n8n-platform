@@ -39,6 +39,9 @@ La IA se considera herramienta de asistencia de desarrollo y arquitectura, no me
 | ISO 27001 A.8.9             | Trazabilidad total en `LOG_INDEX.md` y logs por agente.       |
 | ISO 27001 A.8.25            | Integración de pre-commit hooks para detección de secretos.   |
 | ISO 27001 A.8.28            | Validación manual de workflows n8n (JSON) antes de commit.    |
+| ISO 27001 A.9.4.1           | Control de acceso a AWS ECS/RDS restringido vía IAM y VPC.    |
+| ISO 27001 A.10.1.1          | Cifrado de secretos en AWS Secrets Manager (KMS) y TLS 1.2+.  |
+| ISO 27001 A.12.1.2          | Gestión de cambios vía CI/CD (Makefile) y validación multi-agente. |
 | ISO 27001 A.12.6.1          | Gestión de vulnerabilidades técnicas vía pipeline de TI.       |
 | ISO 27001 A.16.1.2          | Reporte automático de eventos de seguridad (Wazuh/FortiGate). |
 | ISO 9001 Control documental | `PROJECT_RULES.md` como Fuente Única de Verdad (SSOT).        |
@@ -53,14 +56,15 @@ La IA se considera herramienta de asistencia de desarrollo y arquitectura, no me
 | Exposición de N8N_ENCRYPTION_KEY a la IA         | Baja        | Crítico | Exclusión estricta de `.env` y revisión de logs.                |
 | Comandos de Shell incompatibles con Windows 11   | Media       | Bajo    | Validación por Codex en entorno real antes de proponer script.   |
 | Desincronización entre agentes (Pisado de logs)  | Baja        | Medio   | Uso obligatorio de `LOG_INDEX.md` y `CONTEXT.md`.                |
+| Configuración de Infraestructura (IaC/Manual)    | Media       | Crítico | Auditoría de `SPEC_AWS_PRODUCTION.md` por Governor Claude.       |
 
 ### Riesgo aceptado
 
 > El uso de herramientas de IA para asistencia en desarrollo se acepta bajo las condiciones de control documentadas en este archivo. Se prioriza la agilidad en la arquitectura multi-entorno de n8n bajo supervisión humana constante.
 >
 > **Aprobado por:** Governor Claude (vía Protocolo Adopción)
-> **Fecha:** 2026-03-17
-> **Próxima revisión:** 2026-06-17 (Trimestral)
+> **Fecha:** 2026-03-19 (Revisión de Producción AWS)
+> **Próxima revisión:** 2026-06-19 (Trimestral)
 
 ---
 
@@ -76,4 +80,4 @@ La IA se considera herramienta de asistencia de desarrollo y arquitectura, no me
 
 ---
 
-*Última actualización: 2026-03-17 — Revisado por: Gemini (Researcher)*
+*Última actualización: 2026-03-19 — Revisado por: Gemini (Researcher)*

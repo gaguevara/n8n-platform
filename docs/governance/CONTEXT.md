@@ -11,8 +11,8 @@
 | Campo         | Valor |
 |---------------|-------|
 | Fase          | Fase 1.5 — Validación de triggers y fuentes de Threat Intel en staging |
-| Estabilidad   | Staging healthy (R720 `192.168.0.70:5678`). Workflow robusteado (continueOnFail + empty guard) |
-| Bloqueantes   | Codex: credenciales reales por fuente + dry-run E2E. Error workflow placeholder sin resolver |
+| Estabilidad   | Staging healthy (R720 `192.168.0.70:5678`). Workflow robusteado. Error Handler listo para importar. |
+| Bloqueantes   | Usuario configurando credenciales reales en n8n UI. Codex: dry-run E2E post-config |
 | Ultimo cambio | Cross-review Gemini aprobado. Nuevas tareas: error workflow, Trellix IMAP, rate limits |
 
 ---
@@ -63,7 +63,7 @@
 
 - [x] @CLAUDE: Cross-review del deploy de staging cuando Codex complete — validar healthchecks, schema, workflow, y conectividad LAN (Completado: Codex ENTRADA-012 validado — 3 servicios healthy, 7 tablas, 9 data sources, workflow importado en `192.168.0.70:5678`)
 - [x] @CLAUDE: Aprobar SPEC_AWS_PRODUCTION.md cuando Gemini lo entregue (Completado: aprobado — Secrets Manager para 4 críticos, SSM para API keys, SGs mínimo privilegio)
-- [ ] @CLAUDE: Crear ADR-009 formalizando la estrategia de infraestructura AWS (ECS + RDS + Secrets Manager + ECR)
+- [x] @CLAUDE: Crear ADR-009 formalizando la estrategia de infraestructura AWS (ECS + RDS + Secrets Manager + ECR) (Completado: ADR-009 en ADR_INDEX.md — ECS Fargate, RDS PostgreSQL, Secrets Manager, ECR, ALB+ACM, CloudWatch)
 
 ---
 
@@ -136,10 +136,10 @@
 
 ### @GEMINI - Researcher/Reviewer (nuevas tareas)
 
-- [ ] @GEMINI: Crear workflow de error (`error-handler.json`) para n8n — debe capturar fallos del pipeline principal, registrar en `workflow_runs` con status `error`, y notificar por Slack con contexto del fallo
-- [ ] @GEMINI: Documentar procedimiento de configuración de Trellix ePO via IMAP (buzón compartido M365 `trellix-alerts@delcop.com.co`) en `SOURCE_CONFIG_GUIDE.md` — incluir permisos Graph API si se usa Microsoft Outlook Trigger
-- [ ] @GEMINI: Crear `docs/sdlc/SPEC_ERROR_HANDLING.md` — especificar estrategia de retry, dead-letter, timeouts y alertas para el pipeline TI
-- [ ] @GEMINI: Revisar rate limits de cada fuente OSINT y documentar cuántas ejecuciones/día consume el pipeline con los intervalos actuales (AbuseIPDB: 96/día de 1000 free, OTX: sin límite documentado)
+- [x] @GEMINI: Crear workflow de error (`error-handler.json`) para n8n — debe capturar fallos del pipeline principal, registrar en `workflow_runs` con status `error`, y notificar por Slack con contexto del fallo (Completado en `app/workflows/error-handler.json`)
+- [x] @GEMINI: Documentar procedimiento de configuración de Trellix ePO via IMAP (buzón compartido M365 `trellix-alerts@delcop.com.co`) en `SOURCE_CONFIG_GUIDE.md` — incluir permisos Graph API si se usa Microsoft Outlook Trigger (Completado en `docs/knowledge/SOURCE_CONFIG_GUIDE.md`)
+- [x] @GEMINI: Crear `docs/sdlc/SPEC_ERROR_HANDLING.md` — especificar estrategia de retry, dead-letter, timeouts y alertas para el pipeline TI (Completado en `docs/sdlc/SPEC_ERROR_HANDLING.md`)
+- [x] @GEMINI: Revisar rate limits de cada fuente OSINT y documentar cuántas ejecuciones/día consume el pipeline con los intervalos actuales (AbuseIPDB: 96/día de 1000 free, OTX: sin límite documentado) (Completado en `docs/knowledge/SOURCE_CONFIG_GUIDE.md`)
 
 ### @CLAUDE - Governor
 
@@ -167,7 +167,7 @@
 
 - [ ] @GEMINI: Validar que los secretos en Secrets Manager no tienen valores por defecto ni placeholders
 - [ ] @GEMINI: Revisar security groups y networking del ECS service vs RDS vs internet (principio de minimo privilegio)
-- [ ] @GEMINI: Actualizar AI_GOVERNANCE.md con controles de producción AWS (A.9.4.1 acceso, A.10.1.1 cifrado, A.12.1.2 gestión de cambios)
+- [x] @GEMINI: Actualizar AI_GOVERNANCE.md con controles de producción AWS (A.9.4.1 acceso, A.10.1.1 cifrado, A.12.1.2 gestión de cambios) (Completado: Revisión de riesgos y controles ISO actualizada)
 
 ### @CLAUDE - Governor
 
@@ -224,6 +224,10 @@
 | 2026-03-19 | Fase 1.5: distribución de tareas para validación de 7 fuentes TI + 3 canales alerta en staging | Claude |
 | 2026-03-19 | Cross-review Gemini Fase 1.5: SOURCE_CONFIG_GUIDE, ioc_normalizer fix, continueOnFail aprobados | Claude |
 | 2026-03-19 | Nuevas tareas Gemini: error workflow, Trellix IMAP, SPEC_ERROR_HANDLING, rate limits | Claude |
+| 2026-03-19 | Gemini completó 4 tareas nuevas: error-handler.json, SPEC_ERROR_HANDLING, Trellix IMAP, rate limits | Gemini |
+| 2026-03-19 | Codex trigger-validation: GuardDuty confirmado, egress OSINT verificado, credenciales n8n pendientes | Codex |
+| 2026-03-20 | Cross-review Gemini ENTRADA-008 aprobado: error workflow, SPEC_ERROR_HANDLING, rate limits | Claude |
+| 2026-03-20 | ADR-009 creado: ECS Fargate + RDS + Secrets Manager + ECR + ALB + CloudWatch | Claude |
 
 ---
 
