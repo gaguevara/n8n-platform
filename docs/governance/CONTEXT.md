@@ -1,8 +1,8 @@
 # CONTEXT.md - Estado Actual del Proyecto
 
-> **Ultima actualizacion:** 2026-03-20
-> **Actualizado por:** Gemini (Researcher — Upgrade v4.4)
-> **Proxima revision:** al completar validación de fuentes en staging
+> **Ultima actualizacion:** 2026-03-22
+> **Actualizado por:** Claude (Governor — Hallazgo FortiGate + Fase 1.6)
+> **Proxima revision:** al completar dry-run de todas las fuentes en staging
 
 ---
 
@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 1.5 — Validación de triggers y fuentes de Threat Intel en staging |
-| Estabilidad   | Staging healthy (R720). 2 workflows activos. PostgreSQL + SMTP configurados. |
-| Bloqueantes   | Credenciales de fuentes LAN (FortiGate, Wazuh, Zabbix) — pendientes del usuario |
-| Ultimo cambio | Upgrade Framework v4.4; re-estructuración de backlog por agente |
+| Fase          | Fase 1.6 — Corrección de endpoints + dry-run por fuente en staging |
+| Estabilidad   | Staging healthy (R720). FortiGate endpoint corregido. Credenciales LAN en progreso. |
+| Bloqueantes   | Credenciales Wazuh y Zabbix — pendientes del usuario |
+| Ultimo cambio | Fix FortiGate endpoint (hallazgo cross-project mcp-servers↔n8n-platform) |
 
 ---
 
@@ -34,7 +34,8 @@
 - [x] @CODEX: Verificar GuardDuty habilitado y `DETECTOR_ID`
 - [x] @CODEX: Corregir referencia incorrecta en `docs/governance/ONBOARDING.md`
 - [ ] @CODEX: Ejecutar test manual del nodo `pg-upsert` en n8n UI (staging)
-- [ ] @CODEX: Validar conectividad y configurar API key FortiGate en `.env` staging
+- [x] @CODEX: Validar conectividad y configurar API key FortiGate en `.env` staging
+- [ ] @CODEX: Reimportar `threat-intel-main.json` corregido en n8n staging (endpoint FortiGate fix)
 - [ ] @CODEX: Validar conectividad y configurar credenciales Wazuh en `.env` staging
 - [ ] @CODEX: Validar conectividad y configurar token Zabbix en `.env` staging
 - [ ] @CODEX: Registrar AbuseIPDB y configurar API key en `.env` staging
@@ -63,6 +64,8 @@
 - [x] @GEMINI: Preparar template de Task Definition ECS en `docs/architecture/ECS_TASK_DEFINITION_TEMPLATE.json`
 - [x] @GEMINI: Investigar alternativa al `n8n execute` CLI para dry-run en staging
 - [x] @GEMINI: Actualizar AI_GOVERNANCE.md con controles de producción AWS
+- [ ] @GEMINI: Investigar endpoints adicionales de FortiGate relevantes para TI (IPS, virus, webfilter, app-ctrl) y documentar en SOURCE_CONFIG_GUIDE.md
+- [ ] @GEMINI: Revisar ioc_normalizer.js para soportar estructura de respuesta `/api/v2/log/memory/*` (campo `results[]` vs `logs[]`)
 - [ ] @GEMINI: Validar que secretos en AWS no tienen valores por defecto (Fase 2)
 - [ ] @GEMINI: Revisar Security Groups y networking de producción (Fase 2)
 - [x] @GEMINI: Adaptar `docs/governance/AI_GOVERNANCE.md` al proyecto n8n DELCOP (Finalizado: Integrados controles AWS y Framework v4.4)
@@ -75,6 +78,7 @@
 - [x] @CLAUDE: Cross-review de credenciales/fuentes (Gemini)
 - [x] @CLAUDE: Verificar que API keys no quedaron trackeadas en Git
 - [x] @CLAUDE: Cross-review de remediación staging (Codex)
+- [x] @CLAUDE: Cross-review hallazgo FortiGate endpoint (validado y corregido en workflow)
 - [ ] @CLAUDE: Aprobar activación automática (triggers cron) tras validación total
 - [ ] @CLAUDE: Registrar ADR-010 (Fuentes activas vs pendientes)
 - [ ] @CLAUDE: Cross-review final de infraestructura AWS (Fase 2)

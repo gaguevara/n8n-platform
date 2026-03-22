@@ -65,7 +65,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ $env.FORTIGATE_HOST }}/api/v2/log/event/system",
+        "url": "={{ $env.FORTIGATE_HOST }}/api/v2/log/memory/event/system",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendHeaders": true,
@@ -77,6 +77,7 @@
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
+            { "name": "vdom", "value": "root" },
             { "name": "rows", "value": "100" },
             { "name": "filter", "value": "logid=0100032001 or logid=0100032002 or logid=0419016384" }
           ]

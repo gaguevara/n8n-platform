@@ -6,6 +6,30 @@
 
 ---
 
+## ENTRADA-013 | 2026-03-22 | cross-review hallazgo FortiGate
+
+**Tipo:** Cross-review + fix de hallazgo cross-project
+**Tarea:** Validar HALLAZGO_FORTIGATE_ENDPOINT.md y aplicar corrección al workflow.
+
+### Hallazgo validado
+- Endpoint `/api/v2/log/event/system` devuelve 404 en FortiOS 7.4.11
+- Path correcto: `/api/v2/log/memory/event/system` (validado en equipo real desde proyecto mcp-servers)
+- Faltaba parámetro `vdom=root`
+
+### Correcciones aplicadas
+- `app/workflows/threat-intel-main.json` línea 68: endpoint corregido
+- `app/workflows/threat-intel-main.json` línea 79: agregado `vdom=root` a queryParameters
+- `docs/HALLAZGO_FORTIGATE_ENDPOINT.md`: marcado checkbox de corrección
+
+### Tareas generadas (Fase 1.6)
+- @CODEX: reimportar workflow corregido en staging
+- @GEMINI: investigar endpoints adicionales de FortiGate + validar estructura de respuesta en ioc_normalizer.js
+
+### Harness gap
+- Hallazgo detectado en otro proyecto (mcp-servers). El framework no tiene mecanismo formal de cross-project findings.
+
+---
+
 ## ENTRADA-012 | 2026-03-20 | cross-review + new-tasks
 
 **Tipo:** Cross-review Codex ENTRADA-017 + nuevas tareas paralelas
