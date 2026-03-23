@@ -250,128 +250,143 @@ function normalizeFortiGate(item) {
 }
 
 function normalizeWazuh(item) {
-  const data = item.json;
-  const alert = data.data || data;
-  const results = [];
+  const rootData = item.json;
+  const iocs = [];
 
-  // Extraer IoCs del campo data
-  const rawText = JSON.stringify(alert);
+  // Wazuh API puede devolver { data: { affected_items: [] } } o un item individual
+  const alerts = rootData.data?.affected_items || (rootData.id && rootData.rule ? [rootData] : []);
 
-  // IPs
-  for (const match of rawText.matchAll(IOC_PATTERNS.ip_v4)) {
-    if (!isPrivateIP(match[0])) {
-      results.push({
-        ioc_value: match[0],
-        ioc_type: 'ip_v4',
-        severity: mapSeverity(alert.rule?.level || '0', 'wazuh'),
+  for (const alert of alerts) {
+    // Extraer IoCs del campo data (vulnerabilidades) o del root
+    const rawText = JSON.stringify(alert);
+
+    // IPs
+    for (const match of rawText.matchAll(IOC_PATTERNS.ip_v4)) {
+      if (!isPrivateIP(match[0])) {
+        iocs.push({
+          ioc_value: match[0],
+          ioc_type: 'ip_v4',
+          severity: mapSeverity(alert.rule?.level || '0', 'wazuh'),
+          observed_at: alert.timestamp || new Date().toISOString(),
+          _source: 'wazuh',
+          tags: [alert.rule?.groups || [], alert.agent?.name].flat().filter(Boolean),
+          metadata: {
+            rule_id: alert.rule?.id,
+            rule_description: alert.rule?.description,
+            agent: alert.agent?.name,
+            manager: alert.manager?.name,
+            decoder: alert.decoder?.name
+          }
+        });
+      }
+    }
+
+    // CVEs de Wazuh vulnerability detector
+    if (alert.vulnerability?.cve || alert.data?.vulnerability?.cve) {
+      const v = alert.vulnerability || alert.data.vulnerability;
+      iocs.push({
+        ioc_value: v.cve,
+        ioc_type: 'cve',
+        severity: mapSeverity(v.severity || alert.rule?.level, 'wazuh'),
         observed_at: alert.timestamp || new Date().toISOString(),
         _source: 'wazuh',
-        tags: [alert.rule?.groups || [], alert.agent?.name].flat().filter(Boolean),
+        tags: ['vulnerability', v.package?.name].filter(Boolean),
         metadata: {
-          rule_id: alert.rule?.id,
-          rule_description: alert.rule?.description,
-          agent: alert.agent?.name,
-          manager: alert.manager?.name,
-          decoder: alert.decoder?.name
+          package: v.package,
+          cvss: v.cvss,
+          reference: v.reference
         }
       });
     }
   }
 
-  // CVEs de Wazuh vulnerability detector
-  if (alert.data?.vulnerability?.cve) {
-    results.push({
-      ioc_value: alert.data.vulnerability.cve,
-      ioc_type: 'cve',
-      severity: mapSeverity(alert.data.vulnerability.severity || alert.rule?.level, 'wazuh'),
-      observed_at: alert.timestamp || new Date().toISOString(),
-      _source: 'wazuh',
-      tags: ['vulnerability', alert.data.vulnerability.package?.name].filter(Boolean),
-      metadata: {
-        package: alert.data.vulnerability.package,
-        cvss: alert.data.vulnerability.cvss,
-        reference: alert.data.vulnerability.reference
-      }
-    });
-  }
-
-  return results;
+  return iocs;
 }
 
 function normalizeGuardDuty(item) {
-  const finding = item.json;
-  const results = [];
+  const rootData = item.json;
+  const iocs = [];
 
-  // Extraer IPs de remote/local
-  const remoteIp = finding.Service?.Action?.NetworkConnectionAction?.RemoteIpDetails?.IpAddressV4
-    || finding.Service?.Action?.PortProbeAction?.PortProbeDetails?.[0]?.RemoteIpDetails?.IpAddressV4;
+  // GuardDuty API devuelve { Findings: [] } o un finding individual
+  const findings = rootData.Findings || (rootData.Id && rootData.Type ? [rootData] : []);
 
-  if (remoteIp && !isPrivateIP(remoteIp)) {
-    results.push({
-      ioc_value: remoteIp,
-      ioc_type: 'ip_v4',
-      severity: mapSeverity(finding.Severity, 'guardduty'),
-      observed_at: finding.Service?.EventFirstSeen || new Date().toISOString(),
-      _source: 'guardduty',
-      tags: [finding.Type, finding.Service?.Action?.ActionType].filter(Boolean),
-      metadata: {
-        finding_id: finding.Id,
-        finding_type: finding.Type,
-        resource_type: finding.Resource?.ResourceType,
-        instance_id: finding.Resource?.InstanceDetails?.InstanceId,
-        region: finding.Region,
-        account_id: finding.AccountId,
-        count: finding.Service?.Count
-      }
-    });
-  }
+  for (const finding of findings) {
+    // Extraer IPs de remote/local
+    const remoteIp = finding.Service?.Action?.NetworkConnectionAction?.RemoteIpDetails?.IpAddressV4
+      || finding.Service?.Action?.PortProbeAction?.PortProbeDetails?.[0]?.RemoteIpDetails?.IpAddressV4;
 
-  // Dominios maliciosos (DNS findings)
-  if (finding.Service?.Action?.DnsRequestAction?.Domain) {
-    const domain = finding.Service.Action.DnsRequestAction.Domain;
-    if (!isWhitelistedDomain(domain)) {
-      results.push({
-        ioc_value: domain,
-        ioc_type: 'domain',
+    if (remoteIp && !isPrivateIP(remoteIp)) {
+      iocs.push({
+        ioc_value: remoteIp,
+        ioc_type: 'ip_v4',
         severity: mapSeverity(finding.Severity, 'guardduty'),
         observed_at: finding.Service?.EventFirstSeen || new Date().toISOString(),
         _source: 'guardduty',
-        tags: ['dns', finding.Type].filter(Boolean),
-        metadata: { finding_type: finding.Type, protocol: finding.Service?.Action?.DnsRequestAction?.Protocol }
-      });
-    }
-  }
-
-  return results;
-}
-
-function normalizeZabbix(item) {
-  const data = item.json;
-  const results = [];
-
-  // Zabbix triggers con IPs en el nombre o valor
-  const text = `${data.name || ''} ${data.description || ''} ${data.value || ''}`;
-
-  for (const match of text.matchAll(IOC_PATTERNS.ip_v4)) {
-    if (!isPrivateIP(match[0])) {
-      results.push({
-        ioc_value: match[0],
-        ioc_type: 'ip_v4',
-        severity: data.priority >= 4 ? 'high' : data.priority >= 2 ? 'medium' : 'low',
-        observed_at: data.lastchange ? new Date(data.lastchange * 1000).toISOString() : new Date().toISOString(),
-        _source: 'zabbix',
-        tags: ['zabbix', data.hosts?.[0]?.host].filter(Boolean),
+        tags: [finding.Type, finding.Service?.Action?.ActionType].filter(Boolean),
         metadata: {
-          trigger_id: data.triggerid,
-          host: data.hosts?.[0]?.host,
-          priority: data.priority,
-          status: data.status
+          finding_id: finding.Id,
+          finding_type: finding.Type,
+          resource_type: finding.Resource?.ResourceType,
+          instance_id: finding.Resource?.InstanceDetails?.InstanceId,
+          region: finding.Region,
+          account_id: finding.AccountId,
+          count: finding.Service?.Count
         }
       });
     }
+
+    // Dominios maliciosos (DNS findings)
+    if (finding.Service?.Action?.DnsRequestAction?.Domain) {
+      const domain = finding.Service.Action.DnsRequestAction.Domain;
+      if (!isWhitelistedDomain(domain)) {
+        iocs.push({
+          ioc_value: domain,
+          ioc_type: 'domain',
+          severity: mapSeverity(finding.Severity, 'guardduty'),
+          observed_at: finding.Service?.EventFirstSeen || new Date().toISOString(),
+          _source: 'guardduty',
+          tags: ['dns', finding.Type].filter(Boolean),
+          metadata: { finding_type: finding.Type, protocol: finding.Service?.Action?.DnsRequestAction?.Protocol }
+        });
+      }
+    }
   }
 
-  return results;
+  return iocs;
+}
+
+function normalizeZabbix(item) {
+  const rootData = item.json;
+  const iocs = [];
+
+  // Zabbix JSON-RPC devuelve { result: [] } o un trigger individual
+  const triggers = rootData.result || (rootData.triggerid ? [rootData] : []);
+
+  for (const data of triggers) {
+    // Zabbix triggers con IPs en el nombre o valor
+    const text = `${data.name || ''} ${data.description || ''} ${data.value || ''}`;
+
+    for (const match of text.matchAll(IOC_PATTERNS.ip_v4)) {
+      if (!isPrivateIP(match[0])) {
+        iocs.push({
+          ioc_value: match[0],
+          ioc_type: 'ip_v4',
+          severity: data.priority >= 4 ? 'high' : data.priority >= 2 ? 'medium' : 'low',
+          observed_at: data.lastchange ? new Date(data.lastchange * 1000).toISOString() : new Date().toISOString(),
+          _source: 'zabbix',
+          tags: ['zabbix', data.hosts?.[0]?.host].filter(Boolean),
+          metadata: {
+            trigger_id: data.triggerid,
+            host: data.hosts?.[0]?.host,
+            priority: data.priority,
+            status: data.status
+          }
+        });
+      }
+    }
+  }
+
+  return iocs;
 }
 
 function normalizeOSINTFeed(item) {

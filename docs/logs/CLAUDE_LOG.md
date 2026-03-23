@@ -6,6 +6,37 @@
 
 ---
 
+## ENTRADA-016 | 2026-03-23 | framework-recommendations-review + cross-review
+
+**Tipo:** Review de recomendaciones + cross-review multi-agente
+**Tarea:** Completar review de Governor en FRAMEWORK_RECOMMENDATIONS_REVIEW, cross-review de Gemini ENTRADA-015 y Codex ENTRADA-021/022.
+
+### Cross-review Gemini ENTRADA-015
+- `normalizeWazuh()`: ahora itera `data.affected_items[]`, extrae CVEs de `vulnerability` y `data.vulnerability`. ✅
+- `normalizeZabbix()`: itera `result[]`, extrae IPs de triggers. ✅
+- `normalizeGuardDuty()`: itera `Findings[]`. ✅ (mejora no solicitada pero coherente)
+- Runbook sección 6: dry-runs por fuente + evidencia ISO A.5.7. ✅
+
+### Cross-review Codex ENTRADA-021/022
+- Documento FRAMEWORK_RECOMMENDATIONS_REVIEW creado con identidad de proyecto. ✅
+- Sección Codex completa con evaluación por recomendación. ✅
+- Validaciones de engine y detect-secrets (manual por ausencia del tool). ✅
+
+### Review Governor completado
+- 12 recomendaciones evaluadas: 10 "Adoptar ahora", 2 "Adoptar luego"
+- Decisión consolidada con unanimidad en 9/12 recomendaciones
+- Próximo paso: ADR-011 + patch v4.5
+
+### Tareas generadas
+- @CODEX: dry-runs por fuente siguiendo Runbook sección 6
+- @GEMINI: review de recomendaciones en FRAMEWORK_RECOMMENDATIONS_REVIEW (ya completado)
+- @CLAUDE: crear ADR-011 con decisiones del review
+
+### Harness gap
+- Ninguno nuevo.
+
+---
+
 ## ENTRADA-015 | 2026-03-23 | validate TAREAS_INTEGRACION_MCP + Fase 1.7 update
 
 **Tipo:** Validación cross-project + actualización de tareas

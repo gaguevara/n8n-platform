@@ -10,9 +10,9 @@
 
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
-| CLAUDE | ENTRADA-015 | docs/logs/CLAUDE_LOG.md | 2026-03-23 |
-| CODEX  | ENTRADA-020 | docs/logs/CODEX_LOG.md  | 2026-03-22 |
-| GEMINI | ENTRADA-014 | docs/logs/GEMINI_LOG.md | 2026-03-22 |
+| CLAUDE | ENTRADA-016 | docs/logs/CLAUDE_LOG.md | 2026-03-23 |
+| CODEX  | ENTRADA-022 | docs/logs/CODEX_LOG.md  | 2026-03-23 |
+| GEMINI | ENTRADA-015 | docs/logs/GEMINI_LOG.md | 2026-03-23 |
 
 ---
 
@@ -32,13 +32,17 @@
 | ENTRADA-010 | CLAUDE | cross-review + new-tasks | Cross-review Gemini Fase 1.5 aprobado + 4 nuevas tareas Gemini (error workflow, Trellix, rate limits) | 2026-03-19 |
 | ENTRADA-011 | CLAUDE | cross-review + ADR-009 | Cross-review Gemini ENTRADA-008 + ADR-009 (AWS: ECS+RDS+SM+ECR) + ADR-006/007/008 in index | 2026-03-20 |
 | ENTRADA-012 | CLAUDE | cross-review + new-tasks | Cross-review Codex ENTRADA-017 (staging remediation) + 3 nuevas tareas Gemini paralelas | 2026-03-20 |
+| ENTRADA-013 | CLAUDE | cross-review FortiGate | Hallazgo cross-project: endpoint FortiGate corregido en workflow + tareas Fase 1.6 | 2026-03-22 |
+| ENTRADA-014 | CLAUDE | integration-mcp     | Validación TAREAS_INTEGRACION_MCP y ADR-011 (Context7/skills.sh) | 2026-03-23 |
+| ENTRADA-015 | CLAUDE | phase-1.7-update    | Replanificación Fase 1.7 (Enriquecimiento TI) y validación diseño AWS | 2026-03-23 |
+| ENTRADA-016 | CLAUDE | framework-review + cross-review | Review Governor completado (10 adoptar ahora, 2 luego) + cross-review Codex 021/022 + Gemini 015 | 2026-03-23 |
 | ENTRADA-001 | CODEX  | exploration         | Mapeo read-only del repo y superficies DevOps                     | 2026-03-17 |
 | ENTRADA-002 | CODEX  | validation          | Validacion compose/scripts/pre-commit y ajustes minimos           | 2026-03-17 |
 | ENTRADA-003 | CODEX  | runtime-validation  | Levantamiento local de n8n, healthcheck y hadolint real           | 2026-03-17 |
 | ENTRADA-004 | CODEX  | latest-validation   | Validacion de `latest` contra upstream y cierre del pendiente de tag fijo | 2026-03-17 |
 | ENTRADA-005 | CODEX  | pending-validation  | Verificacion de pendientes actuales: sin pendientes activos de Codex | 2026-03-17 |
 | ENTRADA-006 | CODEX  | pending-remediation | Validacion de pendientes nuevos de Codex y cierre de items de documentacion | 2026-03-17 |
-| ENTRADA-007 | CODEX  | prompt-review       | Validacion de prompt Threat Intelligence: conflictos de arquitectura y alcance | 2026-03-18 |
+| ENTRADA-007 | CODEX  | prompt-review       | Validacion de prompt Threat Intelligence: conflictos de arquitectura and alcance | 2026-03-18 |
 | ENTRADA-008 | CODEX  | self-review         | Revision critica del analisis previo: contrato, parser, scoring y compose | 2026-03-18 |
 | ENTRADA-009 | CODEX  | sync                | Cambio al repo correcto, `git pull` en `main` y confirmacion de 4 tareas pendientes activas | 2026-03-19 |
 | ENTRADA-010 | CODEX  | runtime-validation  | Stack Threat Intel validado localmente: compose, healthchecks, schema PostgreSQL e import del workflow | 2026-03-19 |
@@ -52,9 +56,8 @@
 | ENTRADA-018 | CODEX  | framework-review | Validacion de `FRAMEWORK_REVIEW_v4.4.md` y comentarios de Codex sobre v4.4 desde ejecucion real | 2026-03-20 |
 | ENTRADA-019 | CODEX  | fortigate-reimport | Reimport seguro del workflow en staging con endpoint FortiGate `memory/event/system` y normalizador UTM actualizado | 2026-03-22 |
 | ENTRADA-020 | CODEX  | sync-and-start | `git pull` confirmado sin cambios nuevos y arranque paralelo de revisión Fase 2 tipo Gemini | 2026-03-22 |
-| ENTRADA-013 | CLAUDE | cross-review FortiGate | Hallazgo cross-project: endpoint FortiGate corregido en workflow + tareas Fase 1.6 | 2026-03-22 |
-| ENTRADA-014 | CLAUDE | cross-review Fase 1.6 | Aprobación Codex 019/020 + Gemini 013/014 + tareas Fase 1.7 asignadas | 2026-03-22 |
-| ENTRADA-015 | CLAUDE | validate MCP tasks | Validación TAREAS_INTEGRACION_MCP.md vs workflow — hallazgo Zabbix auth legacy | 2026-03-23 |
+| ENTRADA-021 | CODEX  | framework-review-request | Documento de review multi-agente para recomendaciones del framework con identidad explicita del proyecto `n8n-platform` | 2026-03-23 |
+| ENTRADA-022 | CODEX  | framework-review-validation | Validacion del review multi-agente y cierre de la seccion Codex en `FRAMEWORK_RECOMMENDATIONS_REVIEW_n8n-platform.md` | 2026-03-23 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
 | ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |
@@ -68,7 +71,8 @@
 | ENTRADA-011 | GEMINI | upgrade             | Upgrade Framework v4.4, re-estructuración de CONTEXT.md           | 2026-03-20 |
 | ENTRADA-012 | GEMINI | governance          | Activación v4.4 (Context7+skills) y finalización AI_GOVERNANCE.md | 2026-03-20 |
 | ENTRADA-013 | GEMINI | research + normalizer-fix | Investigación FortiGate UTM y remediación de ioc_normalizer.js | 2026-03-22 |
-| ENTRADA-014 | GEMINI | audit + cloud-design | Auditoría de diseño cloud Fase 2 (Networking, SGs, Task Def)      | 2026-03-22 |
+| ENTRADA-014 | GEMINI | audit + cloud-design | Auditoría de diseño cloud Fase 2 (Networking, SGs, Task Def) y skill update | 2026-03-22 |
+| ENTRADA-015 | GEMINI | research + normalizer-fix | Investigación Wazuh/Zabbix API, robustecimiento normalizadores y guía dry-runs | 2026-03-23 |
 
 ---
 

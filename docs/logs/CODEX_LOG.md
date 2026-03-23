@@ -6,6 +6,91 @@
 
 ---
 
+## ENTRADA-022 | 2026-03-23 | framework-review-validation
+
+**Tipo:** Validacion post-cambio
+**Tarea:** Validar el documento de review multi-agente para `n8n-platform` y completar la evaluacion de Codex dentro del mismo.
+
+### Archivos afectados
+
+- `FRAMEWORK_RECOMMENDATIONS_REVIEW_n8n-platform.md`
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+
+### Comandos ejecutados + output
+
+1. `Test-Path scripts/post-change.sh`
+   - Resultado: `False`; no existe script de post-cambio, se aplico validacion manual del skill `validate-change`.
+2. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate FRAMEWORK_RECOMMENDATIONS_REVIEW_n8n-platform.md --json`
+   - Resultado: validacion configurada y exitosa para el documento nuevo.
+3. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/logs/CODEX_LOG.md --json`
+   - Resultado: validacion configurada y exitosa sobre el log.
+4. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/governance/LOG_INDEX.md --json`
+   - Resultado: validacion configurada y exitosa sobre el indice.
+5. `git diff --check -- FRAMEWORK_RECOMMENDATIONS_REVIEW_n8n-platform.md docs/logs/CODEX_LOG.md docs/governance/LOG_INDEX.md`
+   - Resultado: sin errores de diff; solo warnings de Git por normalizacion `LF -> CRLF` en archivos ya existentes del checkout.
+6. `detect-secrets scan --baseline .secrets.baseline`
+   - Resultado: `detect-secrets` no esta instalado en esta PC (`CommandNotFoundException`); se hizo verificacion manual del diff y no se introdujeron secretos.
+7. Actualizacion de `FRAMEWORK_RECOMMENDATIONS_REVIEW_n8n-platform.md`
+   - Resultado: se completo la seccion de Codex con estados sugeridos y prioridades operativas para `n8n-platform`.
+
+### Estado final
+
+- El documento nuevo quedo validado y ya no tiene pendiente la seccion de Codex.
+- La recomendacion de framework ahora esta lista para review cruzado de Claude y Gemini en el mismo archivo.
+- No se detectaron secretos nuevos ni errores de formato bloqueantes en los archivos tocados.
+
+### Riesgo residual
+
+- `detect-secrets` sigue ausente en esta maquina; la comprobacion de secretos fue manual.
+- El engine valida presencia/configuracion, pero no hace una revision semantica profunda de Markdown.
+
+### Harness gap
+
+- La validacion documental del engine sigue siendo minima; para governance docs largos convendria una validacion semantica mas fuerte o reglas por anchors.
+
+---
+
+## ENTRADA-021 | 2026-03-23 | framework-review-request
+
+**Tipo:** Documentacion de gobernanza
+**Tarea:** Crear un documento de review multi-agente para recomendaciones del framework, nombrando explicitamente el proyecto `n8n-platform` para evitar confusion con otros repositorios.
+
+### Archivos afectados
+
+- `FRAMEWORK_RECOMMENDATIONS_REVIEW_n8n-platform.md`
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+
+### Comandos ejecutados + output
+
+1. `Get-Content SESSION_BOOTSTRAP.md`, `PROJECT_RULES.md`, `CONTEXT.md`, `CODEX_OVERLAY.md`, `LOG_INDEX.md`
+   - Resultado: bootstrap y reglas del proyecto `n8n-platform` revalidados antes de editar.
+2. `Get-Content -Tail docs/logs/CLAUDE_LOG.md`, `docs/logs/GEMINI_LOG.md`
+   - Resultado: confirmadas recomendaciones recientes y hallazgos activos del framework.
+3. `Get-Content FRAMEWORK_REVIEW_v4.4.md`
+   - Resultado: identificadas recomendaciones base `M-001..M-008` y comentarios adicionales de Codex/Gemini.
+4. Creacion de `FRAMEWORK_RECOMMENDATIONS_REVIEW_n8n-platform.md`
+   - Resultado: documento nuevo con identidad explicita del proyecto, instrucciones de review, matriz de recomendaciones y secciones separadas para Claude, Codex y Gemini.
+5. `Get-Content FRAMEWORK_RECOMMENDATIONS_REVIEW_n8n-platform.md`
+   - Resultado: estructura verificada; el nombre del proyecto aparece en titulo, bloque de identidad y secciones por agente.
+
+### Estado final
+
+- Existe un documento dedicado para review multi-agente de mejoras del framework en el contexto de `n8n-platform`.
+- El documento reduce el riesgo de mezclar recomendaciones entre proyectos al dejar nombre de proyecto y ruta del repositorio visibles.
+- Quedo listo para que Claude, Codex y Gemini agreguen su evaluacion sin reescribir `FRAMEWORK_REVIEW_v4.4.md`.
+
+### Riesgo residual
+
+- El documento no fuerza mecanicamente el append-only; esa recomendacion sigue pendiente de evaluacion o adopcion en el framework base.
+
+### Harness gap
+
+- No existe aun una plantilla generada automaticamente para reviews multi-agente de mejoras del framework por proyecto; por ahora se resolvio con un documento manual.
+
+---
+
 ## ENTRADA-020 | 2026-03-22 | sync-and-start
 
 **Tipo:** Sincronizacion de sesion y arranque de tareas

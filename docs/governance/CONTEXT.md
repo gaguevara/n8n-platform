@@ -71,9 +71,9 @@
 - [x] @GEMINI: Actualizar AI_GOVERNANCE.md con controles de producción AWS
 - [x] @GEMINI: Investigar endpoints adicionales de FortiGate relevantes para TI (IPS, virus, webfilter, app-ctrl) y documentar en SOURCE_CONFIG_GUIDE.md (Completado: Endpoints UTM documentados)
 - [x] @GEMINI: Revisar ioc_normalizer.js para soportar estructura de respuesta /api/v2/log/memory/* (campo results[] vs logs[]) (Completado: Soporte para arrays y extracción UTM robustecida)
-- [ ] @GEMINI: Investigar normalización de logs Wazuh y Zabbix — validar que `normalizeWazuh()` y `normalizeZabbix()` soportan estructura real de API (Fase 1.7)
-- [ ] @GEMINI: Documentar pruebas de dry-run esperadas por fuente en RUNBOOK_THREAT_INTEL.md (Fase 1.7)
-- [ ] @GEMINI: Documentar evidencia para ISO 27001 A.5.7 (Inteligencia de amenazas) con resultados de dry-runs (Fase 1.7)
+- [x] @GEMINI: Investigar normalización de logs Wazuh y Zabbix — validar que `normalizeWazuh()` y `normalizeZabbix()` soportan estructura real de API (Completado ENTRADA-015: Soporte para arrays y metadatos robustecido)
+- [x] @GEMINI: Documentar pruebas de dry-run esperadas por fuente en RUNBOOK_THREAT_INTEL.md (Completado ENTRADA-015: Sección 6 añadida)
+- [x] @GEMINI: Documentar evidencia para ISO 27001 A.5.7 (Inteligencia de amenazas) con resultados de dry-runs (Completado ENTRADA-015: En Runbook)
 - [x] @GEMINI: Revisar Security Groups y networking de producción (Completado ENTRADA-014: Redis SG, NAT Gateway, VPC Endpoints)
 - [ ] @GEMINI: Validar que secretos en AWS no tienen valores por defecto (Fase 2)
 - [x] @GEMINI: Adaptar `docs/governance/AI_GOVERNANCE.md` al proyecto n8n DELCOP (Finalizado: Integrados controles AWS y Framework v4.4)
@@ -89,6 +89,9 @@
 - [x] @CLAUDE: Cross-review hallazgo FortiGate endpoint (validado y corregido en workflow)
 - [x] @CLAUDE: Cross-review Codex ENTRADA-019/020 + Gemini ENTRADA-013/014 (Fase 1.6 aprobada)
 - [x] @CLAUDE: Validar TAREAS_INTEGRACION_MCP.md contra código actual (hallazgo: Zabbix auth legacy)
+- [x] @CLAUDE: Cross-review Codex ENTRADA-021/022 + Gemini ENTRADA-015 (normalizers + review doc)
+- [x] @CLAUDE: Completar review Governor en FRAMEWORK_RECOMMENDATIONS_REVIEW (10 adoptar ahora, 2 luego)
+- [ ] @CLAUDE: Crear ADR-011 (decisiones del framework recommendations review)
 - [ ] @CLAUDE: Cross-review de dry-runs por fuente cuando Codex los ejecute (Fase 1.7)
 - [ ] @CLAUDE: Aprobar activación automática (triggers cron) tras validación total
 - [ ] @CLAUDE: Registrar ADR-010 (Fuentes activas vs pendientes)

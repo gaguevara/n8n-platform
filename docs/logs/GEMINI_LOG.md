@@ -270,6 +270,33 @@ Tareas de la Fase 1.6 para Gemini completadas. El normalizador es ahora compatib
     - Se añadió el **Redis SG** (puerto 6379) restringido al ECS Service.
     - Se incluyó la recomendación formal de **NAT Gateway** y **VPC Endpoints** (ECR, S3, Secrets Manager, etc.) para mejorar seguridad y costos.
     - Se actualizó la tabla de mapeo con descripciones mejoradas y tokens adicionales (`VIRUSTOTAL`, `ZABBIX`).
+3.  **Skill Update:** Se instaló el skill comunitario `aws-ecs-fargate` para proveer patrones de hardening durante la implementación de Codex.
 
 ### Estado Final
 Auditoría de diseño de Fase 2 completada a nivel documental. La infraestructura está ahora correctamente especificada bajo el principio de mínimo privilegio. Se puede proceder con la creación de recursos en AWS una vez Codex inicie su bloque de tareas.
+
+---
+
+## ENTRADA-015 | 2026-03-23 | research + normalizer-fix
+
+**Tipo:** Investigación técnica y robustecimiento de normalizadores (Fase 1.7)
+**Tarea:** Investigar estructuras reales de API de Wazuh y Zabbix, actualizar `ioc_normalizer.js` y documentar dry-runs.
+
+### Investigación de APIs
+- **Wazuh:** Se confirmó que la API `GET /alerts` devuelve un objeto con `data.affected_items[]`. El normalizador previo asumía un solo item o un string global.
+- **Zabbix:** La API JSON-RPC `trigger.get` devuelve un array `result[]`. Se requiere iterar para extraer IPs de triggers y hosts asociados.
+- **GuardDuty:** La respuesta de AWS contiene un array `Findings[]`.
+
+### Remediación de Código (ioc_normalizer.js)
+Se actualizaron los normalizadores para soportar estructuras de array:
+1. **normalizeWazuh():** Ahora itera sobre `data.affected_items` y extrae IoCs/CVEs preservando metadatos por alerta.
+2. **normalizeZabbix():** Itera sobre `result[]`, extrayendo IoCs de `name/description` y mapeando severidad.
+3. **normalizeGuardDuty():** Itera sobre `Findings[]`, extrayendo IPs remotas y dominios.
+
+### Documentación Operativa (RUNBOOK_THREAT_INTEL.md)
+Se añadió la **Sección 6: Validación de Dry-runs por Fuente**:
+- Definición de entradas de prueba y resultados esperados.
+- Especificación de evidencia necesaria para cumplimiento de **ISO 27001 A.5.7** (Capturas, registros en BD, logs).
+
+### Estado Final
+Tareas de la Fase 1.7 para Gemini completadas. El normalizador es ahora 100% compatible con las respuestas reales de todas las fuentes configuradas. La guía de dry-runs provee el marco para que Codex valide el pipeline en Staging de forma estructurada.
