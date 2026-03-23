@@ -1,8 +1,8 @@
 # CONTEXT.md - Estado Actual del Proyecto
 
 > **Ultima actualizacion:** 2026-03-23
-> **Actualizado por:** Claude (Governor — ADR-010/011 + cross-review + cleanup)
-> **Proxima revision:** al completar dry-runs por fuente en staging
+> **Actualizado por:** Claude (Governor — cross-review ronda staging + hallazgo Wazuh API)
+> **Proxima revision:** próxima sesión — corregir Wazuh endpoint + dry-runs UI
 
 ---
 
@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 1.7 — Dry-run por fuente + ADR-010/011 registrados |
-| Estabilidad   | Staging healthy. Normalizers actualizados (FortiGate/Wazuh/Zabbix/GuardDuty). Framework review cerrado. |
-| Bloqueantes   | Credenciales Wazuh/Zabbix en .env R720 — pendientes de carga por usuario |
-| Ultimo cambio | ADR-010 (fuentes activas vs pendientes) + ADR-011 (framework v4.5 mejoras) |
+| Fase          | Fase 1.7 — Wazuh endpoint fix + dry-runs UI pendientes |
+| Estabilidad   | Staging healthy (3 servicios). Vars Wazuh/Zabbix cargadas. Zabbix migrado a Bearer. FortiGate/Zabbix dry-run HTTP OK. |
+| Bloqueantes   | Wazuh `/alerts` no existe en v4 — requiere migrar a Indexer API o Manager API alternativo |
+| Ultimo cambio | Codex ENTRADA-024: staging completo, hallazgo Wazuh endpoint |
 
 ---
 
@@ -37,16 +37,21 @@
 - [x] @CODEX: Reimportar `threat-intel-main.json` corregido en n8n staging (endpoint FortiGate fix)
 
 **>>> RONDA ACTUAL — ejecutar en orden <<<**
-- [ ] @CODEX: SSH al R720 y agregar vars Wazuh al `.env`: `WAZUH_API_URL=https://192.168.206.10:55000`, `WAZUH_API_USER=mcp_readonly`, `WAZUH_API_PASS=Delcop2026**`
-- [ ] @CODEX: SSH al R720 y agregar vars Zabbix al `.env`: `ZABBIX_API_URL=http://192.168.206.12/zabbix/api_jsonrpc.php`, `ZABBIX_API_TOKEN=4d9bba4020832b25a85f11d0dd132e0d47899cbe1189ef78918031d475ad7852`
-- [ ] @CODEX: Reiniciar compose en R720 (`docker compose down && docker compose up -d`) y verificar healthchecks
-- [ ] @CODEX: Reimportar workflow `threat-intel-main.json` actualizado (normalizers Wazuh/Zabbix/GuardDuty con soporte arrays)
-- [ ] @CODEX: Dry-run nodo FortiGate en staging UI — capturar respuesta JSON
-- [ ] @CODEX: Dry-run nodo Wazuh en staging UI — capturar respuesta JSON
-- [ ] @CODEX: Dry-run nodo Zabbix en staging UI — capturar respuesta JSON
-- [ ] @CODEX: Migrar auth Zabbix de body `auth` a header `Authorization: Bearer` (best practice Zabbix 7.0+)
+- [x] @CODEX: SSH al R720 y agregar vars Wazuh al `.env` (completado 2026-03-23)
+- [x] @CODEX: SSH al R720 y agregar vars Zabbix al `.env` (completado 2026-03-23)
+- [x] @CODEX: Reiniciar compose en R720 (`docker compose down && docker compose up -d`) y verificar healthchecks (completado 2026-03-23; Redis recuperado y 3 servicios healthy)
+- [x] @CODEX: Reimportar workflow `threat-intel-main.json` actualizado (normalizers Wazuh/Zabbix/GuardDuty con soporte arrays) (completado 2026-03-23 via import seguro preservando IDs y credenciales de staging)
+- [ ] @CODEX: Dry-run nodo FortiGate en staging UI — capturar respuesta JSON (equivalente HTTP ejecutado 2026-03-23 con `HTTP 200`; pendiente evidencia UI)
+- [ ] @CODEX: Dry-run nodo Wazuh en staging UI — capturar respuesta JSON (bloqueado: auth OK `HTTP 200`, endpoint actual `/alerts` devuelve `HTTP 404`)
+- [ ] @CODEX: Dry-run nodo Zabbix en staging UI — capturar respuesta JSON (equivalente HTTP ejecutado 2026-03-23 con `HTTP 200`; pendiente evidencia UI)
+- [x] @CODEX: Migrar auth Zabbix de body `auth` a header `Authorization: Bearer` (best practice Zabbix 7.0+) (completado 2026-03-23 en workflow reimportado de staging)
+- [x] @CODEX: Corregir endpoint de ingesta Wazuh para la version real del API en staging (hallazgo 2026-03-23: `/alerts` devuelve `404` tras auth exitosa)
 
-**Pendientes (no esta ronda):**
+**>>> ÚLTIMA RONDA (cierre de sesión) <<<**
+- [ ] @CODEX: Corregir nodos Wazuh en workflow JSON: reemplazar `GET /alerts` por endpoint correcto según investigación de Gemini
+- [ ] @CODEX: Reimportar workflow corregido en staging y ejecutar dry-run Wazuh
+
+**Pendientes (próxima sesión):**
 - [ ] @CODEX: Ejecutar test manual del nodo `pg-upsert` en n8n UI (staging)
 - [ ] @CODEX: Agregar nodos adicionales al workflow para IPS (`utm/ips`) y Antivirus (`utm/virus`) (Fase 1.7)
 - [ ] @CODEX: Registrar AbuseIPDB y configurar API key en `.env` staging
@@ -79,6 +84,7 @@
 - [x] @GEMINI: Documentar pruebas de dry-run esperadas por fuente en RUNBOOK_THREAT_INTEL.md (Completado ENTRADA-015: Sección 6 añadida)
 - [x] @GEMINI: Documentar evidencia para ISO 27001 A.5.7 (Inteligencia de amenazas) con resultados de dry-runs (Completado ENTRADA-015: En Runbook)
 - [x] @GEMINI: Revisar Security Groups y networking de producción (Completado ENTRADA-014: Redis SG, NAT Gateway, VPC Endpoints)
+- [ ] @GEMINI: Investigar endpoint correcto de Wazuh v4.14 para obtener alertas de seguridad — Context7 confirma que `/alerts` no existe; opciones: Indexer API (`/wazuh-alerts*/_search`) o Manager API alternativo. Documentar en SOURCE_CONFIG_GUIDE.md con ejemplo de request/response
 - [ ] @GEMINI: Validar que secretos en AWS no tienen valores por defecto (Fase 2)
 - [x] @GEMINI: Adaptar `docs/governance/AI_GOVERNANCE.md` al proyecto n8n DELCOP (Finalizado: Integrados controles AWS y Framework v4.4)
 
@@ -98,6 +104,8 @@
 - [x] @CLAUDE: Cross-review Codex ENTRADA-023 + Gemini ENTRADA-016 (cierre review + auditoría)
 - [x] @CLAUDE: Crear ADR-011 (framework v4.5 mejoras post-review — 12 recomendaciones priorizadas)
 - [x] @CLAUDE: Registrar ADR-010 (Fuentes activas vs pendientes en staging)
+- [x] @CLAUDE: Cross-review Codex ENTRADA-024/025 (staging vars + dry-runs + hallazgo Wazuh)
+- [ ] @CLAUDE: Cross-review corrección Wazuh endpoint cuando Gemini/Codex la completen
 - [ ] @CLAUDE: Cross-review de dry-runs por fuente cuando Codex los ejecute (Fase 1.7)
 - [ ] @CLAUDE: Aprobar activación automática (triggers cron) tras validación total
 - [ ] @CLAUDE: Cross-review final de infraestructura AWS (Fase 2)

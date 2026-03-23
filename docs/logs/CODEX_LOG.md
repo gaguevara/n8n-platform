@@ -6,6 +6,104 @@
 
 ---
 
+## ENTRADA-025 | 2026-03-23 | staging-post-validation
+
+**Tipo:** Validacion post-cambio
+**Tarea:** Validar la actualizacion de `CONTEXT.md`, `CODEX_LOG.md` y `LOG_INDEX.md` despues de la ronda de staging.
+
+### Archivos afectados
+
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+
+### Comandos ejecutados + output
+
+1. `bash update-agent-context.sh`
+   - Resultado: fallo local por ausencia de `/bin/bash` en esta PC (`execvpe(/bin/bash) failed: No such file or directory`).
+2. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/governance/CONTEXT.md --json`
+   - Resultado: validacion configurada y exitosa para `CONTEXT.md`.
+3. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/logs/CODEX_LOG.md --json`
+   - Resultado: validacion configurada y exitosa para `CODEX_LOG.md`.
+4. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/governance/LOG_INDEX.md --json`
+   - Resultado: validacion configurada y exitosa para `LOG_INDEX.md`.
+5. `git diff --check -- docs/governance/CONTEXT.md docs/logs/CODEX_LOG.md docs/governance/LOG_INDEX.md`
+   - Resultado: sin errores bloqueantes; solo warnings de normalizacion `LF -> CRLF` en el checkout de Windows.
+
+### Estado final
+
+- La evidencia documental del ciclo de staging quedo validada.
+- `CONTEXT.md`, `CODEX_LOG.md` y `LOG_INDEX.md` quedaron coherentes entre si.
+
+### Riesgo residual
+
+- La sincronizacion via `update-agent-context.sh` no pudo ejecutarse en esta maquina por falta de `bash`; no se detectaron inconsistencias inmediatas, pero el paso quedo sin automatizar.
+
+### Harness gap
+
+- El skill `sync-agent-context` asume disponibilidad de `bash`; en esta PC Windows solo quedo disponible la validacion manual/engine.
+
+---
+
+## ENTRADA-024 | 2026-03-23 | staging-vars-and-dry-runs
+
+**Tipo:** Remediacion y validacion de staging
+**Tarea:** Ejecutar la ronda actual de `@CODEX` en staging: cargar vars Wazuh/Zabbix, recuperar Redis, redeployar, reimportar el workflow con auth moderna de Zabbix y ejecutar dry-runs equivalentes por API.
+
+### Archivos afectados
+
+- `docs/governance/CONTEXT.md`
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+- `.tmp/codex-staging/threat-intel-main.before-2026-03-23.json` (temporal, no versionado)
+- `.tmp/codex-staging/threat-intel-main.safe-2026-03-23.json` (temporal, no versionado)
+- Runtime de staging en R720 (`/srv/n8n-platform/.env`, `n8n_staging`)
+
+### Comandos ejecutados + output
+
+1. `git pull --rebase --autostash origin main`, `git status --short --branch`, `Get-Content docs/governance/CONTEXT.md`
+   - Resultado: `Already up to date.` y backlog nuevo de `@CODEX` detectado en `CONTEXT.md`.
+2. `ssh gabo@192.168.0.70 "... docker compose ps -a ..."`
+   - Resultado: `n8n_threat_cache` aparecio en restart loop mientras `n8n_staging` y `n8n_threat_db` seguian arriba.
+3. `docker compose ... logs threat-cache`
+   - Resultado: Redis fallaba con `requirepass wrong number of arguments`; el `.env` remoto no tenia `REDIS_PASSWORD` efectivo.
+4. Actualizacion remota de `/srv/n8n-platform/.env`
+   - Resultado: quedaron cargadas las claves `REDIS_PASSWORD`, `WAZUH_API_*` y `ZABBIX_API_*` sin exponer sus valores en el log.
+5. `ssh gabo@192.168.0.70 "docker compose --env-file .env -f infra/docker-compose.staging.yml down && ... up -d"`
+   - Resultado: redeploy completo; luego `ps -a` mostro `n8n_staging`, `n8n_threat_cache` y `n8n_threat_db` en `healthy`.
+6. `docker exec n8n_staging n8n export:workflow --id=0d5f2e64-... --output=/tmp/threat-intel-main.before-2026-03-23.json`
+   - Resultado: export del workflow actual de staging realizado con exito.
+7. Generacion local de `.tmp/codex-staging/threat-intel-main.safe-2026-03-23.json`
+   - Resultado: variante segura creada a partir del export real de staging, actualizando `code-normalizer`, `code-persist`, `code-alert` desde `app/code-nodes/*` y migrando Zabbix a `Authorization: Bearer`.
+8. `docker cp ... && docker exec n8n_staging n8n import:workflow --input=/tmp/threat-intel-main.safe-2026-03-23.json`
+   - Resultado: `Successfully imported 1 workflow.`
+9. `curl -s http://localhost:5678/healthz`, `docker compose ... ps -a`
+   - Resultado: `{"status":"ok"}` y los 3 servicios de staging quedaron `healthy`.
+10. Dry-run equivalente FortiGate desde R720 via `curl`
+    - Resultado: `HTTP 200`; devolvio JSON real con `results[]` y eventos recientes.
+11. Dry-run equivalente Wazuh auth + alerts
+    - Resultado: auth `HTTP 200` con JWT (`token_len=408`), pero `GET /alerts` devolvio `HTTP 404`.
+12. Dry-run equivalente Zabbix via `Authorization: Bearer`
+    - Resultado: `HTTP 200`; devolvio JSON-RPC con `result[]` y triggers activos.
+
+### Estado final
+
+- Staging quedo recuperado y consistente: Redis sano, compose healthy y `healthz` en `ok`.
+- Se completaron las tareas de vars Wazuh/Zabbix, redeploy, reimport seguro del workflow y migracion de auth Zabbix a Bearer en runtime.
+- FortiGate y Zabbix ya tienen evidencia de respuesta JSON real desde el R720.
+- Wazuh sigue bloqueado en la ingesta de alertas porque el endpoint versionado `/alerts` no existe en la version real del API de staging.
+
+### Riesgo residual
+
+- Los dry-runs pedidos en `CONTEXT.md` siguen pendientes de evidencia en UI; aqui se ejecutaron equivalentes HTTP desde el host.
+- `app/workflows/threat-intel-main.json` en Git aun no refleja automaticamente la variante segura importada en staging.
+- `docs/governance/CONTEXT.md` contiene credenciales en texto plano definidas previamente por otro agente; no se duplicaron en este log, pero conviene sanear esa practica.
+
+### Harness gap
+
+- El flujo de trabajo sigue necesitando una via estandar y repetible para dry-run de nodos n8n en entornos vivos; hoy el sustituto operativo fue `curl` directo a las APIs fuente.
+
+---
+
 ## ENTRADA-023 | 2026-03-23 | framework-review-closure
 
 **Tipo:** Validacion de cierre

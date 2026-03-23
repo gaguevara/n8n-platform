@@ -6,6 +6,39 @@
 
 ---
 
+## ENTRADA-018 | 2026-03-23 | cross-review staging ronda + hallazgo Wazuh
+
+**Tipo:** Cross-review + hallazgo + cierre de sesión
+**Tarea:** Validar Codex ENTRADA-024/025, investigar hallazgo Wazuh `/alerts` 404, generar última ronda.
+
+### Cross-review Codex ENTRADA-024 (staging-vars-and-dry-runs)
+- Vars Wazuh/Zabbix cargadas en .env R720 ✅
+- Redis recuperado (faltaba REDIS_PASSWORD) ✅
+- Workflow reimportado con Zabbix Bearer auth ✅
+- Dry-run FortiGate HTTP 200 ✅
+- Dry-run Zabbix HTTP 200 ✅
+- **Hallazgo:** Wazuh auth OK pero `/alerts` devuelve 404 ⚠️
+
+### Cross-review Codex ENTRADA-025 (staging-post-validation)
+- Validación documental del ciclo OK ✅
+- Harness gap: `update-agent-context.sh` falla en Windows (no bash) — documentado
+
+### Investigación Wazuh (Context7)
+- Wazuh v4 **no tiene endpoint `/alerts`** en el Manager API
+- Alertas se obtienen vía **Indexer API** (`POST /wazuh-alerts*/_search` en puerto 9200)
+- Alternativa: usar endpoints específicos del Manager API (`/vulnerability`, `/syscheck`, `/sca`)
+- Tarea asignada a @GEMINI para investigar el enfoque correcto para v4.14
+
+### Tareas última ronda
+- @GEMINI: investigar endpoint correcto Wazuh v4.14
+- @CODEX: corregir nodos Wazuh en workflow + reimportar + dry-run
+- @CLAUDE: cross-review de la corrección
+
+### Harness gap
+- Hallazgo similar al de FortiGate: endpoints asumidos en diseño original no coinciden con la API real. El framework debería incluir validación de endpoints como paso previo al dry-run.
+
+---
+
 ## ENTRADA-017 | 2026-03-23 | ADR-010/011 + cross-review + cleanup
 
 **Tipo:** Gobernanza + cross-review + mantenimiento
