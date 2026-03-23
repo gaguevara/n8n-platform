@@ -6,6 +6,30 @@
 
 ---
 
+## ENTRADA-019 | 2026-03-23 | cross-review Wazuh fix — cierre de sesión
+
+**Tipo:** Cross-review final de sesión
+**Tarea:** Validar corrección Wazuh (Codex ENTRADA-026 + Gemini ENTRADA-017).
+
+### Cross-review aprobado
+- **Workflow:** Wazuh migrado de `GET /alerts` (404) a `POST /wazuh-alerts-*/_search` (Indexer API) ✅
+- **Auth:** De JWT (Manager) a Basic Auth (Indexer) via `WAZUH_INDEXER_BASIC_AUTH` ✅
+- **Conexiones:** Cron → directo a GET Wazuh Alerts (nodo auth marcado DEPRECATED) ✅
+- **Workflow desactivado** en staging — no más crash loop ✅
+- **.env.example** y **.env.staging.example** actualizados con `WAZUH_INDEXER_URL` y `WAZUH_INDEXER_BASIC_AUTH` ✅
+- **SOURCE_CONFIG_GUIDE.md:** Indexer API documentado con ejemplo de payload ✅
+
+### Estado al cierre de sesión
+- Staging: healthy, workflow desactivado, listo para dry-runs manuales
+- FortiGate/Zabbix: dry-run HTTP exitoso, pendiente evidencia UI
+- Wazuh: workflow corregido, pendiente validar URL/credencial Indexer desde R720
+- Framework review v4.4 cerrado, ADR-010/011 registrados
+
+### Harness gap
+- Ninguno nuevo.
+
+---
+
 ## ENTRADA-018 | 2026-03-23 | cross-review staging ronda + hallazgo Wazuh
 
 **Tipo:** Cross-review + hallazgo + cierre de sesión

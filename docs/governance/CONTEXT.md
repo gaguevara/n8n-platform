@@ -1,8 +1,8 @@
 # CONTEXT.md - Estado Actual del Proyecto
 
 > **Ultima actualizacion:** 2026-03-23
-> **Actualizado por:** Claude (Governor — cross-review ronda staging + hallazgo Wazuh API)
-> **Proxima revision:** próxima sesión — corregir Wazuh endpoint + dry-runs UI
+> **Actualizado por:** Codex (Implementer — fix Wazuh Indexer + reimport desactivado)
+> **Proxima revision:** próxima sesión — dry-runs UI y validación de endpoint/credencial efectiva del Indexer Wazuh
 
 ---
 
@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 1.7 — Wazuh endpoint fix + dry-runs UI pendientes |
-| Estabilidad   | Staging healthy (3 servicios). Vars Wazuh/Zabbix cargadas. Zabbix migrado a Bearer. FortiGate/Zabbix dry-run HTTP OK. |
-| Bloqueantes   | Wazuh `/alerts` no existe en v4 — requiere migrar a Indexer API o Manager API alternativo |
-| Ultimo cambio | Codex ENTRADA-024: staging completo, hallazgo Wazuh endpoint |
+| Fase          | Fase 1.7 — workflow staging desactivado y Wazuh migrado a diseño Indexer; dry-runs UI pendientes |
+| Estabilidad   | Staging healthy (3 servicios). Workflow principal reimportado desactivado. Zabbix usa Bearer. Wazuh en JSON ya apunta a Indexer API. |
+| Bloqueantes   | Falta validar URL/credencial efectiva del Wazuh Indexer accesible desde R720 para ejecutar dry-run real |
+| Ultimo cambio | Codex ENTRADA-026: workflow desactivado, JSON Wazuh corregido e import seguro aplicado en staging |
 
 ---
 
@@ -42,17 +42,17 @@
 - [x] @CODEX: Reiniciar compose en R720 (`docker compose down && docker compose up -d`) y verificar healthchecks (completado 2026-03-23; Redis recuperado y 3 servicios healthy)
 - [x] @CODEX: Reimportar workflow `threat-intel-main.json` actualizado (normalizers Wazuh/Zabbix/GuardDuty con soporte arrays) (completado 2026-03-23 via import seguro preservando IDs y credenciales de staging)
 - [ ] @CODEX: Dry-run nodo FortiGate en staging UI — capturar respuesta JSON (equivalente HTTP ejecutado 2026-03-23 con `HTTP 200`; pendiente evidencia UI)
-- [ ] @CODEX: Dry-run nodo Wazuh en staging UI — capturar respuesta JSON (bloqueado: auth OK `HTTP 200`, endpoint actual `/alerts` devuelve `HTTP 404`)
+- [ ] @CODEX: Dry-run nodo Wazuh en staging UI — capturar respuesta JSON (bloqueado: el workflow ya apunta al Indexer API, pero falta validar la URL/credencial efectiva accesible desde el R720)
 - [ ] @CODEX: Dry-run nodo Zabbix en staging UI — capturar respuesta JSON (equivalente HTTP ejecutado 2026-03-23 con `HTTP 200`; pendiente evidencia UI)
 - [x] @CODEX: Migrar auth Zabbix de body `auth` a header `Authorization: Bearer` (best practice Zabbix 7.0+) (completado 2026-03-23 en workflow reimportado de staging)
 - [x] @CODEX: Corregir endpoint de ingesta Wazuh para la version real del API en staging (hallazgo 2026-03-23: `/alerts` devuelve `404` tras auth exitosa)
 
 **>>> ÚLTIMA RONDA (cierre de sesión) <<<**
-- [ ] @CODEX: **URGENTE** — Desactivar workflow en n8n staging UI (está crasheando en loop por cron triggers activos)
-- [ ] @CODEX: Corregir nodos Wazuh en workflow JSON según investigación de Gemini
-- [ ] @CODEX: Reimportar workflow corregido en staging (desactivado) para dry-runs manuales
-- [ ] @GEMINI: Investigar endpoint correcto Wazuh v4.14 para alertas — Context7 confirma que `/alerts` no existe; documentar en SOURCE_CONFIG_GUIDE.md
-- [ ] @CLAUDE: Cross-review de la corrección Wazuh cuando se complete
+- [x] @CODEX: **URGENTE** — Desactivar workflow en n8n staging UI (completado 2026-03-23 via `n8n unpublish:workflow`; export verificado con `active:false`)
+- [x] @CODEX: Corregir nodos Wazuh en workflow JSON según investigación de Gemini (completado 2026-03-23: migrado a Indexer API `wazuh-alerts-*/_search`)
+- [x] @CODEX: Reimportar workflow corregido en staging (desactivado) para dry-runs manuales (completado 2026-03-23 via import seguro preservando IDs/credenciales)
+- [x] @GEMINI: Investigar endpoint correcto Wazuh v4.14 para alertas — Context7 confirma que `/alerts` no existe; documentado en SOURCE_CONFIG_GUIDE.md (Completado ENTRADA-017: Indexer API puerto 9200 identificado)
+- [x] @CLAUDE: Cross-review corrección Wazuh — Codex 026 + Gemini 017 aprobados (Indexer API, workflow desactivado, .env actualizado)
 
 **Pendientes (próxima sesión):**
 - [ ] @CODEX: Ejecutar test manual del nodo `pg-upsert` en n8n UI (staging)

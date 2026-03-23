@@ -66,6 +66,32 @@ Crear una política con las siguientes acciones permitidas:
 2. Mapear el usuario al rol de Indexer y a la política de API.
 3. Verificar en `/usr/share/wazuh-dashboard/data/wazuh/config/wazuh.yml` que `run_as: true` esté configurado si se accede via Dashboard.
 
+### 2.4 Endpoints de Alertas (Wazuh v4.x)
+En Wazuh v4, el **Manager API (puerto 55000)** no provee un endpoint para buscar alertas históricas. Se debe consultar directamente el **Indexer API (puerto 9200)**.
+
+| Requisito | Valor |
+|---|---|
+| **Endpoint** | `POST https://<WAZUH_INDEXER_IP>:9200/wazuh-alerts-*/_search` |
+| **Auth** | Basic Auth (usuario mapeado en sección 2.3) |
+| **Header** | `Content-Type: application/json` |
+
+**Ejemplo de Payload para n8n (JSON):**
+```json
+{
+  "size": 100,
+  "sort": [ { "timestamp": { "order": "desc" } } ],
+  "query": {
+    "bool": {
+      "must": [
+        { "range": { "rule.level": { "gte": 7 } } },
+        { "range": { "timestamp": { "gte": "now-15m" } } }
+      ]
+    }
+  }
+}
+```
+*Nota: El campo `rule.level` >= 7 filtra eventos de seguridad relevantes.*
+
 ---
 
 ## 3. Zabbix (API Tokens)

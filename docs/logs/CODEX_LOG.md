@@ -6,6 +6,78 @@
 
 ---
 
+## ENTRADA-026 | 2026-03-23 | wazuh-indexer-fix
+
+**Tipo:** Remediacion de workflow + validacion de staging
+**Tarea:** Desactivar el workflow principal en staging, corregir Wazuh hacia Indexer API segun Gemini, reimportar el workflow desactivado y validar que el stack siguiera sano.
+
+### Archivos afectados
+
+- `app/workflows/threat-intel-main.json`
+- `.env.example`
+- `.env.staging.example`
+- `docs/governance/CONTEXT.md`
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+- `.tmp/codex-staging/codex-unpublish-check.json` (temporal, no versionado)
+- `.tmp/codex-staging/threat-intel-main.wazuh-indexer-2026-03-23.json` (temporal, no versionado)
+- `.tmp/codex-staging/threat-intel-main.verify-2026-03-23.json` (temporal, no versionado)
+- Runtime de staging en R720 (`n8n_staging`)
+
+### Comandos ejecutados + output
+
+1. `Get-Content .tmp/codex-staging/codex-unpublish-check.json`
+   - Resultado: evidencia local de export con `active:false`; el workflow ya estaba despublicado.
+2. `scp .tmp/codex-staging/threat-intel-main.wazuh-indexer-2026-03-23.json gabo@192.168.0.70:/home/gabo/`
+   - Resultado: archivo de import seguro copiado al R720.
+3. `ssh gabo@192.168.0.70 'docker cp ... && docker exec n8n_staging n8n import:workflow --input=/tmp/threat-intel-main.wazuh-indexer-2026-03-23.json && docker exec n8n_staging n8n export:workflow --id=0d5f2e64-... --output=/tmp/threat-intel-main.verify-2026-03-23.json'`
+   - Resultado: `Successfully imported 1 workflow.` y `Successfully exported 1 workflow.`
+4. `scp gabo@192.168.0.70:/home/gabo/threat-intel-main.verify-2026-03-23.json .tmp/codex-staging/threat-intel-main.verify-2026-03-23.json`
+   - Resultado: export de verificacion descargado al workspace.
+5. `python -` sobre `.tmp/codex-staging/threat-intel-main.verify-2026-03-23.json`
+   - Resultado: verificado que el export contiene `DEPRECATED Wazuh Manager Auth`, `WAZUH_INDEXER_URL`, `WAZUH_INDEXER_BASIC_AUTH`, `wazuh-alerts-*/_search` y `\"active\":false`.
+6. `ssh gabo@192.168.0.70 "curl -s http://localhost:5678/healthz"`
+   - Resultado: `{"status":"ok"}`.
+7. `ssh gabo@192.168.0.70 "docker compose --env-file /srv/n8n-platform/.env -f /srv/n8n-platform/infra/docker-compose.staging.yml ps -a"`
+   - Resultado: `n8n_staging`, `n8n_threat_cache` y `n8n_threat_db` permanecieron `healthy`.
+8. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate app/workflows/threat-intel-main.json --json`
+   - Resultado: validacion exitosa del workflow versionado.
+9. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/governance/CONTEXT.md --json`
+   - Resultado: validacion exitosa de `CONTEXT.md`.
+10. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/logs/CODEX_LOG.md --json`
+    - Resultado: validacion exitosa de `CODEX_LOG.md`.
+11. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/governance/LOG_INDEX.md --json`
+    - Resultado: validacion exitosa de `LOG_INDEX.md`.
+12. `python -m json.tool app/workflows/threat-intel-main.json`
+    - Resultado: JSON valido.
+13. `git diff --check -- app/workflows/threat-intel-main.json .env.example .env.staging.example docs/governance/CONTEXT.md docs/logs/CODEX_LOG.md docs/governance/LOG_INDEX.md`
+    - Resultado: sin errores bloqueantes; solo warnings de normalizacion `LF -> CRLF` en el checkout de Windows.
+14. `detect-secrets scan --baseline .secrets.baseline`
+    - Resultado: `detect-secrets` no disponible en esta PC; se realizo revision manual de los cambios y no se introdujeron secretos reales.
+15. `Test-Path AGENTS.md`, `Test-Path CLAUDE.md`, `Test-Path GEMINI.md`
+    - Resultado: los 3 entrypoints de agentes existen en la raiz del repo.
+16. `bash update-agent-context.sh`
+    - Resultado: fallo local por ausencia de `/bin/bash` en esta PC Windows (`execvpe(/bin/bash) failed: No such file or directory`).
+17. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status`
+    - Resultado: el engine parseo correctamente `CLAUDE #18`, `CODEX #26` y `GEMINI #17`.
+
+### Estado final
+
+- El workflow principal de staging quedo confirmado como desactivado y ya no entra en loop por cron.
+- El JSON versionado migro Wazuh al Indexer API documentado por Gemini.
+- Se agrego el contrato de entorno minimo para Wazuh (`WAZUH_INDEXER_URL`, `WAZUH_INDEXER_BASIC_AUTH`) en los ejemplos.
+- El import seguro se aplico al R720 preservando IDs y credenciales existentes, sin reactivar el workflow.
+- Staging continuo sano despues del cambio.
+
+### Riesgo residual
+
+- Aun falta la URL/credencial efectiva del Wazuh Indexer accesible desde el R720 para ejecutar dry-run real del nodo.
+- `app/workflows/threat-intel-main.json` sigue teniendo placeholders historicos fuera del alcance de esta ronda (por ejemplo credenciales y error workflow), mientras staging usa un import seguro derivado del export real.
+
+### Harness gap
+
+- Validar un workflow n8n vivo desde Windows sigue requiriendo export/import temporal y verificaciones auxiliares; no hay una via local simple para inspeccionar el contenido remoto sin pelear con quoting entre PowerShell, SSH y `sh -lc`.
+
 ## ENTRADA-025 | 2026-03-23 | staging-post-validation
 
 **Tipo:** Validacion post-cambio

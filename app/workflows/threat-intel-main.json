@@ -108,30 +108,26 @@
         "options": { "timeout": 15000 }
       },
       "id": "http-wazuh-auth",
-      "name": "Wazuh Auth",
+      "name": "DEPRECATED Wazuh Manager Auth",
       "type": "n8n-nodes-base.httpRequest",
       "position": [350, 250],
       "typeVersion": 4.2,
-      "notes": "Obtiene JWT token de Wazuh API"
+      "notes": "No usar para alertas historicas en Wazuh v4. El endpoint /alerts del Manager API ya no existe."
     },
     {
       "parameters": {
-        "method": "GET",
-        "url": "={{ $env.WAZUH_API_URL }}/alerts",
+        "method": "POST",
+        "url": "={{ $env.WAZUH_INDEXER_URL }}/wazuh-alerts-*/_search",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "Bearer {{ $json.data.token }}" }
+            { "name": "Authorization", "value": "={{ $env.WAZUH_INDEXER_BASIC_AUTH }}" },
+            { "name": "Content-Type", "value": "application/json" }
           ]
         },
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            { "name": "limit", "value": "500" },
-            { "name": "sort", "value": "-timestamp" },
-            { "name": "q", "value": "rule.level>7" }
-          ]
-        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ size: 100, sort: [{ timestamp: { order: 'desc' } }], query: { bool: { must: [{ range: { 'rule.level': { gte: 7 } } }, { range: { timestamp: { gte: 'now-15m' } } }] } } }) }}",
         "options": { "timeout": 30000 },
         "continueOnFail": true
       },
@@ -140,7 +136,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "position": [550, 300],
       "typeVersion": 4.2,
-      "notes": "Filtra alertas nivel > 7 (medium+). Wazuh levels: 0-3 info, 4-7 low, 8-11 high, 12-15 critical"
+      "notes": "Wazuh v4 usa el Indexer API (OpenSearch) para alertas historicas. Requiere WAZUH_INDEXER_URL y WAZUH_INDEXER_BASIC_AUTH."
     },
     {
       "parameters": {
@@ -469,8 +465,7 @@
   ],
   "connections": {
     "Cron: FortiGate (5min)": { "main": [[{ "node": "GET FortiGate Logs", "type": "main", "index": 0 }]] },
-    "Cron: Wazuh (2min)": { "main": [[{ "node": "Wazuh Auth", "type": "main", "index": 0 }]] },
-    "Wazuh Auth": { "main": [[{ "node": "GET Wazuh Alerts", "type": "main", "index": 0 }]] },
+    "Cron: Wazuh (2min)": { "main": [[{ "node": "GET Wazuh Alerts", "type": "main", "index": 0 }]] },
     "Cron: GuardDuty (5min)": { "main": [[{ "node": "GET GuardDuty Findings", "type": "main", "index": 0 }]] },
     "Cron: Zabbix (5min)": { "main": [[{ "node": "GET Zabbix Triggers", "type": "main", "index": 0 }]] },
     "Cron: OSINT Feeds (15min)": { "main": [[{ "node": "GET AbuseIPDB Blacklist", "type": "main", "index": 0 }, { "node": "GET OTX Pulses", "type": "main", "index": 0 }]] },

@@ -319,3 +319,22 @@ Tareas de la Fase 1.7 para Gemini completadas. El normalizador es ahora 100% com
 
 ### Estado Final
 Sesión de validación completada. El repositorio está en un estado estable y coherente. El agente queda a la espera de la creación de recursos en AWS por parte de Codex para iniciar la auditoría de secretos de Fase 2.
+
+---
+
+## ENTRADA-017 | 2026-03-23 | research + api-fix
+
+**Tipo:** Investigación técnica de API
+**Tarea:** Investigar endpoint correcto de Wazuh v4.14 para obtener alertas de seguridad (Hallazgo Governor ENTRADA-018).
+
+### Hallazgos de la Investigación
+1.  **Manager API (Puerto 55000):** Se confirmó vía Context7 y documentación oficial que el Manager API **no tiene un endpoint de búsqueda de alertas históricas** (`/alerts` devuelve 404). Está limitado a gestión de agentes y configuración.
+2.  **Indexer API (Puerto 9200):** Las alertas de seguridad se almacenan en OpenSearch. El endpoint correcto para ingesta en n8n es `POST https://<WAZUH_INDEXER_IP>:9200/wazuh-alerts-*/_search`.
+3.  **Método de Consulta:** Se debe usar OpenSearch DSL. Para el pipeline de TI, se recomienda filtrar por `rule.level >= 7` y un rango de tiempo relativo (ej. `now-15m`).
+
+### Acciones Ejecutadas
+1.  **Actualización Documental:** Se añadió la sección **2.4 Endpoints de Alertas (Wazuh v4.x)** en `docs/knowledge/SOURCE_CONFIG_GUIDE.md`, incluyendo el endpoint del Indexer, requisitos de auth y un ejemplo de payload JSON para n8n.
+2.  **Recomendación Técnica:** Codex debe actualizar el nodo HTTP de Wazuh en el workflow principal para apuntar al puerto 9200 y usar el nuevo payload de búsqueda.
+
+### Estado Final
+Investigación de Wazuh v4.14 completada. Bloqueo de ingesta resuelto a nivel de diseño. Se entrega la guía técnica para que Codex aplique la corrección en el workflow.
