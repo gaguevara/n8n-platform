@@ -6,6 +6,28 @@
 
 ---
 
+## ENTRADA-017 | 2026-03-23 | ADR-010/011 + cross-review + cleanup
+
+**Tipo:** Gobernanza + cross-review + mantenimiento
+**Tarea:** Crear ADR-010/011, validar Codex ENTRADA-023 y Gemini ENTRADA-016, limpiar .gitignore.
+
+### ADRs registrados
+- **ADR-010:** Fuentes activas vs pendientes en staging — clasificación incremental
+- **ADR-011:** Framework v4.5 mejoras post-review — 12 recomendaciones priorizadas (unanimidad 9/12)
+
+### Cross-reviews aprobados
+- Codex ENTRADA-023: cierre del framework review, sin tareas pendientes ✅
+- Gemini ENTRADA-016: auditoría de sesión, hallazgo `.agent/` duplicado ✅
+
+### Mantenimiento
+- `.gitignore`: agregado `.agent/` (directorio de Codex CLI, no trackeado)
+- Harness gap de Gemini atendido: duplicidad `.agent/` vs `.agents/` resuelta
+
+### Harness gap
+- Codex señala que el framework no tiene marcador explícito de "review cerrado" — se infiere de logs + CONTEXT + documento. Considerar para v4.5.
+
+---
+
 ## ENTRADA-016 | 2026-03-23 | framework-recommendations-review + cross-review
 
 **Tipo:** Review de recomendaciones + cross-review multi-agente

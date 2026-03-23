@@ -71,6 +71,7 @@ __pycache__/
 .claude/settings.local.json
 
 # Community skills (installed per-project via npx skills add)
+.agent/
 .agents/
 .continue/
 skills-lock.json

@@ -10,8 +10,8 @@
 
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
-| CLAUDE | ENTRADA-016 | docs/logs/CLAUDE_LOG.md | 2026-03-23 |
-| CODEX  | ENTRADA-022 | docs/logs/CODEX_LOG.md  | 2026-03-23 |
+| CLAUDE | ENTRADA-017 | docs/logs/CLAUDE_LOG.md | 2026-03-23 |
+| CODEX  | ENTRADA-023 | docs/logs/CODEX_LOG.md  | 2026-03-23 |
 | GEMINI | ENTRADA-015 | docs/logs/GEMINI_LOG.md | 2026-03-23 |
 
 ---
@@ -36,6 +36,7 @@
 | ENTRADA-014 | CLAUDE | integration-mcp     | Validación TAREAS_INTEGRACION_MCP y ADR-011 (Context7/skills.sh) | 2026-03-23 |
 | ENTRADA-015 | CLAUDE | phase-1.7-update    | Replanificación Fase 1.7 (Enriquecimiento TI) y validación diseño AWS | 2026-03-23 |
 | ENTRADA-016 | CLAUDE | framework-review + cross-review | Review Governor completado (10 adoptar ahora, 2 luego) + cross-review Codex 021/022 + Gemini 015 | 2026-03-23 |
+| ENTRADA-017 | CLAUDE | ADR-010/011 + cleanup | ADR-010 (fuentes activas), ADR-011 (framework v4.5), cross-review Codex 023 + Gemini 016, .gitignore fix | 2026-03-23 |
 | ENTRADA-001 | CODEX  | exploration         | Mapeo read-only del repo y superficies DevOps                     | 2026-03-17 |
 | ENTRADA-002 | CODEX  | validation          | Validacion compose/scripts/pre-commit y ajustes minimos           | 2026-03-17 |
 | ENTRADA-003 | CODEX  | runtime-validation  | Levantamiento local de n8n, healthcheck y hadolint real           | 2026-03-17 |
@@ -58,6 +59,7 @@
 | ENTRADA-020 | CODEX  | sync-and-start | `git pull` confirmado sin cambios nuevos y arranque paralelo de revisión Fase 2 tipo Gemini | 2026-03-22 |
 | ENTRADA-021 | CODEX  | framework-review-request | Documento de review multi-agente para recomendaciones del framework con identidad explicita del proyecto `n8n-platform` | 2026-03-23 |
 | ENTRADA-022 | CODEX  | framework-review-validation | Validacion del review multi-agente y cierre de la seccion Codex en `FRAMEWORK_RECOMMENDATIONS_REVIEW_n8n-platform.md` | 2026-03-23 |
+| ENTRADA-023 | CODEX  | framework-review-closure | Validacion final del cierre multi-agente del review y confirmacion de que el siguiente paso operativo es `ADR-011` de Claude | 2026-03-23 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
 | ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |

@@ -17,6 +17,8 @@
 | ADR-007 | Scoring determinístico de IoCs                   | 2026-03-18 | Activa   | Claude         |
 | ADR-008 | Code-nodes versionados como source of truth      | 2026-03-18 | Activa   | Claude         |
 | ADR-009 | Infraestructura AWS: ECS + RDS + Secrets Manager | 2026-03-20 | Activa   | Claude         |
+| ADR-010 | Fuentes activas vs pendientes en staging        | 2026-03-23 | Activa   | Claude         |
+| ADR-011 | Framework v4.5: mejoras post-review multi-agente | 2026-03-23 | Activa   | Claude + Codex + Gemini |
 
 ---
 
@@ -79,6 +81,37 @@
 - **Consecuencia:** Infraestructura reproducible, secretos nunca en texto plano, escalamiento automático disponible.
 - **Referencia:** `docs/sdlc/SPEC_AWS_PRODUCTION.md` (aprobado por Claude, ENTRADA-008)
 
+### [ADR-010] Fuentes activas vs pendientes en staging
+- **Contexto:** El pipeline TI tiene 7 fuentes configuradas, pero no todas tienen credenciales validadas en staging.
+- **Decisión:** Clasificar fuentes en dos grupos para activación incremental:
+  - **Activas (credenciales validadas):** FortiGate (API key + endpoint corregido), Wazuh (JWT auth, .env pendiente de carga), Zabbix (JSON-RPC, .env pendiente de carga), GuardDuty (AWS nativo)
+  - **Pendientes de registro:** AbuseIPDB (requiere cuenta), OTX AlienVault (requiere cuenta)
+  - **Pendiente de configuración:** Trellix ePO (IMAP)
+- **Consecuencia:** Los dry-runs se ejecutan incrementalmente conforme las credenciales estén disponibles. No se bloquea el pipeline por fuentes no críticas.
+
+### [ADR-011] Framework v4.5: mejoras post-review multi-agente
+- **Contexto:** Tras 8 días de uso del framework v4.2→v4.4 en n8n-platform, se identificaron 12 mejoras. Los 3 agentes evaluaron cada una en `FRAMEWORK_RECOMMENDATIONS_REVIEW_n8n-platform.md`.
+- **Decisión:** Adoptar las siguientes mejoras en el framework, organizadas por prioridad:
+  - **Inmediatas (v4.5):**
+    - M-001: Logs append-only — nunca editar entradas previas
+    - M-002: Anti-rewrite en PROJECT_RULES — agregar al final, no reemplazar secciones
+    - M-003: Verificación de proyecto correcto en bootstrap (adapter.project_name vs directorio)
+    - M-005: Documentar tooling externo (Context7, skills.sh) en overlays/bootstrap
+    - M-006: CONTEXT.md con anchors fijos `### @AGENTE - Rol` generados por adapt-project
+    - G-001: Patrón "insert after anchor" para ediciones seguras en Markdown
+  - **Corto plazo (v4.5):**
+    - M-004: adapt-project genera rutas reales del proyecto
+    - C-001: Clasificación de cambios runtime vs git-trackeados
+    - C-002: Dry-run estándar vía webhook dedicado (no `n8n execute`)
+    - G-002: FRAMEWORK_CAPABILITIES.md generado por adapt-project
+  - **Medio plazo (v4.6):**
+    - M-007: Verificación explícita de remote antes de git pull
+    - M-008: Comando `validate-log` en engine para detección de truncados
+- **Alternativas descartadas:** Ninguna recomendación fue descartada — todas tienen evidencia de bugs reales (B-006 a B-009).
+- **Consecuencia:** El framework gana protección mecánica contra los errores más frecuentes de los agentes. Las mejoras son incrementales y retrocompatibles.
+- **Referencia:** `FRAMEWORK_RECOMMENDATIONS_REVIEW_n8n-platform.md`, `FRAMEWORK_REVIEW_v4.4.md`
+- **Votación:** Unanimidad en 9/12 recomendaciones, mayoría 2/3 en las 3 restantes (M-004, G-002 subidas a "ahora" por el Governor).
+
 ---
 
-*Última actualización: 2026-03-20 — Claude (Governor)*
+*Última actualización: 2026-03-23 — Claude (Governor)*

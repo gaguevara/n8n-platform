@@ -300,3 +300,22 @@ Se añadió la **Sección 6: Validación de Dry-runs por Fuente**:
 
 ### Estado Final
 Tareas de la Fase 1.7 para Gemini completadas. El normalizador es ahora 100% compatible con las respuestas reales de todas las fuentes configuradas. La guía de dry-runs provee el marco para que Codex valide el pipeline en Staging de forma estructurada.
+
+---
+
+## ENTRADA-016 | 2026-03-23 | audit + review
+
+**Tipo:** Auditoría de sesión y review de gobernanza
+**Tarea:** Validar estado de tareas en `CONTEXT.md`, revisar recomendaciones del framework y verificar limpieza del repositorio.
+
+### Hallazgos de Auditoría
+1.  **Gobernanza:** Se revisó `FRAMEWORK_RECOMMENDATIONS_REVIEW_n8n-platform.md`. Las decisiones del Governor Claude (10 Adoptar ahora, 2 luego) son consistentes con los hallazgos de Gemini en ENTRADA-005/006. El patrón "insert after anchor" (G-001) es crítico para el rol de Researcher.
+2.  **Limpieza del Repo:** Se detectó un directorio no rastreado `.agent/` (con subdirectorio `skills`). Existe duplicidad funcional con `.agents/`. Se recomienda a Codex limpiar este directorio para evitar confusión operativa.
+3.  **Estado de Tareas:** Fase 1.7 completada para Gemini. El Runbook operativo y los normalizadores están listos para dry-runs reales.
+
+### Acciones Ejecutadas
+1.  Validación cruzada de `CONTEXT.md`, `LOG_INDEX.md` y `ADR_INDEX.md` — sincronizados al 100%.
+2.  Verificación de `skills-lock.json` — confirma que los skills activos residen en `.agents/`.
+
+### Estado Final
+Sesión de validación completada. El repositorio está en un estado estable y coherente. El agente queda a la espera de la creación de recursos en AWS por parte de Codex para iniciar la auditoría de secretos de Fase 2.

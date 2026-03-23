@@ -1,8 +1,8 @@
 # CONTEXT.md - Estado Actual del Proyecto
 
-> **Ultima actualizacion:** 2026-03-22
-> **Actualizado por:** Claude (Governor — Cross-review Fase 1.6 + tareas Fase 1.7)
-> **Proxima revision:** al completar dry-runs de todas las fuentes + credenciales Wazuh/Zabbix
+> **Ultima actualizacion:** 2026-03-23
+> **Actualizado por:** Claude (Governor — ADR-010/011 + cross-review + cleanup)
+> **Proxima revision:** al completar dry-runs por fuente en staging
 
 ---
 
@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 1.7 — Dry-run por fuente + preparación Fase 2 AWS |
-| Estabilidad   | Staging healthy (R720). FortiGate corregido+reimportado. Normalizer UTM actualizado. |
-| Bloqueantes   | Credenciales Wazuh y Zabbix — pendientes del usuario |
-| Ultimo cambio | Cross-review Codex ENTRADA-019/020 + Gemini ENTRADA-013/014 aprobados |
+| Fase          | Fase 1.7 — Dry-run por fuente + ADR-010/011 registrados |
+| Estabilidad   | Staging healthy. Normalizers actualizados (FortiGate/Wazuh/Zabbix/GuardDuty). Framework review cerrado. |
+| Bloqueantes   | Credenciales Wazuh/Zabbix en .env R720 — pendientes de carga por usuario |
+| Ultimo cambio | ADR-010 (fuentes activas vs pendientes) + ADR-011 (framework v4.5 mejoras) |
 
 ---
 
@@ -91,10 +91,11 @@
 - [x] @CLAUDE: Validar TAREAS_INTEGRACION_MCP.md contra código actual (hallazgo: Zabbix auth legacy)
 - [x] @CLAUDE: Cross-review Codex ENTRADA-021/022 + Gemini ENTRADA-015 (normalizers + review doc)
 - [x] @CLAUDE: Completar review Governor en FRAMEWORK_RECOMMENDATIONS_REVIEW (10 adoptar ahora, 2 luego)
-- [ ] @CLAUDE: Crear ADR-011 (decisiones del framework recommendations review)
+- [x] @CLAUDE: Cross-review Codex ENTRADA-023 + Gemini ENTRADA-016 (cierre review + auditoría)
+- [x] @CLAUDE: Crear ADR-011 (framework v4.5 mejoras post-review — 12 recomendaciones priorizadas)
+- [x] @CLAUDE: Registrar ADR-010 (Fuentes activas vs pendientes en staging)
 - [ ] @CLAUDE: Cross-review de dry-runs por fuente cuando Codex los ejecute (Fase 1.7)
 - [ ] @CLAUDE: Aprobar activación automática (triggers cron) tras validación total
-- [ ] @CLAUDE: Registrar ADR-010 (Fuentes activas vs pendientes)
 - [ ] @CLAUDE: Cross-review final de infraestructura AWS (Fase 2)
 - [ ] @CLAUDE: Auditar ECS Task Definition para uso de Secrets Manager (Fase 2)
 - [ ] @CLAUDE: Actualizar CONTEXT_SECURITY.md con estado real de producción (Fase 2)
@@ -120,6 +121,8 @@
 | ADR-005 | 2026-03-17 | SPEC_STAGING_PIPELINE aprobada | Claude |
 | ADR-008 | 2026-03-18 | Code-nodes embebidos en JSON para n8n | Claude |
 | ADR-009 | 2026-03-20 | Estrategia AWS (ECS Fargate + RDS + Secrets Manager) | Claude |
+| ADR-010 | 2026-03-23 | Fuentes activas vs pendientes en staging | Claude |
+| ADR-011 | 2026-03-23 | Framework v4.5: mejoras post-review multi-agente | Claude + Codex + Gemini |
 
 ---
 
