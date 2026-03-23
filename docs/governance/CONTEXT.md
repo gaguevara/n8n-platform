@@ -1,8 +1,8 @@
 # CONTEXT.md - Estado Actual del Proyecto
 
 > **Ultima actualizacion:** 2026-03-23
-> **Actualizado por:** Codex (Implementer — fix Wazuh Indexer + reimport desactivado)
-> **Proxima revision:** próxima sesión — dry-runs UI y validación de endpoint/credencial efectiva del Indexer Wazuh
+> **Actualizado por:** Claude (Governor — 3 rondas autónomas distribuidas)
+> **Proxima revision:** al completar Ronda 3 — usuario revisa resultados consolidados
 
 ---
 
@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 1.7 — workflow staging desactivado y Wazuh migrado a diseño Indexer; dry-runs UI pendientes |
-| Estabilidad   | Staging healthy (3 servicios). Workflow principal reimportado desactivado. Zabbix usa Bearer. Wazuh en JSON ya apunta a Indexer API. |
-| Bloqueantes   | Falta validar URL/credencial efectiva del Wazuh Indexer accesible desde R720 para ejecutar dry-run real |
-| Ultimo cambio | Codex ENTRADA-026: workflow desactivado, JSON Wazuh corregido e import seguro aplicado en staging |
+| Fase          | Fase 1.8 — 3 rondas autónomas: hardening + workflow UTM + validación E2E |
+| Estabilidad   | Staging healthy (3 servicios). Workflow desactivado. Wazuh migrado a Indexer API. |
+| Bloqueantes   | Ninguno para Rondas 1-3 — diseñadas para ejecución autónoma sin intervención del usuario |
+| Ultimo cambio | Governor distribuyó 3 rondas de trabajo paralelo para todos los agentes |
 
 ---
 
@@ -54,66 +54,107 @@
 - [x] @GEMINI: Investigar endpoint correcto Wazuh v4.14 para alertas — Context7 confirma que `/alerts` no existe; documentado en SOURCE_CONFIG_GUIDE.md (Completado ENTRADA-017: Indexer API puerto 9200 identificado)
 - [x] @CLAUDE: Cross-review corrección Wazuh — Codex 026 + Gemini 017 aprobados (Indexer API, workflow desactivado, .env actualizado)
 
-**Pendientes (próxima sesión):**
-- [ ] @CODEX: Ejecutar test manual del nodo `pg-upsert` en n8n UI (staging)
-- [ ] @CODEX: Agregar nodos adicionales al workflow para IPS (`utm/ips`) y Antivirus (`utm/virus`) (Fase 1.7)
-- [ ] @CODEX: Registrar AbuseIPDB y configurar API key en `.env` staging
-- [ ] @CODEX: Registrar OTX AlienVault y configurar API key en `.env` staging
-- [ ] @CODEX: Crear webhook Slack/Teams de prueba y configurar en `.env` staging
-- [ ] @CODEX: Crear repositorio ECR en AWS (Fase 2)
-- [ ] @CODEX: Crear secretos en AWS Secrets Manager (Fase 2)
-- [ ] @CODEX: Crear cluster ECS y task definition (Fase 2)
-- [ ] @CODEX: Crear instancia RDS PostgreSQL para producción (Fase 2)
-- [ ] @CODEX: Build + push de imagen a ECR y deploy inicial (Fase 2)
+---
 
-### @GEMINI - Researcher/Reviewer
+## RONDA 1 — Hardening y limpieza (autónoma, sin intervención de usuario)
 
-- [x] @GEMINI: Investigar best practices de AWS ECS Fargate para n8n
-- [x] @GEMINI: Documentar requisitos de infraestructura AWS en `docs/sdlc/SPEC_AWS_PRODUCTION.md`
-- [x] @GEMINI: Mapear variables de `.env.example` a mecanismos de inyección en ECS
-- [x] @GEMINI: Documentar configuración de FortiGate, Wazuh y Zabbix en `SOURCE_CONFIG_GUIDE.md`
-- [x] @GEMINI: Investigar estado de GuardDuty en cuenta AWS
-- [x] @GEMINI: Validar manejo de "empty response" en `ioc_normalizer.js`
-- [x] @GEMINI: Crear workflow `error-handler.json` y `SPEC_ERROR_HANDLING.md`
-- [x] @GEMINI: Documentar configuración de Trellix ePO via IMAP
-- [x] @GEMINI: Revisar rate limits de fuentes OSINT
-- [x] @GEMINI: Crear runbook de operación en `docs/knowledge/RUNBOOK_THREAT_INTEL.md`
-- [x] @GEMINI: Preparar template de Task Definition ECS en `docs/architecture/ECS_TASK_DEFINITION_TEMPLATE.json`
-- [x] @GEMINI: Investigar alternativa al `n8n execute` CLI para dry-run en staging
-- [x] @GEMINI: Actualizar AI_GOVERNANCE.md con controles de producción AWS
-- [x] @GEMINI: Investigar endpoints adicionales de FortiGate relevantes para TI (IPS, virus, webfilter, app-ctrl) y documentar en SOURCE_CONFIG_GUIDE.md (Completado: Endpoints UTM documentados)
-- [x] @GEMINI: Revisar ioc_normalizer.js para soportar estructura de respuesta /api/v2/log/memory/* (campo results[] vs logs[]) (Completado: Soporte para arrays y extracción UTM robustecida)
-- [x] @GEMINI: Investigar normalización de logs Wazuh y Zabbix — validar que `normalizeWazuh()` y `normalizeZabbix()` soportan estructura real de API (Completado ENTRADA-015: Soporte para arrays y metadatos robustecido)
-- [x] @GEMINI: Documentar pruebas de dry-run esperadas por fuente en RUNBOOK_THREAT_INTEL.md (Completado ENTRADA-015: Sección 6 añadida)
-- [x] @GEMINI: Documentar evidencia para ISO 27001 A.5.7 (Inteligencia de amenazas) con resultados de dry-runs (Completado ENTRADA-015: En Runbook)
-- [x] @GEMINI: Revisar Security Groups y networking de producción (Completado ENTRADA-014: Redis SG, NAT Gateway, VPC Endpoints)
-- [ ] @GEMINI: Investigar endpoint correcto de Wazuh v4.14 para obtener alertas de seguridad — Context7 confirma que `/alerts` no existe; opciones: Indexer API (`/wazuh-alerts*/_search`) o Manager API alternativo. Documentar en SOURCE_CONFIG_GUIDE.md con ejemplo de request/response
-- [ ] @GEMINI: Validar que secretos en AWS no tienen valores por defecto (Fase 2)
-- [x] @GEMINI: Adaptar `docs/governance/AI_GOVERNANCE.md` al proyecto n8n DELCOP (Finalizado: Integrados controles AWS y Framework v4.4)
+> **Objetivo:** Limpiar repo, agregar nodos UTM al workflow, validar Wazuh Indexer desde R720, actualizar ECS template
 
-### @CLAUDE - Governor
+### @CODEX - Implementer/DevOps (Ronda 1)
 
-- [x] @CLAUDE: Cross-review del deploy de staging (Codex)
-- [x] @CLAUDE: Aprobar SPEC_AWS_PRODUCTION.md (Gemini)
-- [x] @CLAUDE: Crear ADR-009 formalizando estrategia AWS
-- [x] @CLAUDE: Cross-review de credenciales/fuentes (Gemini)
-- [x] @CLAUDE: Verificar que API keys no quedaron trackeadas en Git
-- [x] @CLAUDE: Cross-review de remediación staging (Codex)
-- [x] @CLAUDE: Cross-review hallazgo FortiGate endpoint (validado y corregido en workflow)
-- [x] @CLAUDE: Cross-review Codex ENTRADA-019/020 + Gemini ENTRADA-013/014 (Fase 1.6 aprobada)
-- [x] @CLAUDE: Validar TAREAS_INTEGRACION_MCP.md contra código actual (hallazgo: Zabbix auth legacy)
-- [x] @CLAUDE: Cross-review Codex ENTRADA-021/022 + Gemini ENTRADA-015 (normalizers + review doc)
-- [x] @CLAUDE: Completar review Governor en FRAMEWORK_RECOMMENDATIONS_REVIEW (10 adoptar ahora, 2 luego)
-- [x] @CLAUDE: Cross-review Codex ENTRADA-023 + Gemini ENTRADA-016 (cierre review + auditoría)
-- [x] @CLAUDE: Crear ADR-011 (framework v4.5 mejoras post-review — 12 recomendaciones priorizadas)
-- [x] @CLAUDE: Registrar ADR-010 (Fuentes activas vs pendientes en staging)
-- [x] @CLAUDE: Cross-review Codex ENTRADA-024/025 (staging vars + dry-runs + hallazgo Wazuh)
-- [ ] @CLAUDE: Cross-review corrección Wazuh endpoint cuando Gemini/Codex la completen
-- [ ] @CLAUDE: Cross-review de dry-runs por fuente cuando Codex los ejecute (Fase 1.7)
-- [ ] @CLAUDE: Aprobar activación automática (triggers cron) tras validación total
-- [ ] @CLAUDE: Cross-review final de infraestructura AWS (Fase 2)
-- [ ] @CLAUDE: Auditar ECS Task Definition para uso de Secrets Manager (Fase 2)
-- [ ] @CLAUDE: Actualizar CONTEXT_SECURITY.md con estado real de producción (Fase 2)
+- [ ] @CODEX: Limpiar directorio `.agent/` del repo — es duplicado de `.agents/` (hallazgo Gemini ENTRADA-016). Confirmar que `.agents/skills/` tiene los skills activos y eliminar `.agent/`
+- [ ] @CODEX: Agregar 2 nodos HTTP adicionales al workflow JSON (`app/workflows/threat-intel-main.json`) para IPS (`/api/v2/log/memory/utm/ips`) y Antivirus (`/api/v2/log/memory/utm/virus`). Copiar estructura del nodo FortiGate existente, misma auth, agregar `vdom=root`. Conectar al mismo merge node
+- [ ] @CODEX: SSH al R720: probar conectividad al Wazuh Indexer — ejecutar `curl -k -u admin:admin https://192.168.206.10:9200/ 2>&1` (probar puerto 9200 con credenciales default, si falla probar con las credenciales de Wazuh Manager). Documentar IP:puerto real y credencial funcional
+- [ ] @CODEX: Agregar `WAZUH_INDEXER_URL` y `WAZUH_INDEXER_BASIC_AUTH` al `.env` del R720 con los valores descubiertos en el paso anterior
+- [ ] @CODEX: Validar JSON del workflow con `node -e "JSON.parse(require('fs').readFileSync('app/workflows/threat-intel-main.json','utf8')); console.log('OK')"` después de agregar nodos UTM
+- [ ] @CODEX: Ejecutar `git pull` en R720, reimportar workflow actualizado (con nodos UTM) desactivado en staging
+
+### @GEMINI - Researcher/Reviewer (Ronda 1)
+
+- [ ] @GEMINI: Actualizar `ECS_TASK_DEFINITION_TEMPLATE.json` — agregar `WAZUH_INDEXER_URL` (environment) y `WAZUH_INDEXER_BASIC_AUTH` (secrets/SSM) que faltan tras la migración a Indexer API
+- [ ] @GEMINI: Revisar `ioc_normalizer.js` función `normalizeWazuh()` — verificar que parsea correctamente la estructura de respuesta del Indexer API (`hits.hits[]._source` vs `data.affected_items[]`). Si hay diferencia, proponer fix
+- [ ] @GEMINI: Crear checklist de activación pre-cron en `docs/knowledge/ACTIVATION_CHECKLIST.md` — lista de verificaciones que deben pasar antes de activar cada trigger: conectividad, credencial, dry-run OK, pg-upsert OK, canal de alerta configurado
+
+### @CLAUDE - Governor (Ronda 1)
+
+- [ ] @CLAUDE: Cross-review de Codex Ronda 1 (limpieza .agent/, nodos UTM, conectividad Wazuh Indexer)
+- [ ] @CLAUDE: Cross-review de Gemini Ronda 1 (ECS template, normalizer Indexer, checklist activación)
+- [ ] @CLAUDE: Verificar que no hay secretos en archivos trackeados tras los cambios (`grep -r "API_KEY=\|PASSWORD=\|TOKEN=" --include="*.json" --include="*.yml" --include="*.md" | grep -v example | grep -v CONFIGURAR | grep -v placeholder`)
+
+---
+
+## RONDA 2 — Validación E2E por fuente (autónoma)
+
+> **Objetivo:** Dry-run de cada fuente configurada, test de persistencia PostgreSQL, configurar canal de alerta
+> **Prerequisito:** Ronda 1 completada
+
+### @CODEX - Implementer/DevOps (Ronda 2)
+
+- [ ] @CODEX: SSH al R720 y ejecutar dry-run HTTP equivalente de FortiGate desde el servidor: `curl -k -H "Authorization: Bearer $FORTIGATE_API_KEY" "https://$FORTIGATE_HOST/api/v2/log/memory/event/system?vdom=root&rows=5"` — capturar respuesta JSON completa en log
+- [ ] @CODEX: SSH al R720 y ejecutar dry-run HTTP equivalente de Wazuh Indexer: `curl -k -u "$WAZUH_USER:$WAZUH_PASS" "https://$WAZUH_INDEXER:9200/wazuh-alerts-*/_search" -H "Content-Type: application/json" -d '{"size":5,"query":{"range":{"rule.level":{"gte":7}}}}'` — capturar respuesta
+- [ ] @CODEX: SSH al R720 y ejecutar dry-run HTTP equivalente de Zabbix: `curl -s "$ZABBIX_API_URL" -H "Authorization: Bearer $ZABBIX_API_TOKEN" -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"trigger.get","params":{"output":"extend","limit":5,"min_severity":3},"id":1}'` — capturar respuesta
+- [ ] @CODEX: Ejecutar test de persistencia PostgreSQL desde R720: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "INSERT INTO iocs (ioc_value, ioc_type, severity, confidence, source, tags, metadata) VALUES ('1.2.3.4', 'ip_v4', 'medium', 50, 'dry-run-test', ARRAY['test'], '{}') ON CONFLICT DO NOTHING; SELECT count(*) FROM iocs WHERE source='dry-run-test';"` — confirmar que pg-upsert funciona
+- [ ] @CODEX: Limpiar dato de test: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "DELETE FROM iocs WHERE source='dry-run-test';"`
+
+### @GEMINI - Researcher/Reviewer (Ronda 2)
+
+- [ ] @GEMINI: Analizar las respuestas JSON capturadas por Codex (FortiGate, Wazuh, Zabbix) y validar que los campos esperados por `ioc_normalizer.js` están presentes. Documentar mapeo real vs esperado en una tabla
+- [ ] @GEMINI: Revisar `ioc_scorer.js` — verificar que los `source_trust` weights de las fuentes activas (fortigate=0.85, wazuh=0.90, zabbix=0.60) son coherentes con la calidad de datos observada en los dry-runs
+- [ ] @GEMINI: Revisar `alert_dispatcher.js` — verificar que los canales de alerta (Slack, Teams, Email) fallan gracefully si el webhook no está configurado (no debe crashear el pipeline)
+
+### @CLAUDE - Governor (Ronda 2)
+
+- [ ] @CLAUDE: Cross-review dry-runs de Codex — validar que cada fuente responde datos reales y no errores
+- [ ] @CLAUDE: Cross-review análisis de Gemini — verificar coherencia entre respuestas reales y normalizers
+- [ ] @CLAUDE: Actualizar `CONTEXT_SECURITY.md` con el estado real de cada fuente (activa/bloqueada/pendiente)
+
+---
+
+## RONDA 3 — Consolidación y preparación para activación (autónoma)
+
+> **Objetivo:** Consolidar todo el trabajo, preparar el workflow para activación, documentar estado final
+> **Prerequisito:** Ronda 2 completada
+
+### @CODEX - Implementer/DevOps (Ronda 3)
+
+- [ ] @CODEX: Reimportar workflow final en staging (con nodos UTM + Wazuh Indexer) — desactivado
+- [ ] @CODEX: Ejecutar `docker compose -f infra/docker-compose.staging.yml ps -a` y `curl http://192.168.0.70:5678/healthz` — confirmar staging sigue healthy
+- [ ] @CODEX: Ejecutar `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status` para confirmar estado de los 3 agentes
+- [ ] @CODEX: Limpiar archivos temporales en R720 (`/tmp/threat-intel-main.*.json`, `.tmp/codex-staging/`)
+
+### @GEMINI - Researcher/Reviewer (Ronda 3)
+
+- [ ] @GEMINI: Auditoría final de coherencia: verificar que `DATA-CONTRACTS.md`, `ioc_normalizer.js`, `01-schema.sql` y el workflow JSON están alineados — campos, tipos, tablas
+- [ ] @GEMINI: Actualizar `RUNBOOK_THREAT_INTEL.md` sección 6 con los resultados reales de los dry-runs de Ronda 2
+- [ ] @GEMINI: Generar resumen ejecutivo de Fase 1 en `docs/PHASE1_SUMMARY.md`: qué se logró, qué queda pendiente, métricas (fuentes activas, nodos, entradas de log, ADRs)
+
+### @CLAUDE - Governor (Ronda 3)
+
+- [ ] @CLAUDE: Cross-review final de Ronda 3 — Codex (staging health + cleanup) y Gemini (auditoría + resumen)
+- [ ] @CLAUDE: Registrar ADR-012 consolidando las fuentes validadas y su estado de activación
+- [ ] @CLAUDE: Actualizar `CONTEXT_SECURITY.md` con inventario final de credenciales/fuentes por entorno
+- [ ] @CLAUDE: Commit final de consolidación con todo el trabajo de las 3 rondas
+
+---
+
+## Pendientes post-rondas (requieren intervención de usuario)
+
+- [ ] @USUARIO: Registrar cuenta en AbuseIPDB y proporcionar API key
+- [ ] @USUARIO: Registrar cuenta en OTX AlienVault y proporcionar API key
+- [ ] @USUARIO: Crear webhook Slack/Teams en canal `#security-alerts-test`
+- [ ] @USUARIO: Decidir activación de triggers cron tras revisión de resultados de Ronda 3
+- [ ] @USUARIO: Aprobar inicio de Fase 2 (infraestructura AWS)
+
+## Pendientes Fase 2 (post-activación staging)
+
+- [ ] @CODEX: Crear repositorio ECR en AWS
+- [ ] @CODEX: Crear secretos en AWS Secrets Manager
+- [ ] @CODEX: Crear cluster ECS y task definition
+- [ ] @CODEX: Crear instancia RDS PostgreSQL para producción
+- [ ] @CODEX: Build + push de imagen a ECR y deploy inicial
+- [ ] @GEMINI: Validar que secretos en AWS no tienen valores por defecto
+- [ ] @CLAUDE: Cross-review final de infraestructura AWS
+- [ ] @CLAUDE: Auditar ECS Task Definition para uso de Secrets Manager
 
 ---
 
