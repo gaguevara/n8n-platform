@@ -48,8 +48,11 @@
 - [x] @CODEX: Corregir endpoint de ingesta Wazuh para la version real del API en staging (hallazgo 2026-03-23: `/alerts` devuelve `404` tras auth exitosa)
 
 **>>> ÚLTIMA RONDA (cierre de sesión) <<<**
-- [ ] @CODEX: Corregir nodos Wazuh en workflow JSON: reemplazar `GET /alerts` por endpoint correcto según investigación de Gemini
-- [ ] @CODEX: Reimportar workflow corregido en staging y ejecutar dry-run Wazuh
+- [ ] @CODEX: **URGENTE** — Desactivar workflow en n8n staging UI (está crasheando en loop por cron triggers activos)
+- [ ] @CODEX: Corregir nodos Wazuh en workflow JSON según investigación de Gemini
+- [ ] @CODEX: Reimportar workflow corregido en staging (desactivado) para dry-runs manuales
+- [ ] @GEMINI: Investigar endpoint correcto Wazuh v4.14 para alertas — Context7 confirma que `/alerts` no existe; documentar en SOURCE_CONFIG_GUIDE.md
+- [ ] @CLAUDE: Cross-review de la corrección Wazuh cuando se complete
 
 **Pendientes (próxima sesión):**
 - [ ] @CODEX: Ejecutar test manual del nodo `pg-upsert` en n8n UI (staging)
