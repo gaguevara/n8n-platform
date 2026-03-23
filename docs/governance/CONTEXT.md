@@ -33,21 +33,25 @@
 - [x] @CODEX: Importar `error-handler.json` y vincularlo al pipeline principal
 - [x] @CODEX: Verificar GuardDuty habilitado y `DETECTOR_ID`
 - [x] @CODEX: Corregir referencia incorrecta en `docs/governance/ONBOARDING.md`
-- [ ] @CODEX: Ejecutar test manual del nodo `pg-upsert` en n8n UI (staging)
 - [x] @CODEX: Validar conectividad y configurar API key FortiGate en `.env` staging
-- [x] @CODEX: Reimportar `threat-intel-main.json` corregido en n8n staging (endpoint FortiGate fix) (Completado: workflow reimportado en R720 el 2026-03-22; export valida `/api/v2/log/memory/event/system` y normalizador actualizado)
-- [ ] @CODEX: Validar conectividad y configurar credenciales Wazuh en `.env` staging
-- [ ] @CODEX: Validar conectividad y configurar token Zabbix en `.env` staging
+- [x] @CODEX: Reimportar `threat-intel-main.json` corregido en n8n staging (endpoint FortiGate fix)
+
+**>>> RONDA ACTUAL — ejecutar en orden <<<**
+- [ ] @CODEX: SSH al R720 y agregar vars Wazuh al `.env`: `WAZUH_API_URL=https://192.168.206.10:55000`, `WAZUH_API_USER=mcp_readonly`, `WAZUH_API_PASS=Delcop2026**`
+- [ ] @CODEX: SSH al R720 y agregar vars Zabbix al `.env`: `ZABBIX_API_URL=http://192.168.206.12/zabbix/api_jsonrpc.php`, `ZABBIX_API_TOKEN=4d9bba4020832b25a85f11d0dd132e0d47899cbe1189ef78918031d475ad7852`
+- [ ] @CODEX: Reiniciar compose en R720 (`docker compose down && docker compose up -d`) y verificar healthchecks
+- [ ] @CODEX: Reimportar workflow `threat-intel-main.json` actualizado (normalizers Wazuh/Zabbix/GuardDuty con soporte arrays)
+- [ ] @CODEX: Dry-run nodo FortiGate en staging UI — capturar respuesta JSON
+- [ ] @CODEX: Dry-run nodo Wazuh en staging UI — capturar respuesta JSON
+- [ ] @CODEX: Dry-run nodo Zabbix en staging UI — capturar respuesta JSON
+- [ ] @CODEX: Migrar auth Zabbix de body `auth` a header `Authorization: Bearer` (best practice Zabbix 7.0+)
+
+**Pendientes (no esta ronda):**
+- [ ] @CODEX: Ejecutar test manual del nodo `pg-upsert` en n8n UI (staging)
+- [ ] @CODEX: Agregar nodos adicionales al workflow para IPS (`utm/ips`) y Antivirus (`utm/virus`) (Fase 1.7)
 - [ ] @CODEX: Registrar AbuseIPDB y configurar API key en `.env` staging
 - [ ] @CODEX: Registrar OTX AlienVault y configurar API key en `.env` staging
 - [ ] @CODEX: Crear webhook Slack/Teams de prueba y configurar en `.env` staging
-- [ ] @CODEX: Agregar variables Wazuh y Zabbix al `.env` del R720 (valores en TAREAS_INTEGRACION_MCP.md)
-- [ ] @CODEX: Reiniciar compose en R720 tras cargar nuevas env vars
-- [ ] @CODEX: Ejecutar dry-run del nodo FortiGate en staging UI y capturar respuesta (Fase 1.7)
-- [ ] @CODEX: Ejecutar dry-run del nodo Wazuh en staging UI (Fase 1.7)
-- [ ] @CODEX: Ejecutar dry-run del nodo Zabbix en staging UI (Fase 1.7)
-- [ ] @CODEX: Migrar auth Zabbix de body `auth` a header `Authorization: Bearer` (best practice Zabbix 7.0+)
-- [ ] @CODEX: Agregar nodos adicionales al workflow para IPS (`utm/ips`) y Antivirus (`utm/virus`) (Fase 1.7)
 - [ ] @CODEX: Crear repositorio ECR en AWS (Fase 2)
 - [ ] @CODEX: Crear secretos en AWS Secrets Manager (Fase 2)
 - [ ] @CODEX: Crear cluster ECS y task definition (Fase 2)
