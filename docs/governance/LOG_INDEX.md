@@ -10,7 +10,7 @@
 
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
-| CLAUDE | ENTRADA-014 | docs/logs/CLAUDE_LOG.md | 2026-03-22 |
+| CLAUDE | ENTRADA-015 | docs/logs/CLAUDE_LOG.md | 2026-03-23 |
 | CODEX  | ENTRADA-020 | docs/logs/CODEX_LOG.md  | 2026-03-22 |
 | GEMINI | ENTRADA-014 | docs/logs/GEMINI_LOG.md | 2026-03-22 |
 
@@ -54,6 +54,7 @@
 | ENTRADA-020 | CODEX  | sync-and-start | `git pull` confirmado sin cambios nuevos y arranque paralelo de revisión Fase 2 tipo Gemini | 2026-03-22 |
 | ENTRADA-013 | CLAUDE | cross-review FortiGate | Hallazgo cross-project: endpoint FortiGate corregido en workflow + tareas Fase 1.6 | 2026-03-22 |
 | ENTRADA-014 | CLAUDE | cross-review Fase 1.6 | Aprobación Codex 019/020 + Gemini 013/014 + tareas Fase 1.7 asignadas | 2026-03-22 |
+| ENTRADA-015 | CLAUDE | validate MCP tasks | Validación TAREAS_INTEGRACION_MCP.md vs workflow — hallazgo Zabbix auth legacy | 2026-03-23 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
 | ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |

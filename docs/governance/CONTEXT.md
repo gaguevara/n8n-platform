@@ -41,9 +41,12 @@
 - [ ] @CODEX: Registrar AbuseIPDB y configurar API key en `.env` staging
 - [ ] @CODEX: Registrar OTX AlienVault y configurar API key en `.env` staging
 - [ ] @CODEX: Crear webhook Slack/Teams de prueba y configurar en `.env` staging
-- [ ] @CODEX: Ejecutar dry-run vía n8n UI de cada fuente configurada
+- [ ] @CODEX: Agregar variables Wazuh y Zabbix al `.env` del R720 (valores en TAREAS_INTEGRACION_MCP.md)
 - [ ] @CODEX: Reiniciar compose en R720 tras cargar nuevas env vars
 - [ ] @CODEX: Ejecutar dry-run del nodo FortiGate en staging UI y capturar respuesta (Fase 1.7)
+- [ ] @CODEX: Ejecutar dry-run del nodo Wazuh en staging UI (Fase 1.7)
+- [ ] @CODEX: Ejecutar dry-run del nodo Zabbix en staging UI (Fase 1.7)
+- [ ] @CODEX: Migrar auth Zabbix de body `auth` a header `Authorization: Bearer` (best practice Zabbix 7.0+)
 - [ ] @CODEX: Agregar nodos adicionales al workflow para IPS (`utm/ips`) y Antivirus (`utm/virus`) (Fase 1.7)
 - [ ] @CODEX: Crear repositorio ECR en AWS (Fase 2)
 - [ ] @CODEX: Crear secretos en AWS Secrets Manager (Fase 2)
@@ -70,6 +73,7 @@
 - [x] @GEMINI: Revisar ioc_normalizer.js para soportar estructura de respuesta /api/v2/log/memory/* (campo results[] vs logs[]) (Completado: Soporte para arrays y extracción UTM robustecida)
 - [ ] @GEMINI: Investigar normalización de logs Wazuh y Zabbix — validar que `normalizeWazuh()` y `normalizeZabbix()` soportan estructura real de API (Fase 1.7)
 - [ ] @GEMINI: Documentar pruebas de dry-run esperadas por fuente en RUNBOOK_THREAT_INTEL.md (Fase 1.7)
+- [ ] @GEMINI: Documentar evidencia para ISO 27001 A.5.7 (Inteligencia de amenazas) con resultados de dry-runs (Fase 1.7)
 - [x] @GEMINI: Revisar Security Groups y networking de producción (Completado ENTRADA-014: Redis SG, NAT Gateway, VPC Endpoints)
 - [ ] @GEMINI: Validar que secretos en AWS no tienen valores por defecto (Fase 2)
 - [x] @GEMINI: Adaptar `docs/governance/AI_GOVERNANCE.md` al proyecto n8n DELCOP (Finalizado: Integrados controles AWS y Framework v4.4)
@@ -84,6 +88,7 @@
 - [x] @CLAUDE: Cross-review de remediación staging (Codex)
 - [x] @CLAUDE: Cross-review hallazgo FortiGate endpoint (validado y corregido en workflow)
 - [x] @CLAUDE: Cross-review Codex ENTRADA-019/020 + Gemini ENTRADA-013/014 (Fase 1.6 aprobada)
+- [x] @CLAUDE: Validar TAREAS_INTEGRACION_MCP.md contra código actual (hallazgo: Zabbix auth legacy)
 - [ ] @CLAUDE: Cross-review de dry-runs por fuente cuando Codex los ejecute (Fase 1.7)
 - [ ] @CLAUDE: Aprobar activación automática (triggers cron) tras validación total
 - [ ] @CLAUDE: Registrar ADR-010 (Fuentes activas vs pendientes)

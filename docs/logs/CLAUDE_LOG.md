@@ -6,6 +6,27 @@
 
 ---
 
+## ENTRADA-015 | 2026-03-23 | validate TAREAS_INTEGRACION_MCP + Fase 1.7 update
+
+**Tipo:** Validación cross-project + actualización de tareas
+**Tarea:** Cruzar TAREAS_INTEGRACION_MCP.md (del proyecto mcp-servers) contra el estado real del workflow y generar tareas pendientes.
+
+### Validación cruzada
+- FortiGate: 3/3 tareas completadas (endpoint, vdom, .env) ✅
+- Wazuh: nodos correctos (auth JWT, filtro level>7), .env pendiente del usuario ⏳
+- Zabbix: nodos correctos (trigger.get, min_severity:3), pero auth usa método legacy (`auth` en body JSON-RPC) ⚠️
+  - Context7 confirma: Zabbix 7.0+ recomienda `Authorization: Bearer` en header
+  - No bloqueante — ambos métodos funcionan
+
+### Tareas generadas
+- @CODEX: agregar vars Wazuh/Zabbix a .env R720, dry-runs por fuente, migrar auth Zabbix a Bearer
+- @GEMINI: documentar evidencia ISO A.5.7 con resultados de dry-runs
+
+### Harness gap
+- Cross-project findings (mcp-servers → n8n-platform) no tienen mecanismo formal en el framework. TAREAS_INTEGRACION_MCP.md es un workaround manual.
+
+---
+
 ## ENTRADA-014 | 2026-03-22 | cross-review Fase 1.6 + tareas 1.7
 
 **Tipo:** Cross-review + asignación de tareas
