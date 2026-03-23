@@ -6,6 +6,29 @@
 
 ---
 
+## ENTRADA-014 | 2026-03-22 | cross-review Fase 1.6 + tareas 1.7
+
+**Tipo:** Cross-review + asignación de tareas
+**Tarea:** Validar entregables de Codex (ENTRADA-019/020) y Gemini (ENTRADA-013/014), generar Fase 1.7.
+
+### Cross-review Codex
+- **ENTRADA-019 (fortigate-reimport):** Workflow reimportado con endpoint corregido. Backup pre-reimport creado. ✅ Aprobado.
+- **ENTRADA-020 (sync-and-start):** Sesión sincronizada, inició revisión paralela de Fase 2. ✅ Aprobado.
+
+### Cross-review Gemini
+- **ENTRADA-013 (normalizer-fix):** `normalizeFortiGate()` ahora soporta `results[]`/`logs[]`, extrae campos UTM (attack, virus) y hashes SHA256 desde `msg`. Referencia a `IOC_PATTERNS.hash_sha256` verificada (línea 73). ✅ Aprobado.
+- **ENTRADA-014 (cloud-design audit):** Task Definition completada con variables faltantes (THREAT_DB, ZABBIX, webhooks). SPEC actualizado con Redis SG, NAT Gateway, VPC Endpoints. ✅ Aprobado.
+
+### Tareas Fase 1.7 asignadas
+- @CODEX: dry-run FortiGate en staging UI + nodos adicionales IPS/Antivirus
+- @GEMINI: validar normalizers Wazuh/Zabbix + documentar dry-runs esperados
+- @CLAUDE: cross-review de dry-runs cuando se ejecuten
+
+### Harness gap
+- Ninguno nuevo detectado en esta revisión.
+
+---
+
 ## ENTRADA-013 | 2026-03-22 | cross-review hallazgo FortiGate
 
 **Tipo:** Cross-review + fix de hallazgo cross-project

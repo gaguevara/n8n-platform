@@ -1,8 +1,8 @@
 # CONTEXT.md - Estado Actual del Proyecto
 
 > **Ultima actualizacion:** 2026-03-22
-> **Actualizado por:** Claude (Governor — Hallazgo FortiGate + Fase 1.6)
-> **Proxima revision:** al completar dry-run de todas las fuentes en staging
+> **Actualizado por:** Claude (Governor — Cross-review Fase 1.6 + tareas Fase 1.7)
+> **Proxima revision:** al completar dry-runs de todas las fuentes + credenciales Wazuh/Zabbix
 
 ---
 
@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 1.6 — Corrección de endpoints + dry-run por fuente en staging |
-| Estabilidad   | Staging healthy (R720). FortiGate endpoint corregido. Credenciales LAN en progreso. |
+| Fase          | Fase 1.7 — Dry-run por fuente + preparación Fase 2 AWS |
+| Estabilidad   | Staging healthy (R720). FortiGate corregido+reimportado. Normalizer UTM actualizado. |
 | Bloqueantes   | Credenciales Wazuh y Zabbix — pendientes del usuario |
-| Ultimo cambio | Fix FortiGate endpoint (hallazgo cross-project mcp-servers↔n8n-platform) |
+| Ultimo cambio | Cross-review Codex ENTRADA-019/020 + Gemini ENTRADA-013/014 aprobados |
 
 ---
 
@@ -35,7 +35,7 @@
 - [x] @CODEX: Corregir referencia incorrecta en `docs/governance/ONBOARDING.md`
 - [ ] @CODEX: Ejecutar test manual del nodo `pg-upsert` en n8n UI (staging)
 - [x] @CODEX: Validar conectividad y configurar API key FortiGate en `.env` staging
-- [ ] @CODEX: Reimportar `threat-intel-main.json` corregido en n8n staging (endpoint FortiGate fix)
+- [x] @CODEX: Reimportar `threat-intel-main.json` corregido en n8n staging (endpoint FortiGate fix) (Completado: workflow reimportado en R720 el 2026-03-22; export valida `/api/v2/log/memory/event/system` y normalizador actualizado)
 - [ ] @CODEX: Validar conectividad y configurar credenciales Wazuh en `.env` staging
 - [ ] @CODEX: Validar conectividad y configurar token Zabbix en `.env` staging
 - [ ] @CODEX: Registrar AbuseIPDB y configurar API key en `.env` staging
@@ -43,6 +43,8 @@
 - [ ] @CODEX: Crear webhook Slack/Teams de prueba y configurar en `.env` staging
 - [ ] @CODEX: Ejecutar dry-run vía n8n UI de cada fuente configurada
 - [ ] @CODEX: Reiniciar compose en R720 tras cargar nuevas env vars
+- [ ] @CODEX: Ejecutar dry-run del nodo FortiGate en staging UI y capturar respuesta (Fase 1.7)
+- [ ] @CODEX: Agregar nodos adicionales al workflow para IPS (`utm/ips`) y Antivirus (`utm/virus`) (Fase 1.7)
 - [ ] @CODEX: Crear repositorio ECR en AWS (Fase 2)
 - [ ] @CODEX: Crear secretos en AWS Secrets Manager (Fase 2)
 - [ ] @CODEX: Crear cluster ECS y task definition (Fase 2)
@@ -64,10 +66,12 @@
 - [x] @GEMINI: Preparar template de Task Definition ECS en `docs/architecture/ECS_TASK_DEFINITION_TEMPLATE.json`
 - [x] @GEMINI: Investigar alternativa al `n8n execute` CLI para dry-run en staging
 - [x] @GEMINI: Actualizar AI_GOVERNANCE.md con controles de producción AWS
-- [ ] @GEMINI: Investigar endpoints adicionales de FortiGate relevantes para TI (IPS, virus, webfilter, app-ctrl) y documentar en SOURCE_CONFIG_GUIDE.md
-- [ ] @GEMINI: Revisar ioc_normalizer.js para soportar estructura de respuesta `/api/v2/log/memory/*` (campo `results[]` vs `logs[]`)
+- [x] @GEMINI: Investigar endpoints adicionales de FortiGate relevantes para TI (IPS, virus, webfilter, app-ctrl) y documentar en SOURCE_CONFIG_GUIDE.md (Completado: Endpoints UTM documentados)
+- [x] @GEMINI: Revisar ioc_normalizer.js para soportar estructura de respuesta /api/v2/log/memory/* (campo results[] vs logs[]) (Completado: Soporte para arrays y extracción UTM robustecida)
+- [ ] @GEMINI: Investigar normalización de logs Wazuh y Zabbix — validar que `normalizeWazuh()` y `normalizeZabbix()` soportan estructura real de API (Fase 1.7)
+- [ ] @GEMINI: Documentar pruebas de dry-run esperadas por fuente en RUNBOOK_THREAT_INTEL.md (Fase 1.7)
+- [x] @GEMINI: Revisar Security Groups y networking de producción (Completado ENTRADA-014: Redis SG, NAT Gateway, VPC Endpoints)
 - [ ] @GEMINI: Validar que secretos en AWS no tienen valores por defecto (Fase 2)
-- [ ] @GEMINI: Revisar Security Groups y networking de producción (Fase 2)
 - [x] @GEMINI: Adaptar `docs/governance/AI_GOVERNANCE.md` al proyecto n8n DELCOP (Finalizado: Integrados controles AWS y Framework v4.4)
 
 ### @CLAUDE - Governor
@@ -79,6 +83,8 @@
 - [x] @CLAUDE: Verificar que API keys no quedaron trackeadas en Git
 - [x] @CLAUDE: Cross-review de remediación staging (Codex)
 - [x] @CLAUDE: Cross-review hallazgo FortiGate endpoint (validado y corregido en workflow)
+- [x] @CLAUDE: Cross-review Codex ENTRADA-019/020 + Gemini ENTRADA-013/014 (Fase 1.6 aprobada)
+- [ ] @CLAUDE: Cross-review de dry-runs por fuente cuando Codex los ejecute (Fase 1.7)
 - [ ] @CLAUDE: Aprobar activación automática (triggers cron) tras validación total
 - [ ] @CLAUDE: Registrar ADR-010 (Fuentes activas vs pendientes)
 - [ ] @CLAUDE: Cross-review final de infraestructura AWS (Fase 2)

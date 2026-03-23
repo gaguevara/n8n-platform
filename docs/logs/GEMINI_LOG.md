@@ -224,3 +224,52 @@ Fase 1.5 finalizada al 100% desde la perspectiva de Gemini. Superficie operativa
 ### Harness gap
 
 - Documentar en ONBOARDING.md que Context7 requiere `.mcp.json` y skills.sh requiere `npx` — ambos ya presentes en el repo
+
+---
+
+## ENTRADA-013 | 2026-03-22 | research + normalizer-fix
+
+**Tipo:** Investigación técnica y remediación de código
+**Tarea:** Investigar endpoints UTM de FortiGate y robustecer `ioc_normalizer.js` para soportar estructuras de respuesta variadas.
+
+### Investigación de Endpoints (FortiOS 7.4+)
+Se identificaron los endpoints jerárquicos para las categorías UTM:
+- **IPS:** `/api/v2/log/memory/utm/ips`
+- **Antivirus:** `/api/v2/log/memory/utm/virus`
+- **Webfilter:** `/api/v2/log/memory/utm/webfilter`
+- **App Control:** `/api/v2/log/memory/utm/app-ctrl`
+Se confirmó que el parámetro `vdom=root` es obligatorio y que la respuesta utiliza el campo `results[]` (o `logs[]` en algunas versiones/configuraciones).
+
+### Remediación de Código (ioc_normalizer.js)
+Se actualizó la función `normalizeFortiGate` para:
+1. Soporte de arrays: Ahora busca `results` o `logs` en la raíz del objeto, o procesa el objeto directamente si n8n ya realizó el split.
+2. Extracción UTM: Se añadió lógica para capturar campos `attack` (IPS) y `virus` (Antivirus) en la metadata.
+3. Regex en mensajes: Se implementó una extracción secundaria de hashes SHA256 desde el campo `msg` para logs de Antivirus, aumentando la visibilidad de IoCs.
+
+### Documentación
+Se actualizó `docs/knowledge/SOURCE_CONFIG_GUIDE.md` con la tabla de endpoints y parámetros recomendados para FortiGate.
+
+### Estado Final
+Tareas de la Fase 1.6 para Gemini completadas. El normalizador es ahora compatible con la estructura real de FortiOS 7.4 y capaz de procesar múltiples categorías de seguridad. Se recomienda a Codex re-importar el workflow y realizar dry-runs con estas nuevas fuentes.
+
+---
+
+## ENTRADA-014 | 2026-03-22 | audit + cloud-design
+
+**Tipo:** Auditoría técnica de diseño cloud (Fase 2)
+**Tarea:** Revisar la arquitectura de red, Security Groups y Task Definition para el despliegue en AWS ECS.
+
+### Hallazgos de la Auditoría
+1.  **Gaps en Task Definition:** Se detectó que `ECS_TASK_DEFINITION_TEMPLATE.json` omitía múltiples variables de entorno y secretos definidos en la tabla de mapeo de la SPEC (ej. `THREAT_DB_USER`, `ZABBIX_API_TOKEN`, webhooks de alerta).
+2.  **Infraestructura de Red:** La especificación de Networking en `SPEC_AWS_PRODUCTION.md` era incompleta respecto a la salida a Internet (NAT Gateway) y la conectividad hacia Redis/ElastiCache.
+3.  **VPC Endpoints:** No se mencionaba el uso de VPC Endpoints como mejor práctica para servicios AWS internos en subredes privadas.
+
+### Acciones Ejecutadas
+1.  **Update Task Definition:** Se añadieron todas las variables faltantes en el template JSON, asegurando paridad 1:1 con la tabla de inyección de secretos.
+2.  **Update SPEC AWS:** 
+    - Se añadió el **Redis SG** (puerto 6379) restringido al ECS Service.
+    - Se incluyó la recomendación formal de **NAT Gateway** y **VPC Endpoints** (ECR, S3, Secrets Manager, etc.) para mejorar seguridad y costos.
+    - Se actualizó la tabla de mapeo con descripciones mejoradas y tokens adicionales (`VIRUSTOTAL`, `ZABBIX`).
+
+### Estado Final
+Auditoría de diseño de Fase 2 completada a nivel documental. La infraestructura está ahora correctamente especificada bajo el principio de mínimo privilegio. Se puede proceder con la creación de recursos en AWS una vez Codex inicie su bloque de tareas.

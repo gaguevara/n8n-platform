@@ -18,10 +18,12 @@ El despliegue en producción consistirá en:
 
 ### 3.1. Networking y Exposición
 - **ALB (Application Load Balancer):** Actúa como punto de entrada público, realiza la terminación TLS/SSL (mediante AWS Certificate Manager) y reenvía tráfico por HTTP (puerto 5678) a las tareas de Fargate en subredes privadas.
+- **NAT Gateway / VPC Endpoints:** Dado que Fargate reside en subredes privadas, se requiere un NAT Gateway para salida a Internet (APIs de terceros). Se recomienda el uso de VPC Endpoints para servicios AWS (ECR, S3, Secrets Manager, SSM, CloudWatch) para reducir costos de transferencia y mejorar la seguridad.
 - **Security Groups:** 
   - **ALB SG:** Permite inbound 443/80 desde Internet.
-  - **ECS SG:** Permite inbound 5678 SOLO desde el ALB SG. Egress libre para alcanzar APIs de terceros (Threat Intel, etc.).
+  - **ECS SG:** Permite inbound 5678 SOLO desde el ALB SG. Egress libre (vía NAT Gateway) para alcanzar APIs de terceros (Threat Intel, etc.).
   - **RDS SG:** Permite inbound 5432 SOLO desde el ECS SG.
+  - **Redis SG:** Permite inbound 6379 SOLO desde el ECS SG (si se usa ElastiCache).
 
 ### 3.2. Persistencia y Almacenamiento (Storage)
 - **Base de Datos:** Configurar n8n para usar PostgreSQL (`DB_TYPE=postgresdb`, `DB_POSTGRESDB_HOST`, etc.). La base de datos guarda ejecuciones y credenciales de flujos de trabajo cifradas.
@@ -40,23 +42,18 @@ La siguiente tabla define cómo se debe inyectar cada variable definida en el `.
 
 | Variable | Tipo de Dato | Mecanismo de Inyección en ECS | Razón / Permisos Requeridos |
 |----------|--------------|-------------------------------|-----------------------------|
-| `TZ` | Configuración | Texto Plano (`environment`) | No sensible. |
-| `GENERIC_TIMEZONE` | Configuración | Texto Plano (`environment`) | No sensible. |
-| `N8N_PORT` | Configuración | Texto Plano (`environment`) | Puerto interno del contenedor (ej. 5678). |
+| `TZ`, `GENERIC_TIMEZONE`, `N8N_PORT` | Configuración | Texto Plano (`environment`) | No sensible. |
 | `N8N_ENCRYPTION_KEY` | Crítico | **AWS Secrets Manager** (`secrets`) | Clave maestra para cifrar credenciales en n8n. |
-| `N8N_EDITOR_BASE_URL` | Configuración | Texto Plano (`environment`) | URL pública, no sensible. |
-| `WEBHOOK_URL` | Configuración | Texto Plano (`environment`) | URL pública, no sensible. |
-| `RDS_HOST` | Infraestructura | Texto Plano (`environment`) / SSM (Opcional) | Endpoint interno de la VPC. |
-| `RDS_USER` | Infraestructura | Texto Plano (`environment`) | Usuario de DB. |
+| `N8N_EDITOR_BASE_URL`, `WEBHOOK_URL` | Configuración | Texto Plano (`environment`) | URL pública, no sensible. |
+| `RDS_HOST`, `RDS_USER` | Infraestructura | Texto Plano (`environment`) / SSM | Endpoint interno de la VPC. |
 | `RDS_PASSWORD` | Crítico | **AWS Secrets Manager** (`secrets`) | Contraseña de la base de datos principal de n8n. |
-| `THREAT_DB_USER` | Infraestructura | Texto Plano (`environment`) | Usuario DB de Threat Intel. |
+| `THREAT_DB_USER`, `THREAT_DB_HOST_PORT` | Infraestructura | Texto Plano (`environment`) | Parámetros de conexión DB TI. |
 | `THREAT_DB_PASSWORD` | Crítico | **AWS Secrets Manager** (`secrets`) | Contraseña DB de Threat Intel. |
-| `THREAT_DB_HOST_PORT` | Configuración | Texto Plano (`environment`) | Puerto DB Threat Intel. |
 | `REDIS_PASSWORD` | Crítico | **AWS Secrets Manager** (`secrets`) | Contraseña de caché. |
 | `REDIS_HOST_PORT` | Configuración | Texto Plano (`environment`) | Puerto Redis. |
 | `FORTIGATE_HOST`, `WAZUH_API_URL`, `ZABBIX_API_URL` | Infraestructura | Texto Plano (`environment`) | URLs de servicios de origen. |
 | `WAZUH_API_USER` | Infraestructura | Texto Plano (`environment`) | Usuario API no crítico. |
-| `FORTIGATE_API_KEY`, `WAZUH_API_PASSWORD`, `ZABBIX_API_TOKEN` | Sensible | **SSM Parameter Store (SecureString)** | Credenciales de integración, rotación moderada. |
+| `FORTIGATE_API_KEY`, `WAZUH_API_PASSWORD`, `ZABBIX_API_TOKEN` | Sensible | **SSM Parameter Store (SecureString)** | Credenciales de integración. |
 | `ABUSEIPDB_API_KEY`, `OTX_API_KEY`, `VIRUSTOTAL_API_KEY` | Sensible | **SSM Parameter Store (SecureString)** | Tokens de APIs externas. |
 | `SLACK_WEBHOOK_URL`, `TEAMS_WEBHOOK_URL` | Sensible | **SSM Parameter Store (SecureString)** | Webhooks con capacidad de escritura. |
 | `ALERT_EMAIL_TO`, `ALERT_EMAIL_FROM` | Configuración | Texto Plano (`environment`) | Correos de alerta, no sensibles. |

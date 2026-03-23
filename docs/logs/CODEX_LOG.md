@@ -6,6 +6,96 @@
 
 ---
 
+## ENTRADA-020 | 2026-03-22 | sync-and-start
+
+**Tipo:** Sincronizacion de sesion y arranque de tareas
+**Tarea:** Ejecutar `git pull` en `main`, revalidar pendientes actuales de `@CODEX` en Fase 1.6 e iniciar trabajo paralelo tipo Gemini sobre networking/SGs de Fase 2.
+
+### Archivos afectados
+
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+
+### Comandos ejecutados + output
+
+1. `git status --short --branch`, `Get-Content docs/governance/CONTEXT.md`
+   - Resultado: repo local con cambios abiertos de trabajo en curso (`ioc_normalizer.js`, `CONTEXT.md`, `LOG_INDEX.md`, `SOURCE_CONFIG_GUIDE.md`, `GEMINI_LOG.md`); tarea accionable de `@CODEX` ya reducida a dry-runs y credenciales pendientes.
+2. `git pull --rebase --autostash origin main`
+   - Resultado: `Already up to date.`; `main` ya estaba sincronizada con `origin/main` el `2026-03-22`.
+3. Revisión local de `docs/knowledge/DRY_RUN_ALTERNATIVES.md` y `docs/knowledge/RUNBOOK_THREAT_INTEL.md`
+   - Resultado: confirmado que `n8n execute` sigue sin vía soportada para dry-run automático y que el camino recomendado sigue siendo UI o Webhook dedicado.
+4. Inicio de subagente paralelo tipo Gemini
+   - Resultado: tarea delegada para arrancar la revisión pendiente de networking/SGs de Fase 2 sobre `SPEC_AWS_PRODUCTION.md`, `ECS_TASK_DEFINITION_TEMPLATE.json` y `CONTEXT.md`.
+
+### Estado final
+
+- `main` quedó sincronizada; no había commits nuevos por bajar.
+- No apareció una nueva tarea de `@CODEX` ejecutable sin credenciales adicionales del usuario.
+- Quedó arrancada en paralelo una línea de trabajo tipo Gemini para adelantar Fase 2.
+
+### Riesgo residual
+
+- Los pendientes de `@CODEX` continúan mayormente bloqueados por credenciales externas o ejecución manual en UI.
+
+### Harness gap
+
+- La sincronización de sesión puede quedar “limpia” en Git aunque el árbol local tenga trabajo multi-agente sin consolidar; conviene diferenciar mejor en el framework entre `repo synced` y `workspace clean`.
+
+---
+
+## ENTRADA-019 | 2026-03-22 | fortigate-reimport
+
+**Tipo:** Reimport de workflow en staging
+**Tarea:** Aplicar en el R720 la correccion de endpoint FortiGate y el `ioc_normalizer.js` actualizado como parte de la Fase 1.6.
+
+### Archivos afectados
+
+- `docs/governance/CONTEXT.md`
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+- `.tmp/codex-staging/threat-intel-main.staging-2026-03-22.json` (temporal, no versionado)
+- `.tmp/codex-staging/threat-intel-main.before-2026-03-22.json` (temporal, no versionado)
+- `.tmp/codex-staging/threat-intel-main.reimport-safe-2026-03-22.json` (temporal, no versionado)
+- Runtime de n8n en R720 (`n8n_staging`)
+
+### Comandos ejecutados + output
+
+1. `Get-Content docs/governance/CONTEXT.md`, `git diff -- app/code-nodes/ioc_normalizer.js`, `Get-Content app/workflows/threat-intel-main.json`
+   - Resultado: identificada nueva tarea Fase 1.6 para `@CODEX`; confirmado que `threat-intel-main.json` ya trae el endpoint FortiGate corregido y que `ioc_normalizer.js` local incorpora soporte para `results[]`/`logs[]` y metadata UTM.
+2. Generacion de `.tmp/codex-staging/threat-intel-main.staging-2026-03-22.json`
+   - Resultado: se intento construir un JSON temporal desde el archivo versionado, embebiendo code-nodes y credenciales de staging.
+3. `scp ... threat-intel-main.staging-2026-03-22.json` + `ssh ... n8n import:workflow`
+   - Resultado: la importacion fallo con `SQLITE_CONSTRAINT: NOT NULL constraint failed: workflow_entity.active`.
+4. Copia y analisis de `/tmp/threat-intel-main.before-2026-03-22.json`
+   - Resultado: se confirmo la hipotesis correcta: el export real de staging incluye metadata requerida por SQLite (`active`, `isArchived`, `versionId`, `shared`) que el archivo versionado no trae.
+5. Generacion de `.tmp/codex-staging/threat-intel-main.reimport-safe-2026-03-22.json`
+   - Resultado: se reconstruyo una variante segura partiendo del export real de staging; se aplicaron solo dos cambios: endpoint FortiGate a `/api/v2/log/memory/event/system` con `vdom=root` y `jsCode` de `code-normalizer` actualizado desde `app/code-nodes/ioc_normalizer.js`.
+6. `scp ... threat-intel-main.reimport-safe-2026-03-22.json`
+   - Resultado: copia al R720 completada.
+7. `ssh gabo@192.168.0.70 "docker cp ... && docker exec n8n_staging n8n import:workflow --input=/tmp/threat-intel-main.reimport-safe-2026-03-22.json && docker exec n8n_staging n8n export:workflow --id=0d5f2e64-0d1b-4a8a-9e13-5fc0f2e7b8ad --pretty > /tmp/threat-intel-main.after-2026-03-22.json"`
+   - Resultado: `Successfully imported 1 workflow.`; export posterior generado sin errores.
+8. `ssh gabo@192.168.0.70 "grep -n '/api/v2/log/memory/event/system' /tmp/threat-intel-main.after-2026-03-22.json"` + validacion local del archivo seguro
+   - Resultado: endpoint nuevo confirmado en staging; el JSON seguro muestra `vdom=root` y el normalizador embebido con `rootData.results || rootData.logs`.
+9. `curl.exe -s http://192.168.0.70:5678/healthz` + `ssh ... n8n list:workflow`
+   - Resultado: staging sigue `healthy`; se mantienen `DELCOP Threat Intelligence - Main Pipeline` y `DELCOP n8n Error Handler`.
+
+### Estado final
+
+- Completado: la tarea de reimportar el workflow corregido para FortiGate en staging queda cerrada.
+- Validado: el runtime del workflow principal en el R720 ya usa el endpoint `memory/event/system` y el normalizador compatible con respuestas `results[]`/`logs[]`.
+- Staging sigue sano despues del reimport.
+
+### Riesgo residual
+
+- Siguen pendientes los valores reales de Wazuh, Zabbix, AbuseIPDB, OTX y webhook; por eso el dry-run por fuente continua incompleto.
+- El archivo versionado `app/workflows/threat-intel-main.json` sigue sin metadata de export de n8n; para staging fue necesario partir del export real y no del JSON de repo.
+
+### Harness gap
+
+- Para reimports de n8n en instancias SQLite, el harness deberia distinguir entre `workflow source-of-truth` versionado y `workflow export runtime-safe` con metadata de plataforma; si no, aparecen constraints como `workflow_entity.active`.
+
+---
+
 ## ENTRADA-018 | 2026-03-20 | framework-review
 
 **Tipo:** Validacion documental del framework v4.4

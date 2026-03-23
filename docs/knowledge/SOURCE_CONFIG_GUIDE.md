@@ -26,6 +26,21 @@ end
 5. **Trusted Hosts:** Agregar la IP del servidor n8n (R720 / AWS ECS). **Obligatorio para seguridad.**
 6. Al guardar, se generará el **API Key**. Copiarlo inmediatamente (no se vuelve a mostrar).
 
+### 1.3 Endpoints de Log (FortiOS 7.4+)
+El pipeline consume logs vía REST API. Se recomienda usar `memory` para eventos en tiempo real, aunque para auditoría histórica se puede usar `disk` (si el hardware lo soporta).
+
+| Categoría | Endpoint Path (Base: `/api/v2/log/memory/`) | Descripción |
+|---|---|---|
+| **System** | `event/system` | Eventos de sistema, login, configuración. |
+| **IPS** | `utm/ips` | Detecciones de intrusiones y ataques de red. |
+| **Antivirus** | `utm/virus` | Malware detectado en tráfico (HTTP, FTP, etc). |
+| **Web Filter** | `utm/webfilter` | Dominios y URLs bloqueadas o monitoreadas. |
+| **App Control** | `utm/app-ctrl` | Aplicaciones detectadas (Shadow IT, P2P). |
+
+**Parámetros recomendados:**
+- `vdom=root`: Obligatorio si no se especifica otro VDOM.
+- `format=json`: Por defecto en el header `Accept: application/json`.
+
 ---
 
 ## 2. Wazuh (RBAC)

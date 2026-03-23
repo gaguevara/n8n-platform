@@ -34,6 +34,13 @@
         { "name": "DB_TYPE", "value": "postgresdb" },
         { "name": "DB_POSTGRESDB_PORT", "value": "5432" },
         { "name": "DB_POSTGRESDB_DATABASE", "value": "n8n" },
+        { "name": "THREAT_DB_USER", "value": "delcop_threat" },
+        { "name": "THREAT_DB_HOST_PORT", "value": "5432" },
+        { "name": "REDIS_HOST_PORT", "value": "6379" },
+        { "name": "FORTIGATE_HOST", "value": "192.168.1.1" },
+        { "name": "WAZUH_API_URL", "value": "https://wazuh.delcop.local:55000" },
+        { "name": "WAZUH_API_USER", "value": "n8n_user" },
+        { "name": "ZABBIX_API_URL", "value": "https://zabbix.delcop.local/api_jsonrpc.php" },
         { "name": "ALERT_EMAIL_TO", "value": "seguridad@delcop.com.co" },
         { "name": "ALERT_EMAIL_FROM", "value": "n8n-threatintel@delcop.com.co" }
       ],
@@ -46,8 +53,12 @@
         { "name": "REDIS_PASSWORD", "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT>:secret:threat_intel/redis_password" },
         { "name": "FORTIGATE_API_KEY", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/fortigate_key" },
         { "name": "WAZUH_API_PASSWORD", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/wazuh_pass" },
+        { "name": "ZABBIX_API_TOKEN", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/zabbix_token" },
         { "name": "ABUSEIPDB_API_KEY", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/abuseipdb_key" },
-        { "name": "OTX_API_KEY", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/otx_key" }
+        { "name": "OTX_API_KEY", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/otx_key" },
+        { "name": "VIRUSTOTAL_API_KEY", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/virustotal_key" },
+        { "name": "SLACK_WEBHOOK_URL", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/slack_webhook" },
+        { "name": "TEAMS_WEBHOOK_URL", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/teams_webhook" }
       ],
       "healthCheck": {
         "command": [ "CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1" ],

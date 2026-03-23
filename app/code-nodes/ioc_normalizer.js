@@ -185,45 +185,68 @@ function classifyAlertLevel(score) {
 // --- Normalizadores por fuente ---
 
 function normalizeFortiGate(item) {
-  const data = item.json;
-  const results = [];
+  const rootData = item.json;
+  const iocs = [];
 
-  // Extraer IPs de srcip/dstip
-  if (data.srcip && !isPrivateIP(data.srcip)) {
-    results.push({
-      ioc_value: data.srcip,
-      ioc_type: 'ip_v4',
-      severity: mapSeverity(data.severity || data.level, 'fortigate'),
-      observed_at: data.date ? `${data.date}T${data.time || '00:00:00'}Z` : new Date().toISOString(),
-      _source: 'fortigate',
-      tags: [data.type, data.subtype, data.action].filter(Boolean),
-      metadata: {
-        fortigate_logid: data.logid,
-        policy_id: data.policyid,
-        action: data.action,
-        service: data.service,
-        dst: data.dstip,
-        dst_port: data.dstport,
-        src_interface: data.srcintf,
-        dst_interface: data.dstintf
+  // FortiOS API puede devolver un objeto con .results[] o .logs[]
+  // O n8n puede haber spliteado los resultados ya.
+  const logEntries = rootData.results || rootData.logs || [rootData];
+
+  for (const data of logEntries) {
+    if (!data || typeof data !== 'object') continue;
+
+    // 1. Extraer IPs de srcip/dstip
+    if (data.srcip && !isPrivateIP(data.srcip)) {
+      iocs.push({
+        ioc_value: data.srcip,
+        ioc_type: 'ip_v4',
+        severity: mapSeverity(data.severity || data.level, 'fortigate'),
+        observed_at: data.date ? `${data.date}T${data.time || '00:00:00'}Z` : new Date().toISOString(),
+        _source: 'fortigate',
+        tags: [data.type, data.subtype, data.action].filter(Boolean),
+        metadata: {
+          fortigate_logid: data.logid,
+          policy_id: data.policyid,
+          action: data.action,
+          service: data.service,
+          dst: data.dstip,
+          attack: data.attack, // Para IPS
+          virus: data.virus    // Para Antivirus
+        }
+      });
+    }
+
+    // 2. Si hay URL en el log (web filter, etc.)
+    if (data.hostname) {
+      iocs.push({
+        ioc_value: data.hostname,
+        ioc_type: 'domain',
+        severity: mapSeverity(data.severity || data.level, 'fortigate'),
+        observed_at: new Date().toISOString(),
+        _source: 'fortigate',
+        tags: ['webfilter', data.catdesc].filter(Boolean),
+        metadata: { url: data.url, category: data.cat }
+      });
+    }
+
+    // 3. Extraer IoCs de mensajes de texto en logs UTM (IPS/Virus)
+    if (data.msg) {
+      // Intentar extraer hashes si es un log de Antivirus
+      for (const match of data.msg.matchAll(IOC_PATTERNS.hash_sha256)) {
+        iocs.push({
+          ioc_value: match[0],
+          ioc_type: 'hash_sha256',
+          severity: mapSeverity(data.severity || data.level, 'fortigate'),
+          observed_at: new Date().toISOString(),
+          _source: 'fortigate',
+          tags: ['virus', data.virus].filter(Boolean),
+          metadata: { virus: data.virus, action: data.action }
+        });
       }
-    });
+    }
   }
 
-  // Si hay URL en el log (web filter, etc.)
-  if (data.hostname) {
-    results.push({
-      ioc_value: data.hostname,
-      ioc_type: 'domain',
-      severity: mapSeverity(data.severity || data.level, 'fortigate'),
-      observed_at: new Date().toISOString(),
-      _source: 'fortigate',
-      tags: ['webfilter', data.catdesc].filter(Boolean),
-      metadata: { url: data.url, category: data.cat }
-    });
-  }
-
-  return results;
+  return iocs;
 }
 
 function normalizeWazuh(item) {
