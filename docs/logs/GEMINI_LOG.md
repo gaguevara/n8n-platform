@@ -266,7 +266,7 @@ Tareas de la Fase 1.6 para Gemini completadas. El normalizador es ahora compatib
 
 ### Acciones Ejecutadas
 1.  **Update Task Definition:** Se añadieron todas las variables faltantes en el template JSON, asegurando paridad 1:1 con la tabla de inyección de secretos.
-2.  **Update SPEC AWS:** 
+2.  **Update SPEC AWS:**
     - Se añadió el **Redis SG** (puerto 6379) restringido al ECS Service.
     - Se incluyó la recomendación formal de **NAT Gateway** y **VPC Endpoints** (ECR, S3, Secrets Manager, etc.) para mejorar seguridad y costos.
     - Se actualizó la tabla de mapeo con descripciones mejoradas y tokens adicionales (`VIRUSTOTAL`, `ZABBIX`).
@@ -338,3 +338,30 @@ Sesión de validación completada. El repositorio está en un estado estable y c
 
 ### Estado Final
 Investigación de Wazuh v4.14 completada. Bloqueo de ingesta resuelto a nivel de diseño. Se entrega la guía técnica para que Codex aplique la corrección en el workflow.
+
+---
+
+## ENTRADA-018 | 2026-03-23 | audit + pipeline-completion
+
+**Tipo:** Auditoría y finalización de Fase 1
+**Tarea:** Ejecución autónoma de tareas de Ronda 1, 2 y 3 (normalizadores, ECS template, dry-run doc y consolidación).
+
+### Análisis y acciones ejecutadas:
+1. **Ronda 1:** Se actualizó \ECS_TASK_DEFINITION_TEMPLATE.json\ agregando las variables \WAZUH_INDEXER_URL\ y \WAZUH_INDEXER_BASIC_AUTH\. Se modificó el parseador en \ioc_normalizer.js\ para consumir la estructura \hits.hits\ de Elasticsearch que expone el Wazuh Indexer API. Se creó el \ACTIVATION_CHECKLIST.md\ de pre-requisitos cron.
+2. **Ronda 2:** Se realizó análisis del mapeo de los normalizadores versus el conocimiento de API en \MAPPING_ANALYSIS.md\. Se validaron como coherentes los pesos de scoring (\ioc_scorer.js\), asignando valor lógico según la fidelidad (ej. Wazuh > Zabbix). Se robusteció \lert_dispatcher.js\ asegurando falla controlada (*graceful fail*) si falta el webhook de Slack/Teams, usando la sintaxis correcta \\\.
+3. **Ronda 3:** Se auditó la coherencia entre \DATA-CONTRACTS.md\, \ 1-schema.sql\ y \ioc_normalizer.js\, documentando en el reporte un *drift* aceptable pero que requerirá actualización del MD (contrato centrado en IoCs). Se actualizó \RUNBOOK_THREAT_INTEL.md\ con los hallazgos empíricos del dry-run de Codex y se generó el resumen de consolidación \PHASE1_SUMMARY.md\.
+
+### Documentación actualizada:
+- \docs/architecture/ECS_TASK_DEFINITION_TEMPLATE.json\
+- \pp/code-nodes/ioc_normalizer.js\
+- \docs/knowledge/ACTIVATION_CHECKLIST.md\ (Nuevo)
+- \pp/code-nodes/alert_dispatcher.js\
+- \docs/knowledge/MAPPING_ANALYSIS.md\ (Nuevo)
+- \docs/knowledge/RUNBOOK_THREAT_INTEL.md\
+- \docs/PHASE1_SUMMARY.md\ (Nuevo)
+
+### Recomendación a CONTEXT.md
+Mis tareas correspondientes a la Fase 1.8 (Rondas 1 a 3) han sido finalizadas.
+
+### Harness gap
+Ninguno detectado.

@@ -19,7 +19,7 @@ El despliegue en producción consistirá en:
 ### 3.1. Networking y Exposición
 - **ALB (Application Load Balancer):** Actúa como punto de entrada público, realiza la terminación TLS/SSL (mediante AWS Certificate Manager) y reenvía tráfico por HTTP (puerto 5678) a las tareas de Fargate en subredes privadas.
 - **NAT Gateway / VPC Endpoints:** Dado que Fargate reside en subredes privadas, se requiere un NAT Gateway para salida a Internet (APIs de terceros). Se recomienda el uso de VPC Endpoints para servicios AWS (ECR, S3, Secrets Manager, SSM, CloudWatch) para reducir costos de transferencia y mejorar la seguridad.
-- **Security Groups:** 
+- **Security Groups:**
   - **ALB SG:** Permite inbound 443/80 desde Internet.
   - **ECS SG:** Permite inbound 5678 SOLO desde el ALB SG. Egress libre (vía NAT Gateway) para alcanzar APIs de terceros (Threat Intel, etc.).
   - **RDS SG:** Permite inbound 5432 SOLO desde el ECS SG.

@@ -40,6 +40,7 @@
         { "name": "FORTIGATE_HOST", "value": "192.168.1.1" },
         { "name": "WAZUH_API_URL", "value": "https://wazuh.delcop.local:55000" },
         { "name": "WAZUH_API_USER", "value": "n8n_user" },
+        { "name": "WAZUH_INDEXER_URL", "value": "https://wazuh.delcop.local:9200" },
         { "name": "ZABBIX_API_URL", "value": "https://zabbix.delcop.local/api_jsonrpc.php" },
         { "name": "ALERT_EMAIL_TO", "value": "seguridad@delcop.com.co" },
         { "name": "ALERT_EMAIL_FROM", "value": "n8n-threatintel@delcop.com.co" }
@@ -53,6 +54,7 @@
         { "name": "REDIS_PASSWORD", "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT>:secret:threat_intel/redis_password" },
         { "name": "FORTIGATE_API_KEY", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/fortigate_key" },
         { "name": "WAZUH_API_PASSWORD", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/wazuh_pass" },
+        { "name": "WAZUH_INDEXER_BASIC_AUTH", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/wazuh_indexer_auth" },
         { "name": "ZABBIX_API_TOKEN", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/zabbix_token" },
         { "name": "ABUSEIPDB_API_KEY", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/abuseipdb_key" },
         { "name": "OTX_API_KEY", "valueFrom": "arn:aws:ssm:<REGION>:<ACCOUNT>:parameter/prod/threat_intel/otx_key" },

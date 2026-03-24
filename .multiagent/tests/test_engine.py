@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 from pathlib import Path
 from subprocess import CompletedProcess
 
@@ -8,6 +9,7 @@ ENGINE_PATH = Path(__file__).resolve().parents[1] / "core" / "engine.py"
 SPEC = importlib.util.spec_from_file_location("multiagent_engine", ENGINE_PATH)
 engine = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
+sys.modules[SPEC.name] = engine
 SPEC.loader.exec_module(engine)
 
 
@@ -31,9 +33,49 @@ def build_config() -> dict:
     }
 
 
+def build_watch_config() -> dict:
+    config = build_config()
+    config["agents"].append({"id": "GEMINI", "log": "logs/GEMINI_LOG.md"})
+    config["paths"].update(
+        {
+            "context": "Docs/governance/CONTEXT.md",
+            "project_rules": "Docs/governance/PROJECT_RULES.md",
+            "agent_roles": "Docs/governance/AGENT_ROLES.md",
+        }
+    )
+    config["auto_validate"] = {
+        "enabled": True,
+        "interval_minutes": 3,
+        "round_counter": 0,
+        "baseline": {"CLAUDE": 0, "CODEX": 0, "GEMINI": 0},
+        "on_new_entry": ["verify_files", "sync_index", "notify"],
+        "hallucination_check": True,
+        "auto_commit": False,
+        "notify": "stdout",
+        "subagent_pattern": "SUB-{AGENT}-{N}",
+        "deadman_interval": 5,
+        "role_boundaries": {
+            "CLAUDE": ["docs/governance/", "docs/sdlc/", "*.md"],
+            "CODEX": [".multiagent/core/", ".multiagent/tests/", "*.py"],
+            "GEMINI": ["docs/reviews/", "docs/architecture/"],
+        },
+        "shared_zones": [
+            "docs/logs/",
+            "docs/governance/CONTEXT.md",
+            "docs/governance/LOG_INDEX.md",
+        ],
+    }
+    return config
+
+
 def write_file(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def write_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(engine.json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
 def test_parse_last_entry_valid(tmp_path: Path) -> None:
@@ -238,3 +280,312 @@ def test_sync_index_write_rejects_path_escape(tmp_path: Path, capsys) -> None:
 
     assert rc == 1
     assert "path escapes project base" in output
+
+
+def test_parse_subagent_entries_detects_headers(tmp_path: Path) -> None:
+    log_path = tmp_path / "CLAUDE_LOG.md"
+    write_file(
+        log_path,
+        "\n".join(
+            [
+                "## ENTRADA-001",
+                "main entry",
+                "## SUB-CLAUDE-1",
+                "sub work",
+                "## SUB-CLAUDE-2",
+                "more sub work",
+            ],
+        ),
+    )
+
+    assert engine.parse_subagent_entries(log_path) == [("CLAUDE", 1), ("CLAUDE", 2)]
+
+
+def test_verify_files_reports_missing_path(tmp_path: Path) -> None:
+    entry = engine.LogEntry(
+        number=1,
+        header="## ENTRADA-001",
+        body=("- **Archivos afectados:** `docs/missing.md`, `docs/existing.md`",),
+    )
+    write_file(tmp_path / "docs" / "existing.md", "ok")
+
+    missing = engine.verify_files(tmp_path, [entry])
+
+    assert missing == ["docs/missing.md"]
+
+
+def test_detect_antiloop_when_same_error_repeats(tmp_path: Path) -> None:
+    log_path = tmp_path / "CODEX_LOG.md"
+    write_file(
+        log_path,
+        "\n".join(
+            [
+                "## ENTRADA-001",
+                "Error: same failure on step 12",
+                "## ENTRADA-002",
+                "Error: same failure on step 42",
+            ],
+        ),
+    )
+
+    fingerprint = engine.detect_antiloop(log_path, "## ENTRADA-{number}")
+
+    assert fingerprint is not None
+    assert "same failure" in fingerprint
+
+
+def test_check_role_boundaries_flags_violation_and_allows_shared_zone() -> None:
+    config = build_watch_config()
+
+    warnings = engine.check_role_boundaries(
+        "CODEX",
+        [
+            ".multiagent/core/engine.py",
+            "docs/governance/PROJECT_RULES.md",
+            "docs/governance/CONTEXT.md",
+        ],
+        config,
+    )
+
+    assert warnings == [
+        (
+            "ROLE_VIOLATION: CODEX modified "
+            "docs/governance/PROJECT_RULES.md outside assigned zone"
+        )
+    ]
+
+
+def test_check_dependency_queue_returns_queued_until_blocker_checked() -> None:
+    context_text = "\n".join(
+        [
+            "### @GEMINI - Researcher",
+            "- [ ] @GEMINI: Fase A de SPEC-004",
+            "### @CODEX - Implementer",
+            "- [ ] @CODEX: Fase B de SPEC-004",
+            "  Nota: Fase B inicia cuando Gemini complete Fase A",
+        ],
+    )
+
+    queue = engine.check_dependency_queue(context_text)
+
+    assert queue["CODEX"].status == "QUEUED"
+    assert "GEMINI" in queue["CODEX"].reason
+
+
+def test_check_dependency_queue_returns_ready_when_blocker_is_checked() -> None:
+    context_text = "\n".join(
+        [
+            "### @GEMINI - Researcher",
+            "- [x] @GEMINI: Fase A de SPEC-004",
+            "### @CODEX - Implementer",
+            "- [ ] @CODEX: Fase B de SPEC-004",
+            "  Nota: Fase B inicia cuando Gemini complete Fase A",
+        ],
+    )
+
+    queue = engine.check_dependency_queue(context_text)
+
+    assert queue["CODEX"].status == "READY"
+
+
+def test_parse_context_tasks_stops_before_non_agent_sections() -> None:
+    context_text = "\n".join(
+        [
+            "### @CLAUDE - Governor",
+            "- [ ] @CLAUDE: Fase C",
+            "  Nota: cuando CODEX complete Fase B",
+            "---",
+            "## Riesgos tecnicos abiertos",
+            "| Riesgo | Impacto |",
+        ],
+    )
+
+    tasks = engine.parse_context_tasks(context_text)
+
+    assert len(tasks) == 1
+    assert "Riesgos tecnicos abiertos" not in tasks[0]["combined_text"]
+
+
+def test_execute_watch_cycle_updates_round_and_baseline(
+    tmp_path: Path,
+) -> None:
+    config = build_watch_config()
+    config_path = tmp_path / "adapter.json"
+    write_json(config_path, config)
+    write_file(
+        tmp_path / "logs" / "CODEX_LOG.md",
+        (
+            "## ENTRADA-001\n"
+            "## Fecha: 2026-03-24\n"
+            "- **Archivos afectados:** `.multiagent/core/engine.py`\n"
+        ),
+    )
+    write_file(tmp_path / ".multiagent" / "core" / "engine.py", "print('ok')\n")
+    write_file(tmp_path / "Docs" / "governance" / "LOG_INDEX.md", "# LOG\n")
+    write_file(
+        tmp_path / "Docs" / "governance" / "CONTEXT.md",
+        "### @CODEX - Implementer\n- [ ] @CODEX: Fase B\n",
+    )
+
+    state = engine.execute_watch_cycle(str(config_path), tmp_path)
+    saved = engine.read_json(config_path)
+
+    assert state["round_counter"] == 1
+    assert saved["auto_validate"]["round_counter"] == 1
+    assert saved["auto_validate"]["baseline"]["CODEX"] == 1
+
+
+def test_execute_watch_cycle_detects_hallucination_and_keeps_baseline(
+    tmp_path: Path,
+) -> None:
+    config = build_watch_config()
+    config_path = tmp_path / "adapter.json"
+    write_json(config_path, config)
+    write_file(
+        tmp_path / "logs" / "CODEX_LOG.md",
+        "## ENTRADA-001\n- **Archivos afectados:** `docs/missing.md`\n",
+    )
+    write_file(tmp_path / "Docs" / "governance" / "LOG_INDEX.md", "# LOG\n")
+    write_file(
+        tmp_path / "Docs" / "governance" / "CONTEXT.md",
+        "### @CODEX - Implementer\n- [ ] @CODEX: Fase B\n",
+    )
+
+    state = engine.execute_watch_cycle(str(config_path), tmp_path)
+    saved = engine.read_json(config_path)
+
+    assert state["hallucinations"] == [
+        "CODEX: hallucination detected -> docs/missing.md"
+    ]
+    assert saved["auto_validate"]["baseline"]["CODEX"] == 0
+
+
+def test_execute_watch_cycle_deadman_awaits_then_pauses(tmp_path: Path) -> None:
+    config = build_watch_config()
+    config["auto_validate"]["deadman_interval"] = 1
+    config_path = tmp_path / "adapter.json"
+    write_json(config_path, config)
+    write_file(tmp_path / "Docs" / "governance" / "LOG_INDEX.md", "# LOG\n")
+    write_file(
+        tmp_path / "Docs" / "governance" / "CONTEXT.md",
+        "### @CODEX - Implementer\n- [ ] @CODEX: Fase B\n",
+    )
+
+    first = engine.execute_watch_cycle(str(config_path), tmp_path)
+    second = engine.execute_watch_cycle(str(config_path), tmp_path)
+
+    assert first["state"] == "AWAITING_ACK"
+    assert second["state"] == "PAUSED"
+
+
+def test_watch_ack_clears_pause_on_next_cycle(tmp_path: Path) -> None:
+    config = build_watch_config()
+    config["auto_validate"]["deadman_interval"] = 2
+    config_path = tmp_path / "adapter.json"
+    write_json(config_path, config)
+    write_file(tmp_path / "Docs" / "governance" / "LOG_INDEX.md", "# LOG\n")
+    write_file(
+        tmp_path / "Docs" / "governance" / "CONTEXT.md",
+        "### @CODEX - Implementer\n- [ ] @CODEX: Fase B\n",
+    )
+
+    engine.execute_watch_cycle(str(config_path), tmp_path)
+    second = engine.execute_watch_cycle(str(config_path), tmp_path)
+    rc = engine.cmd_watch(str(config_path), tmp_path, ["--ack"])
+    third = engine.execute_watch_cycle(str(config_path), tmp_path)
+
+    assert second["state"] == "AWAITING_ACK"
+    assert rc == 0
+    assert third["state"] == "ACTIVE"
+
+
+def test_render_watch_status_includes_queue_and_round(tmp_path: Path) -> None:
+    config = build_watch_config()
+    config["auto_validate"]["round_counter"] = 3
+    config["auto_validate"]["baseline"]["GEMINI"] = 0
+    config_path = tmp_path / "adapter.json"
+    write_json(config_path, config)
+    write_file(
+        tmp_path / "Docs" / "governance" / "CONTEXT.md",
+        "\n".join(
+            [
+                "### @GEMINI - Researcher",
+                "- [ ] @GEMINI: Fase A de SPEC-004",
+                "### @CODEX - Implementer",
+                "- [ ] @CODEX: Fase B de SPEC-004",
+                "  Nota: Fase B inicia cuando Gemini complete Fase A",
+            ],
+        ),
+    )
+
+    output = engine.render_watch_status(str(config_path), tmp_path)
+
+    assert "RONDA-003" in output
+    assert "CODEX: QUEUED" in output
+
+
+def test_auto_commit_invokes_git_with_safe_paths(tmp_path: Path, monkeypatch) -> None:
+    config = build_watch_config()
+    write_file(tmp_path / "logs" / "CODEX_LOG.md", "entry\n")
+    write_file(tmp_path / "Docs" / "governance" / "LOG_INDEX.md", "# LOG\n")
+    write_file(tmp_path / ".multiagent" / "core" / "engine.py", "print('ok')\n")
+
+    calls: list[list[str]] = []
+
+    def fake_run(argv, capture_output, text, cwd, check, **kwargs):
+        calls.append(argv)
+        if argv[:3] == ["git", "status", "--porcelain"]:
+            return CompletedProcess(argv, 0, stdout="", stderr="")
+        if argv[:4] == ["git", "diff", "--cached", "--name-only"]:
+            return CompletedProcess(
+                argv,
+                0,
+                stdout=".multiagent/core/engine.py\n",
+                stderr="",
+            )
+        return CompletedProcess(argv, 0, stdout="", stderr="")
+
+    monkeypatch.setattr(engine.subprocess, "run", fake_run)
+    monkeypatch.setattr(engine, "cmd_sync_index", lambda config, base, write=False: 0)
+
+    committed = engine.auto_commit(
+        tmp_path,
+        config,
+        "CODEX",
+        7,
+        4,
+        [".multiagent/core/engine.py"],
+    )
+
+    assert committed is True
+    assert [
+        "git",
+        "commit",
+        "-m",
+        "chore(watch): RONDA-004 validate CODEX ENTRADA-007",
+    ] in calls
+
+
+def test_cmd_watch_daemon_spawns_subprocess(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    config = build_watch_config()
+    config_path = tmp_path / "adapter.json"
+    write_json(config_path, config)
+
+    class DummyProcess:
+        pid = 4321
+
+    monkeypatch.setattr(
+        engine.subprocess,
+        "Popen",
+        lambda *args, **kwargs: DummyProcess(),
+    )
+
+    rc = engine.cmd_watch(str(config_path), tmp_path, ["--daemon"])
+    output = capsys.readouterr().out
+
+    assert rc == 0
+    assert "PID 4321" in output

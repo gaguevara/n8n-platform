@@ -42,7 +42,7 @@ orquesta todo automaticamente.
 4. **Generar adapter** — crear `.multiagent/adapters/{nombre-proyecto}.json`:
    ```json
    {
-     "project_name": "{detectado del directorio o git remote}",
+     "project_name": "{slug real del directorio actual o git remote}",
      "agents": [lista segun fase 1.3],
      "paths": {
        "log_index": "docs/governance/LOG_INDEX.md",
@@ -55,6 +55,7 @@ orquesta todo automaticamente.
      "task_file_pattern": "SPEC_*.md"
    }
    ```
+   - `project_name` debe poder compararse mecanicamente con el directorio actual durante `SESSION_BOOTSTRAP` Paso 0.
 
 5. **Crear estructura de directorios**:
    ```
@@ -68,9 +69,10 @@ orquesta todo automaticamente.
 
 6. **Poblar documentos de gobernanza** con datos del proyecto:
    - PROJECT_RULES.md §2 (identidad) y §3 (stack) con datos detectados
-   - CONTEXT.md con estado inicial
+   - CONTEXT.md con estado inicial y anchors fijos por agente activo
    - LOG_INDEX.md con anchors sync y tabla vacia
    - AGENT_ROLES.md con roles segun agentes disponibles
+   - ONBOARDING y gobernanza deben usar rutas reales del proyecto actual, sin placeholders heredados ni rutas de ejemplo rotas
 
 7. **Crear archivos de agente**:
    - `AGENTS.md` (solo si Codex activo) — bootstrap + rol + reglas
@@ -80,6 +82,7 @@ orquesta todo automaticamente.
 8. **Configurar Context7 (MCP)** — documentacion actualizada del stack:
    - Context7 provee documentacion en tiempo real de las librerias del proyecto
    - Los agentes lo usan para consultar APIs, parametros y ejemplos actualizados
+   - Es tooling externo via MCP/npx, no una carpeta del repositorio
    - Crear `.mcp.json`:
    ```json
    {"mcpServers": {"context7": {"command": "npx", "args": ["-y", "@upstash/context7-mcp@latest"]}}}
@@ -95,6 +98,7 @@ orquesta todo automaticamente.
 10. **Instalar skills comunitarios (skills.sh)** — mejores practicas y seguridad:
     - skills.sh provee habilidades de buenas practicas, seguridad y calidad de codigo
     - Los agentes los usan para aplicar guidelines, patrones y hardening al proyecto
+    - Es tooling externo via npm; no asumir archivos base `skills.sh/` dentro del repo
     - Buscar skills relevantes: `npx skills search "<stack> security"`, `npx skills search "<stack> best practices"`
     - Instalar con formato: `npx skills add -y <owner/repo@skill-name>`
     - Los skills se instalan en `.agents/skills/` con symlink a `.claude/skills/`
@@ -104,12 +108,33 @@ orquesta todo automaticamente.
       - **Calidad** (ej: testing guidelines, accessibility, performance)
     - Si `npx` no esta disponible, omitir y documentar en ONBOARDING
 
+    **Skills recomendados (prioridad alta — validados en pilotos):**
+    - `obra/superpowers@systematic-debugging` — debugging estructurado en 4 fases
+    - `obra/superpowers@verification-before-completion` — no declarar "listo" sin verificar
+    - `obra/superpowers@subagent-driven-development` — orquestacion de sub-agentes con review en 2 etapas
+    - `hieutrtr/ai1-skills@code-review-security` — checklist OWASP + scanning automatizado
+    - `0xbigboss/claude-code@python-best-practices` — type-first, dataclasses, Protocol (si Python)
+
+    **Skills recomendados (segun stack — evaluar antes de instalar):**
+    - Frontend detectado → `nextlevelbuilder/ui-ux-pro-max-skill` (design intelligence, 67 estilos UI, paletas, fonts)
+    - Django detectado → `affaan-m/everything-claude-code@django-security`
+    - React detectado → buscar `npx skills search "react best practices"`
+    - Docker detectado → buscar `npx skills search "docker best practices"`
+
+    > **Regla:** Los skills recomendados son referencias, no obligatorios.
+    > Instalar solo si aportan valor al proyecto actual. Validar productividad antes de mantener.
+
     > **Distincion clave:** Context7 = *que hace* cada libreria (docs).
     > skills.sh = *como usarla bien* (practicas, seguridad, calidad).
 
 11. **Activar pre-commit** si `.pre-commit-config.yaml` existe:
     - Descomentar hooks relevantes al stack detectado
     - Generar `.secrets.baseline` si detect-secrets disponible
+
+11.5 **Generar `FRAMEWORK_CAPABILITIES.md`** a partir de `docs/templates/FRAMEWORK_CAPABILITIES.md`:
+    - Ubicacion: `docs/governance/FRAMEWORK_CAPABILITIES.md`
+    - Incluir: comandos del engine, MCP servers configurados, skills internos/comunitarios detectados, validators del adapter, agentes activos y paths clave
+    - Regenerarlo en cada adopcion para reflejar el estado real del proyecto
 
 ### Fase 3: Registro
 
@@ -125,6 +150,7 @@ orquesta todo automaticamente.
 14. **Escribir cola de tareas** en CONTEXT.md → seccion "Pendientes inmediatos":
     - Cada tarea DEBE ir bajo `### @AGENTE - Rol` correspondiente
     - NO crear subsecciones tematicas — los agentes parsean por encabezado
+    - Crear el anchor de cada agente activo aunque la cola inicial este vacia
     ```
     ### @GEMINI - Researcher/Reviewer
     - [ ] @GEMINI: Validar PROJECT_RULES y completar secciones pendientes (Autor: Claude, Fecha: YYYY-MM-DD)
@@ -135,6 +161,7 @@ orquesta todo automaticamente.
     ### @CLAUDE - Governor
     - [ ] @CLAUDE: Consolidar resultados cuando Gemini y Codex completen (Autor: Claude, Fecha: YYYY-MM-DD)
     ```
+   - Si un agente esta activo pero no tiene tarea inicial, dejar el heading y usar `_Sin tareas iniciales._`
    - Si un agente no esta activo, omitir su seccion completa y redistribuir la responsabilidad
 
 15. **Informar al usuario** que la adopcion esta completa y que tareas

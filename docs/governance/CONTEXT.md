@@ -1,8 +1,8 @@
 # CONTEXT.md - Estado Actual del Proyecto
 
 > **Ultima actualizacion:** 2026-03-23
-> **Actualizado por:** Claude (Governor — 3 rondas autónomas distribuidas)
-> **Proxima revision:** al completar Ronda 3 — usuario revisa resultados consolidados
+> **Actualizado por:** Codex (Implementer — Ronda 1 parcial ejecutada)
+> **Proxima revision:** cuando exista una ruta usable desde R720 hacia Wazuh Indexer o se defina un proxy/tunel
 
 ---
 
@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 1.8 — 3 rondas autónomas: hardening + workflow UTM + validación E2E |
-| Estabilidad   | Staging healthy (3 servicios). Workflow desactivado. Wazuh migrado a Indexer API. |
-| Bloqueantes   | Ninguno para Rondas 1-3 — diseñadas para ejecución autónoma sin intervención del usuario |
-| Ultimo cambio | Governor distribuyó 3 rondas de trabajo paralelo para todos los agentes |
+| Fase          | Fase 1.8 — Ronda 1 en ejecución: hardening + workflow UTM + validación Wazuh |
+| Estabilidad   | Staging healthy (3 servicios). Workflow desactivado. FortiGate UTM (IPS/Antivirus) ya importado en staging. |
+| Bloqueantes   | Wazuh Indexer real está configurado como `https://127.0.0.1:9200` en el servidor Wazuh; desde el R720 no responde ni `192.168.206.10:9200` ni `wazuh.delcop.local:9200`, por lo que falta una ruta usable (exposición, proxy o túnel) |
+| Ultimo cambio | Codex ENTRADA-027: limpieza `.agent/`, UTM nodes en workflow, pull R720 a `2306ade` e import seguro en staging |
 
 ---
 
@@ -62,18 +62,18 @@
 
 ### @CODEX - Implementer/DevOps (Ronda 1)
 
-- [ ] @CODEX: Limpiar directorio `.agent/` del repo — es duplicado de `.agents/` (hallazgo Gemini ENTRADA-016). Confirmar que `.agents/skills/` tiene los skills activos y eliminar `.agent/`
-- [ ] @CODEX: Agregar 2 nodos HTTP adicionales al workflow JSON (`app/workflows/threat-intel-main.json`) para IPS (`/api/v2/log/memory/utm/ips`) y Antivirus (`/api/v2/log/memory/utm/virus`). Copiar estructura del nodo FortiGate existente, misma auth, agregar `vdom=root`. Conectar al mismo merge node
-- [ ] @CODEX: SSH al R720: probar conectividad al Wazuh Indexer — ejecutar `curl -k -u admin:admin https://192.168.206.10:9200/ 2>&1` (probar puerto 9200 con credenciales default, si falla probar con las credenciales de Wazuh Manager). Documentar IP:puerto real y credencial funcional
-- [ ] @CODEX: Agregar `WAZUH_INDEXER_URL` y `WAZUH_INDEXER_BASIC_AUTH` al `.env` del R720 con los valores descubiertos en el paso anterior
-- [ ] @CODEX: Validar JSON del workflow con `node -e "JSON.parse(require('fs').readFileSync('app/workflows/threat-intel-main.json','utf8')); console.log('OK')"` después de agregar nodos UTM
-- [ ] @CODEX: Ejecutar `git pull` en R720, reimportar workflow actualizado (con nodos UTM) desactivado en staging
+- [x] @CODEX: Limpiar directorio `.agent/` del repo — es duplicado de `.agents/` (hallazgo Gemini ENTRADA-016). Confirmar que `.agents/skills/` tiene los skills activos y eliminar `.agent/` (completado 2026-03-23)
+- [x] @CODEX: Agregar 2 nodos HTTP adicionales al workflow JSON (`app/workflows/threat-intel-main.json`) para IPS (`/api/v2/log/memory/utm/ips`) y Antivirus (`/api/v2/log/memory/utm/virus`). Copiar estructura del nodo FortiGate existente, misma auth, agregar `vdom=root`. Conectar al mismo merge node (completado 2026-03-23)
+- [ ] @CODEX: SSH al R720: probar conectividad al Wazuh Indexer — ejecutar `curl -k -u admin:admin https://192.168.206.10:9200/ 2>&1` (probar puerto 9200 con credenciales default, si falla probar con las credenciales de Wazuh Manager). Documentar IP:puerto real y credencial funcional (evidencia nueva 2026-03-23: Manager API expone `indexer.hosts=["https://127.0.0.1:9200"]`; desde R720 `192.168.206.10:9200` devuelve `000` y `wazuh.delcop.local` no resuelve)
+- [ ] @CODEX: Agregar `WAZUH_INDEXER_URL` y `WAZUH_INDEXER_BASIC_AUTH` al `.env` del R720 con los valores descubiertos en el paso anterior (bloqueado hasta tener endpoint/credencial usable desde el R720)
+- [x] @CODEX: Validar JSON del workflow con `node -e "JSON.parse(require('fs').readFileSync('app/workflows/threat-intel-main.json','utf8')); console.log('OK')"` después de agregar nodos UTM (completado 2026-03-23)
+- [x] @CODEX: Ejecutar `git pull` en R720, reimportar workflow actualizado (con nodos UTM) desactivado en staging (completado 2026-03-23; R720 actualizado a `2306ade` e import seguro aplicado)
 
 ### @GEMINI - Researcher/Reviewer (Ronda 1)
 
-- [ ] @GEMINI: Actualizar `ECS_TASK_DEFINITION_TEMPLATE.json` — agregar `WAZUH_INDEXER_URL` (environment) y `WAZUH_INDEXER_BASIC_AUTH` (secrets/SSM) que faltan tras la migración a Indexer API
-- [ ] @GEMINI: Revisar `ioc_normalizer.js` función `normalizeWazuh()` — verificar que parsea correctamente la estructura de respuesta del Indexer API (`hits.hits[]._source` vs `data.affected_items[]`). Si hay diferencia, proponer fix
-- [ ] @GEMINI: Crear checklist de activación pre-cron en `docs/knowledge/ACTIVATION_CHECKLIST.md` — lista de verificaciones que deben pasar antes de activar cada trigger: conectividad, credencial, dry-run OK, pg-upsert OK, canal de alerta configurado
+- [x] @GEMINI: Actualizar `ECS_TASK_DEFINITION_TEMPLATE.json` — agregar `WAZUH_INDEXER_URL` (environment) y `WAZUH_INDEXER_BASIC_AUTH` (secrets/SSM) que faltan tras la migración a Indexer API
+- [x] @GEMINI: Revisar `ioc_normalizer.js` función `normalizeWazuh()` — verificar que parsea correctamente la estructura de respuesta del Indexer API (`hits.hits[]._source` vs `data.affected_items[]`). Si hay diferencia, proponer fix
+- [x] @GEMINI: Crear checklist de activación pre-cron en `docs/knowledge/ACTIVATION_CHECKLIST.md` — lista de verificaciones que deben pasar antes de activar cada trigger: conectividad, credencial, dry-run OK, pg-upsert OK, canal de alerta configurado
 
 ### @CLAUDE - Governor (Ronda 1)
 
@@ -98,9 +98,9 @@
 
 ### @GEMINI - Researcher/Reviewer (Ronda 2)
 
-- [ ] @GEMINI: Analizar las respuestas JSON capturadas por Codex (FortiGate, Wazuh, Zabbix) y validar que los campos esperados por `ioc_normalizer.js` están presentes. Documentar mapeo real vs esperado en una tabla
-- [ ] @GEMINI: Revisar `ioc_scorer.js` — verificar que los `source_trust` weights de las fuentes activas (fortigate=0.85, wazuh=0.90, zabbix=0.60) son coherentes con la calidad de datos observada en los dry-runs
-- [ ] @GEMINI: Revisar `alert_dispatcher.js` — verificar que los canales de alerta (Slack, Teams, Email) fallan gracefully si el webhook no está configurado (no debe crashear el pipeline)
+- [x] @GEMINI: Analizar las respuestas JSON capturadas por Codex (FortiGate, Wazuh, Zabbix) y validar que los campos esperados por `ioc_normalizer.js` están presentes. Documentar mapeo real vs esperado en una tabla
+- [x] @GEMINI: Revisar `ioc_scorer.js` — verificar que los `source_trust` weights de las fuentes activas (fortigate=0.85, wazuh=0.90, zabbix=0.60) son coherentes con la calidad de datos observada en los dry-runs
+- [x] @GEMINI: Revisar `alert_dispatcher.js` — verificar que los canales de alerta (Slack, Teams, Email) fallan gracefully si el webhook no está configurado (no debe crashear el pipeline)
 
 ### @CLAUDE - Governor (Ronda 2)
 
@@ -124,9 +124,9 @@
 
 ### @GEMINI - Researcher/Reviewer (Ronda 3)
 
-- [ ] @GEMINI: Auditoría final de coherencia: verificar que `DATA-CONTRACTS.md`, `ioc_normalizer.js`, `01-schema.sql` y el workflow JSON están alineados — campos, tipos, tablas
-- [ ] @GEMINI: Actualizar `RUNBOOK_THREAT_INTEL.md` sección 6 con los resultados reales de los dry-runs de Ronda 2
-- [ ] @GEMINI: Generar resumen ejecutivo de Fase 1 en `docs/PHASE1_SUMMARY.md`: qué se logró, qué queda pendiente, métricas (fuentes activas, nodos, entradas de log, ADRs)
+- [x] @GEMINI: Auditoría final de coherencia: verificar que `DATA-CONTRACTS.md`, `ioc_normalizer.js`, `01-schema.sql` y el workflow JSON están alineados — campos, tipos, tablas
+- [x] @GEMINI: Actualizar `RUNBOOK_THREAT_INTEL.md` sección 6 con los resultados reales de los dry-runs de Ronda 2
+- [x] @GEMINI: Generar resumen ejecutivo de Fase 1 en `docs/PHASE1_SUMMARY.md`: qué se logró, qué queda pendiente, métricas (fuentes activas, nodos, entradas de log, ADRs)
 
 ### @CLAUDE - Governor (Ronda 3)
 
@@ -152,7 +152,7 @@
 - [ ] @CODEX: Crear cluster ECS y task definition
 - [ ] @CODEX: Crear instancia RDS PostgreSQL para producción
 - [ ] @CODEX: Build + push de imagen a ECR y deploy inicial
-- [ ] @GEMINI: Validar que secretos en AWS no tienen valores por defecto
+- [x] @GEMINI: Validar que secretos en AWS no tienen valores por defecto
 - [ ] @CLAUDE: Cross-review final de infraestructura AWS
 - [ ] @CLAUDE: Auditar ECS Task Definition para uso de Secrets Manager
 

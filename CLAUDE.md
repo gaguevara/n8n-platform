@@ -1,4 +1,4 @@
-# CLAUDE.md — n8n Platform DELCOP (Framework Multi-Agente v4.4)
+# CLAUDE.md — n8n Platform DELCOP (Framework Multi-Agente v4.6)
 
 ## Protocolo obligatorio
 
@@ -16,7 +16,7 @@ Antes de cualquier acción, ejecutar en orden:
 Cargar solo cuando la tarea lo requiera:
 - Generando/revisando código → `docs/knowledge/DESIGN_PRINCIPLES.md`
 - Implementando feature con spec → `docs/sdlc/SPEC_[NOMBRE].md`
-- Evaluando habilidades → `docs/skills/SKILLS.md`
+- Evaluando habilidades → `docs/skills/AGENT_SKILLS_MATRIX.md`
 - Entendiendo el harness → `docs/harness/HARNESS.md`
 - Ciclo SDLC → `docs/sdlc/SDLC_WORKFLOW.md`
 
@@ -57,16 +57,8 @@ Si hay trabajo pendiente en logs o CONTEXT.md, ejecutarlo proactivamente.
 - [ ] @CLAUDE: [tarea de gobernanza o consolidacion]
 ```
 
-## Fuentes de conocimiento externo
-
-| Fuente | Propósito | Uso |
-|--------|-----------|-----|
-| Context7 (MCP) | Documentación de librerías en tiempo real | `resolve-library-id` → `query-docs` |
-| skills.sh | Mejores prácticas y seguridad (+89K skills) | `npx skills add -y <owner/repo@skill-name>` |
-
 ## Reglas esenciales
 
-- **git pull obligatorio** antes de iniciar cualquier sesión (Paso 0 del bootstrap).
 - Framework multi-agente: multiples agentes pueden trabajar en el mismo repo.
 - No modificar archivos sin leer contexto primero (Pattern 07).
 - Investigar antes de cambiar (Pattern 01).
@@ -83,10 +75,16 @@ Si hay trabajo pendiente en logs o CONTEXT.md, ejecutarlo proactivamente.
 El engine en `.multiagent/core/engine.py` provee:
 - `status` — ver última entrada de log por agente
 - `sync-index` — sincronizar LOG_INDEX automáticamente
-- Fallback Windows: `powershell -ExecutionPolicy Bypass -File .multiagent/core/sync_index.ps1`
 - `validate <file>` — sugerir/ejecutar validador para un archivo
 
 Configuración del proyecto en `.multiagent/adapters/n8n-platform.json`.
+
+## Fuentes de conocimiento externo
+
+| Fuente | Propósito | Uso |
+|--------|-----------|-----|
+| Context7 (MCP) | Documentación de librerías en tiempo real | `resolve-library-id` → `query-docs` |
+| skills.sh | Mejores prácticas y seguridad (+89K skills) | `npx skills add -y <owner/repo@skill-name>` |
 
 ---
 

@@ -11,8 +11,8 @@
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
 | CLAUDE | ENTRADA-019 | docs/logs/CLAUDE_LOG.md | 2026-03-23 |
-| CODEX  | ENTRADA-026 | docs/logs/CODEX_LOG.md  | 2026-03-23 |
-| GEMINI | ENTRADA-017 | docs/logs/GEMINI_LOG.md | 2026-03-23 |
+| CODEX  | ENTRADA-028 | docs/logs/CODEX_LOG.md  | 2026-03-23 |
+| GEMINI | ENTRADA-018 | docs/logs/GEMINI_LOG.md | 2026-03-23 |
 
 ---
 
@@ -65,6 +65,8 @@
 | ENTRADA-024 | CODEX  | staging-vars-and-dry-runs | Variables Wazuh/Zabbix cargadas en R720, Redis recuperado, workflow reimportado con Zabbix Bearer y dry-runs equivalentes ejecutados | 2026-03-23 |
 | ENTRADA-025 | CODEX  | staging-post-validation | Validacion documental del ciclo de staging y registro del gap local de `bash` para `update-agent-context.sh` | 2026-03-23 |
 | ENTRADA-026 | CODEX  | wazuh-indexer-fix | Workflow staging desactivado, Wazuh migrado a Indexer API y reimport seguro validado sin reactivar cron | 2026-03-23 |
+| ENTRADA-027 | CODEX  | ronda1-utm-and-wazuh-path | Limpieza `.agent/`, nodos UTM en FortiGate, evidencia real del Indexer Wazuh y reimport seguro en staging | 2026-03-23 |
+| ENTRADA-028 | CODEX  | project-validation-audit | Validacion local del stack, auditoria de drift repo↔docs y barrido basico de seguridad/tooling | 2026-03-23 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
 | ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |
@@ -82,6 +84,7 @@
 | ENTRADA-015 | GEMINI | research + normalizer-fix | Investigación Wazuh/Zabbix API, robustecimiento normalizadores y guía dry-runs | 2026-03-23 |
 | ENTRADA-016 | GEMINI | audit + review      | Auditoría de sesión, review de recomendaciones y limpieza repo    | 2026-03-23 |
 | ENTRADA-017 | GEMINI | research + api-fix  | Investigación endpoint Wazuh v4.14 (Indexer API puerto 9200)      | 2026-03-23 |
+| ENTRADA-018 | GEMINI | audit + pipeline    | Auditoría y tareas de consolidación Rondas 1-3 (Fase 1)           | 2026-03-23 |
 
 ---
 

@@ -1,87 +1,63 @@
-# =============================================================================
-# n8n Platform - Git Ignore
-# =============================================================================
+# ===== Framework Multi-Agente .gitignore =====
 
-# Environment files con secrets
-.env
-.env.local
-.env.staging
-.env.prod
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
 
-# Datos persistentes (contiene credenciales encriptadas)
-data/
-!data/.gitkeep
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
 
-# Archivos compartidos temporales
-shared-files/
-!shared-files/.gitkeep
-
-# Logs
-*.log
-logs/
-!docs/logs/
-
-# OS files
-.DS_Store
-Thumbs.db
-Desktop.ini
-
-# IDE / Editor
-.vscode/*
-!.vscode/tasks.json
-!.vscode/extensions.json
+# IDE
+.vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# Docker
-.docker/
-
-# Backups
-*.backup
-*.bak
-*.tar.gz
-backups/
-
-# Node (si se instalan dependencias localmente)
-node_modules/
-
-# Temporal
-tmp/
-temp/
-*.tmp
-
-# Framework ZIP (no versionar el distribuible)
-*.zip
-
-# AWS credentials (nunca deben estar en repo)
-.aws/
-credentials
-
-# Python (framework multi-agente engine)
-__pycache__/
-*.py[cod]
-*$py.class
-.pytest_cache/
-.coverage
-.mypy_cache/
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
 
 # Claude Code (session-specific, not project config)
 .claude/settings.local.json
 
-# Community skills (installed per-project via npx skills add)
-.agent/
+# Community skills (installed per-project via npx skills add, not part of framework base)
 .agents/
+.codebuddy/
 .continue/
 skills-lock.json
-# Community skill symlinks in .claude/skills/ (installed, not framework-native)
-.claude/skills/docker-security-guide
-.claude/skills/aws-ecs-fargate
-.claude/skills/postgres-patterns
+# Symlinks created by skills.sh in .claude/skills/ — add community skill names here
+# Our own skills (adapt-project, validate-change, etc.) are NOT listed and ARE tracked
+.claude/skills/python-best-practices
+.claude/skills/code-review-security
+.claude/skills/systematic-debugging
+.claude/skills/verification-before-completion
+.claude/skills/subagent-driven-development
 
-# Secrets extras (nunca commitear)
+# Distribution zips (generated, not tracked)
+multiagent-framework-v*.zip
+
+# Secrets (never commit)
+.env
+.env.*
 *.pem
 *.key
 credentials.json
 secrets.yaml
+.multiagent/.watch.*
+.claude/scheduled_tasks.lock

@@ -9,7 +9,10 @@ Protocolo común de arranque para cualquier agente o desarrollador que inicie un
 ## Secuencia obligatoria de inicio
 
 ```
-0. Sincronizar con remote (si existe): `git pull origin main` (o `git stash && git pull && git stash pop` si hay cambios locales). Si no hay remote configurado, omitir.
+0. Sincronizar con remote (si existe): `git pull origin main` (o `git stash && git pull && git stash pop` si hay cambios locales).
+   - Si no hay remote configurado, omitir.
+   - Si existe `.multiagent/adapters/*.json`, leer `project_name` del adapter principal y compararlo con el nombre del directorio actual.
+   - Si no coincide -> ALERTAR al usuario antes de continuar. Es una alerta operativa, no un bloqueo automático.
 1. Leer docs/governance/PROJECT_RULES.md
 2. Si docs/governance/CONTEXT.md existe -> leerlo
    Si no existe -> ejecutar/adoptar framework via skill adapt-project antes de continuar
@@ -17,7 +20,7 @@ Protocolo común de arranque para cualquier agente o desarrollador que inicie un
 4. Leer docs/governance/LOG_INDEX.md
 5. Revisar últimas entradas relevantes en docs/logs/ de los otros agentes
 6. Si la tarea involucra código → leer docs/knowledge/DESIGN_PRINCIPLES.md
-7. Si hay dudas sobre habilidades esperadas → leer docs/skills/SKILLS.md
+7. Si hay dudas sobre habilidades esperadas → leer docs/skills/AGENT_SKILLS_MATRIX.md
 8. Si la tarea tiene spec → leer docs/sdlc/SPEC_[NOMBRE].md
 9. Determinar tipo de tarea → actuar según nivel
 ```
@@ -62,6 +65,15 @@ En este caso:
 
 ---
 
+## Reglas de preservación
+
+- Los logs `*_LOG.md` son **append-only**. Solo agregar nuevas entradas al final del archivo.
+- Nunca editar, truncar ni reordenar entradas previas de logs sin aprobación explícita del Governor o del humano responsable.
+- Al modificar archivos maestros de gobernanza (`PROJECT_RULES.md`, `SESSION_BOOTSTRAP.md`, overlays, `CONTEXT.md`, `LOG_INDEX.md`), agregar al final de la sección existente o insertar después de un anchor estable.
+- No reescribir secciones completas para introducir una regla puntual. Si una regla previa debe eliminarse, requiere aprobación explícita del Governor o del humano responsable.
+
+---
+
 ## Cierre de sesión
 
 Antes de dar una tarea por terminada:
@@ -84,12 +96,14 @@ El framework integra dos fuentes complementarias para que los agentes trabajen c
 - Provee documentacion en tiempo real de las librerias del stack del proyecto
 - Uso: `resolve-library-id` para encontrar libreria, `query-docs` para consultar
 - Configurado en `.mcp.json`
+- Es tooling externo via MCP/npx; no es una carpeta del repositorio ni un archivo de gobernanza.
 - **Para que:** saber *que hace* cada libreria (APIs, parametros, ejemplos)
 
 ### skills.sh — mejores practicas y seguridad
 - Provee +89K skills comunitarios de buenas practicas, seguridad y calidad
 - Instalacion: `npx skills add -y <owner/repo@skill-name>`
 - `find-skills` se instala durante adapt-project para descubrir skills relevantes
+- Es tooling externo via npm; solo aparece en `.agents/skills/` cuando se instala explicitamente.
 - **Para que:** saber *como usar bien* cada tecnologia (guidelines, hardening, patrones)
 
 Los skills propios del framework estan en `.claude/skills/`. Los skills comunitarios los complementan, no los reemplazan.

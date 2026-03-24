@@ -26,7 +26,7 @@ Permitir que un desarrollador o agente nuevo entienda el proyecto y pueda colabo
    ```
    *Nota: El stack incluye `n8n`, `threat-db` (PostgreSQL) y `threat-cache` (Redis). Por defecto, `threat-db` se expone en el puerto `5433` para evitar conflictos con instalaciones locales de PostgreSQL.*
 
-3. **Verificación:** 
+3. **Verificación:**
    - n8n: `http://localhost:5678`
    - Healthcheck: `docker compose -f infra/docker-compose.local.yml ps` (todos deben estar `healthy`)
 

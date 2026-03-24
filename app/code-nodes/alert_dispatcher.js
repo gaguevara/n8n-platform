@@ -150,23 +150,27 @@ const output = [];
 for (const item of alertItems) {
   const ioc = item.json;
 
-  // Slack payload
-  output.push({
-    json: {
-      _channel: 'slack',
-      _webhook_url: process.env[ALERT_CONFIG.slack.webhook_env] || '',
-      payload: formatSlackPayload(ioc),
-      ioc_id: `${ioc.ioc_type}::${ioc.ioc_value}`,
-      alert_level: ioc.alert_level
-    }
-  });
+  // Slack payload (si configurado)
+  const slackWebhook = $env[ALERT_CONFIG.slack.webhook_env];
+  if (slackWebhook) {
+    output.push({
+      json: {
+        _channel: 'slack',
+        _webhook_url: slackWebhook,
+        payload: formatSlackPayload(ioc),
+        ioc_id: `${ioc.ioc_type}::${ioc.ioc_value}`,
+        alert_level: ioc.alert_level
+      }
+    });
+  }
 
   // Teams payload (si configurado)
-  if (process.env[ALERT_CONFIG.teams.webhook_env]) {
+  const teamsWebhook = $env[ALERT_CONFIG.teams.webhook_env];
+  if (teamsWebhook) {
     output.push({
       json: {
         _channel: 'teams',
-        _webhook_url: process.env[ALERT_CONFIG.teams.webhook_env],
+        _webhook_url: teamsWebhook,
         payload: formatTeamsPayload(ioc),
         ioc_id: `${ioc.ioc_type}::${ioc.ioc_value}`,
         alert_level: ioc.alert_level

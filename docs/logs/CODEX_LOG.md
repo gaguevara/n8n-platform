@@ -6,6 +6,133 @@
 
 ---
 
+## ENTRADA-028 | 2026-03-23 | project-validation-audit
+
+**Tipo:** Validacion tecnica + GC audit + security sweep
+**Tarea:** Auditar el estado real del proyecto tras reiniciar trabajo local: bootstrap obligatorio, validaciones de runtime/compose/scripts, barrido de drift documental y chequeos basicos de seguridad.
+
+### Archivos afectados
+
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+
+### Comandos ejecutados + output
+
+1. `git status --short`, `git remote -v`, `git fetch origin main`, `git rev-list --left-right --count HEAD...origin/main`
+   - Resultado: workspace con cambios locales en curso y `3` archivos nuevos; `origin` apunta a GitHub; divergencia `0 0` contra `origin/main`, por lo que no se hizo `git pull` sobre un arbol sucio.
+2. `Get-ChildItem -Depth 2`, `rg --files`, `Get-Content -Raw README.md`, `infra/*.yml`, `infra/Dockerfile`, `ops/Makefile`
+   - Resultado: stack confirmado (`n8n` + Docker Compose + PostgreSQL/Redis para Threat Intel + framework multi-agente). Se detecto drift entre docs y estado real del repo.
+3. `docker compose -f infra/docker-compose.local.yml config`
+   - Resultado: compose local resuelve correctamente. La salida incluyo variables locales de `.env`, tratadas como sensibles y no replicadas en este log.
+4. `docker compose -f infra/docker-compose.staging.yml config` y `docker compose -f infra/docker-compose.prod.yml config`
+   - Resultado: ambos archivos parsean, pero staging/prod muestran warnings por variables requeridas no definidas en esta estacion (`THREAT_DB_PASSWORD`, `REDIS_PASSWORD`, `AWS_REGION`, `RDS_*`, `N8N_ENCRYPTION_KEY`).
+5. `docker compose -f infra/docker-compose.local.yml ps -a` y `Invoke-WebRequest http://localhost:5678/healthz`
+   - Resultado: `n8n_local`, `n8n_threat_db` y `n8n_threat_cache` permanecen `healthy`; `healthz` responde `{"status":"ok"}`.
+6. `node -e "JSON.parse(...threat-intel-main.json...); JSON.parse(...error-handler.json...); console.log('JSON_OK')"`
+   - Resultado: `JSON_OK`; los workflows son JSON valido, pero el principal sigue con placeholders y configuracion incoherente respecto a la documentacion.
+7. `python -m pre_commit run --all-files` (dos veces)
+   - Resultado: primera corrida modifico formato en `docs/logs/GEMINI_LOG.md`, `docs/knowledge/RUNBOOK_THREAT_INTEL.md`, `docs/governance/ONBOARDING.md`, `docs/sdlc/SPEC_AWS_PRODUCTION.md`, `docs/knowledge/SOURCE_CONFIG_GUIDE.md` y `docs/sdlc/SPEC_ERROR_HANDLING.md`; segunda corrida paso en verde.
+8. `Get-Content infra/Dockerfile | docker run --rm -i hadolint/hadolint`
+   - Resultado: sin hallazgos de hadolint.
+9. `docker run --rm -v ${PWD}:/work koalaman/shellcheck-alpine sh -lc "shellcheck ..."`
+   - Resultado: `scripts/import-workflows.sh` y `update-agent-context.sh` fallan por finales `CRLF` (`SC1017`); adicionalmente `scripts/import-workflows.sh` reporta `SC2231`, `scripts/backup.sh` reporta `SC2064` y `SC2012`.
+10. `detect-secrets scan --baseline .secrets.baseline`, `pip-audit --format json`, `npm audit --production --prefix data/nodes`, `trivy version`
+    - Resultado: `detect-secrets`, `pip-audit` y `trivy` no estan instalados en esta PC; `npm audit` no pudo ejecutarse por ausencia de `package-lock.json`. Se hizo revision manual de patrones sensibles sin detectar secretos reales nuevos en archivos versionados.
+11. `rg -n "TODO|FIXME|CONFIGURAR|Placeholder|DEPRECATED" ...` y busquedas puntuales sobre `threat-intel-main.json`, `CONTEXT.md`, `PHASE1_SUMMARY.md`, `MAPPING_ANALYSIS.md`, `CODEX_LOG.md`
+    - Resultado: evidencia concreta de drift: el workflow repo aun usa placeholders de `jsCode`, credenciales `CONFIGURAR`, `errorWorkflow` placeholder y auth legacy de Zabbix, mientras la documentacion y logs afirman que esos puntos ya estan corregidos.
+12. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status`
+    - Resultado: engine parsea `CLAUDE #19`, `CODEX #27` y `GEMINI #17`; la trazabilidad vigente del repo se mantiene legible.
+
+### Estado final
+
+- El runtime local esta sano y el stack base levanta correctamente.
+- El principal riesgo actual no es de arranque sino de coherencia: el repo esta a mitad de una integracion y la versionada de `app/workflows/threat-intel-main.json` no coincide con lo que `CONTEXT.md`, `PHASE1_SUMMARY.md`, `MAPPING_ANALYSIS.md` y `CODEX_LOG.md` dicen que ya fue importado/corregido en staging.
+- La auditoria detecto tambien deuda operativa en scripts shell para entorno Windows/CRLF y una brecha de tooling de seguridad local.
+
+### Riesgo residual
+
+- Un operador que importe hoy el workflow versionado desde Git obtendra una version con placeholders de code nodes, credenciales sin configurar, `errorWorkflow` placeholder y auth legacy de Zabbix, pese a que la documentacion reciente comunica lo contrario.
+- El workspace quedo mas sucio por la autocorreccion de `pre-commit` sobre documentos ajenos a esta tarea; no se revirtieron esos cambios para evitar perder trabajo existente.
+- La cobertura del barrido de seguridad es parcial mientras falten `detect-secrets`, `pip-audit` y `trivy` en la estacion.
+
+### Harness gap
+
+- Falta una ruta mecanica y reproducible para validar shell scripts en Windows sin depender de `/bin/bash` externo ni sufrir ruido por `CRLF`.
+- El proyecto no distingue con suficiente claridad entre "estado del runtime de staging" y "estado del archivo versionado en Git", lo que permite que la gobernanza marque tareas como completadas aunque el repo aun no refleje esos cambios.
+
+## ENTRADA-027 | 2026-03-23 | ronda1-utm-and-wazuh-path
+
+**Tipo:** Hardening + workflow update + validacion de conectividad
+**Tarea:** Ejecutar la parte autonoma de la Ronda 1 de `@CODEX`: limpiar `.agent/`, agregar nodos UTM a FortiGate, validar el camino real hacia Wazuh Indexer desde el R720 y reimportar el workflow desactivado en staging.
+
+### Archivos afectados
+
+- `app/workflows/threat-intel-main.json`
+- `docs/governance/CONTEXT.md`
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+- `.tmp/codex-staging/threat-intel-main.ronda1-2026-03-23.json` (temporal, no versionado)
+- `.tmp/codex-staging/threat-intel-main.ronda1.verify.json` (temporal, no versionado)
+- Runtime de staging en R720 (`n8n_staging`)
+
+### Comandos ejecutados + output
+
+1. `git pull --ff-only origin main`
+   - Resultado: `Already up to date.` en este workspace al inicio de la ronda.
+2. `Get-ChildItem -Force .agent -Recurse` y `Get-ChildItem -Name .agents/skills`
+   - Resultado: `.agent/` solo contenia directorios duplicados de skills; `.agents/skills/` confirmo el catalogo activo.
+3. `cmd /c rd /s /q .agent`
+   - Resultado: `.agent/` eliminado sin afectar `.agents/`.
+4. `ssh gabo@192.168.0.70 '... curl ... 9200 ... 55000 ...'`
+   - Resultado: `admin9200:000`, `mgr9200:000`, `admin55000:401`, `mgr55000:200`; el Manager API autentica, pero el Indexer no responde en `192.168.206.10:9200`.
+5. `ssh gabo@192.168.0.70 '... /manager/configuration?section=indexer ...'`
+   - Resultado: Wazuh reporto `indexer.hosts=["https://127.0.0.1:9200"]`; el Indexer existe en el servidor Wazuh pero queda expuesto solo en loopback de ese host.
+6. `ssh gabo@192.168.0.70 'getent/host/nslookup/ping wazuh.delcop.local'`
+   - Resultado: `SERVFAIL` y fallo de resolucion; `curl https://wazuh.delcop.local:9200/` devolvio `000`.
+7. `node -e "JSON.parse(require('fs').readFileSync('app/workflows/threat-intel-main.json','utf8')); console.log('OK')"`
+   - Resultado: `OK` despues de agregar los nodos `GET FortiGate IPS Logs` y `GET FortiGate Antivirus Logs`.
+8. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && git pull --ff-only origin main"`
+   - Resultado: fast-forward del repo del R720 hasta `2306ade`.
+9. `scp .tmp/codex-staging/threat-intel-main.ronda1-2026-03-23.json ...` + `docker exec n8n_staging n8n import:workflow ...`
+   - Resultado: `Successfully imported 1 workflow.`
+10. Verificacion del export reimportado con `python -` sobre `.tmp/codex-staging/threat-intel-main.ronda1.verify.json`
+    - Resultado: `active_false=True`, `utm_ips=True`, `utm_virus=True`, `indexer_hits=True`, `slack_guard=True`.
+11. `ssh gabo@192.168.0.70 "curl -s http://localhost:5678/healthz"` y `docker compose ... ps -a`
+    - Resultado: `{"status":"ok"}` y `n8n_staging`, `n8n_threat_cache`, `n8n_threat_db` permanecieron `healthy`.
+12. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate app/workflows/threat-intel-main.json --json`
+    - Resultado: validacion configurada y exitosa del workflow JSON.
+13. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/governance/CONTEXT.md --json`
+    - Resultado: validacion exitosa de `CONTEXT.md`.
+14. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/logs/CODEX_LOG.md --json`
+    - Resultado: validacion exitosa de `CODEX_LOG.md`.
+15. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/governance/LOG_INDEX.md --json`
+    - Resultado: validacion exitosa de `LOG_INDEX.md`.
+16. `git diff --check -- app/workflows/threat-intel-main.json docs/governance/CONTEXT.md docs/logs/CODEX_LOG.md docs/governance/LOG_INDEX.md`
+    - Resultado: sin errores bloqueantes; solo warnings de normalizacion `LF -> CRLF`.
+17. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status`
+    - Resultado: engine parseo correctamente `CLAUDE #19`, `CODEX #27` y `GEMINI #17`.
+18. `detect-secrets scan --baseline .secrets.baseline` y `bash update-agent-context.sh`
+    - Resultado: ambos indisponibles en esta PC (`detect-secrets` no instalado y `/bin/bash` ausente), por lo que el secret-scan quedo manual y la sincronizacion quedo validada via `engine status`.
+
+### Estado final
+
+- `.agent/` fue limpiado; el repo conserva solo `.agents/` como fuente de skills.
+- El workflow versionado ya incluye dos nodos UTM nuevos de FortiGate: IPS y Antivirus.
+- Staging fue reimportado con una variante segura que conserva IDs/credenciales, mantiene el workflow desactivado e incorpora:
+  - los dos nodos UTM nuevos,
+  - `normalizeWazuh()` compatible con `hits.hits[]`,
+  - el guard de Slack para no intentar enviar webhook vacio.
+- El R720 quedo en `2306ade` y el stack siguio sano.
+
+### Riesgo residual
+
+- No existe todavia un endpoint/credencial de Wazuh Indexer usable desde el R720. El unico host confirmado por Wazuh es `https://127.0.0.1:9200`, local al servidor Wazuh.
+- El workspace local contiene trabajo paralelo de Gemini en `app/code-nodes/*`, `docs/architecture/ECS_TASK_DEFINITION_TEMPLATE.json`, `docs/knowledge/*` y documentos nuevos de Ronda 1; no se revirtio ni se aislo.
+
+### Harness gap
+
+- El workflow depende de una topologia de red no documentada para Wazuh Indexer. El framework asumio que `:9200` era accesible desde staging, pero la evidencia real muestra que el servicio esta ligado a loopback del host Wazuh; hace falta documentar si la via soportada sera exposicion controlada, reverse proxy o tunel.
+
 ## ENTRADA-026 | 2026-03-23 | wazuh-indexer-fix
 
 **Tipo:** Remediacion de workflow + validacion de staging

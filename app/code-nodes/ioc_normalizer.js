@@ -253,8 +253,16 @@ function normalizeWazuh(item) {
   const rootData = item.json;
   const iocs = [];
 
-  // Wazuh API puede devolver { data: { affected_items: [] } } o un item individual
-  const alerts = rootData.data?.affected_items || (rootData.id && rootData.rule ? [rootData] : []);
+  // Indexer API devuelve { hits: { hits: [ { _source: {} } ] } }
+  // Manager API devolvía { data: { affected_items: [] } } o un item individual
+  let alerts = [];
+  if (rootData.hits?.hits) {
+    alerts = rootData.hits.hits.map(h => h._source);
+  } else if (rootData.data?.affected_items) {
+    alerts = rootData.data.affected_items;
+  } else if (rootData.id && rootData.rule) {
+    alerts = [rootData];
+  }
 
   for (const alert of alerts) {
     // Extraer IoCs del campo data (vulnerabilidades) o del root

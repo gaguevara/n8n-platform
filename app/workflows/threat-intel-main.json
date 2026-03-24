@@ -97,6 +97,70 @@
     },
     {
       "parameters": {
+        "method": "GET",
+        "url": "={{ $env.FORTIGATE_HOST }}/api/v2/log/memory/utm/ips",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{ $env.FORTIGATE_API_KEY }}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "vdom", "value": "root" },
+            { "name": "rows", "value": "100" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "fullResponse": false } },
+          "timeout": 30000
+        },
+        "continueOnFail": true
+      },
+      "id": "http-fortigate-ips",
+      "name": "GET FortiGate IPS Logs",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [350, 150],
+      "typeVersion": 4.2,
+      "notes": "FortiOS UTM IPS endpoint. Requiere vdom=root y reutiliza la misma API key."
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.FORTIGATE_HOST }}/api/v2/log/memory/utm/virus",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{ $env.FORTIGATE_API_KEY }}" }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "vdom", "value": "root" },
+            { "name": "rows", "value": "100" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "fullResponse": false } },
+          "timeout": 30000
+        },
+        "continueOnFail": true
+      },
+      "id": "http-fortigate-virus",
+      "name": "GET FortiGate Antivirus Logs",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [350, 200],
+      "typeVersion": 4.2,
+      "notes": "FortiOS UTM Antivirus endpoint. Requiere vdom=root y reutiliza la misma API key."
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "={{ $env.WAZUH_API_URL }}/security/user/authenticate",
         "sendBody": true,
@@ -464,12 +528,14 @@
     }
   ],
   "connections": {
-    "Cron: FortiGate (5min)": { "main": [[{ "node": "GET FortiGate Logs", "type": "main", "index": 0 }]] },
+    "Cron: FortiGate (5min)": { "main": [[{ "node": "GET FortiGate Logs", "type": "main", "index": 0 }, { "node": "GET FortiGate IPS Logs", "type": "main", "index": 0 }, { "node": "GET FortiGate Antivirus Logs", "type": "main", "index": 0 }]] },
     "Cron: Wazuh (2min)": { "main": [[{ "node": "GET Wazuh Alerts", "type": "main", "index": 0 }]] },
     "Cron: GuardDuty (5min)": { "main": [[{ "node": "GET GuardDuty Findings", "type": "main", "index": 0 }]] },
     "Cron: Zabbix (5min)": { "main": [[{ "node": "GET Zabbix Triggers", "type": "main", "index": 0 }]] },
     "Cron: OSINT Feeds (15min)": { "main": [[{ "node": "GET AbuseIPDB Blacklist", "type": "main", "index": 0 }, { "node": "GET OTX Pulses", "type": "main", "index": 0 }]] },
     "GET FortiGate Logs": { "main": [[{ "node": "Set Source: FortiGate", "type": "main", "index": 0 }]] },
+    "GET FortiGate IPS Logs": { "main": [[{ "node": "Set Source: FortiGate", "type": "main", "index": 0 }]] },
+    "GET FortiGate Antivirus Logs": { "main": [[{ "node": "Set Source: FortiGate", "type": "main", "index": 0 }]] },
     "GET Wazuh Alerts": { "main": [[{ "node": "Set Source: Wazuh", "type": "main", "index": 0 }]] },
     "GET GuardDuty Findings": { "main": [[{ "node": "Set Source: GuardDuty", "type": "main", "index": 0 }]] },
     "GET Zabbix Triggers": { "main": [[{ "node": "Set Source: Zabbix", "type": "main", "index": 0 }]] },

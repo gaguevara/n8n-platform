@@ -14,8 +14,8 @@ Este documento define los procedimientos operativos estándar (SOP) para el mant
 ### 1.2 Logs de Auditoría (PostgreSQL)
 Consultar la tabla de ejecuciones para estadísticas:
 ```sql
-SELECT workflow_name, status, events_ingested, iocs_created, alerts_sent, finished_at 
-FROM workflow_runs 
+SELECT workflow_name, status, events_ingested, iocs_created, alerts_sent, finished_at
+FROM workflow_runs
 ORDER BY finished_at DESC LIMIT 10;
 ```
 
@@ -79,27 +79,27 @@ Se recomienda rotar claves cada 90 días o ante sospecha de compromiso.
 | **High** | Slack / Teams | Equipo de Seguridad | 4 horas (horario laboral) |
 | **Critical** | Slack + Email | Administrador de Plataforma | Inmediato |
 
-## 6. Validación de Dry-runs por Fuente (Fase 1.7)
+## 6. Resultados de Dry-runs por Fuente (Fase 1)
 
-Antes de activar el pipeline en modo automático, se debe realizar un dry-run manual de cada fuente en el entorno de Staging para validar la conectividad y el parseo de datos.
+Durante la Fase 1, se ejecutaron dry-runs manuales de cada fuente en el entorno de Staging (Dell R720) para validar la conectividad y la estructura de las respuestas.
 
-### 6.1 Pruebas Esperadas
+### 6.1 Resultados Reales Obtenidos (2026-03-23)
 
-| Fuente | Entrada de Prueba | Resultado Esperado en Normalizer |
-|---|---|---|
-| **FortiGate** | Log de evento de sistema o UTM | IoC extraído (IP/Dominio), metadata UTM presente. |
-| **Wazuh** | Alerta de nivel > 7 (ej. Brute force) | IoC extraído (IP atacante), rule_id en metadata. |
-| **Zabbix** | Trigger activo (ej. High CPU/ICMP loss) | IoC extraído (IP del host), prioridad mapeada. |
-| **GuardDuty** | Finding activo en us-east-1 | IoC extraído (Remote IP), finding_type en metadata. |
-| **AbuseIPDB** | Lista de IPs reportadas | IoC extraído (IP), abuse_score en metadata. |
-| **OTX Pulses** | Pulses recientes suscritos | IoC extraído (IP/Hash), tags de la pulse presentes. |
+| Fuente | Entrada de Prueba (HTTP equivalente) | Resultado de Conectividad | Comentarios / Parseo |
+|---|---|---|---|
+| **FortiGate** | `GET /api/v2/log/memory/event/system?vdom=root` | ✅ HTTP 200 | Devolvió JSON real con array `results[]`. Endpoints validados. |
+| **Wazuh** (Indexer)| `POST /wazuh-alerts-*/_search` | ✅ Autenticación OK | Migrado desde API Manager (`/alerts` devolvía 404). Configurado con Basic Auth hacia el Indexer. |
+| **Zabbix** | `POST api_jsonrpc.php (trigger.get)` | ✅ HTTP 200 | Devolvió JSON-RPC con `result[]` y triggers activos. Auth migrada a `Authorization: Bearer`. |
+| **GuardDuty** | N/A (Cloud) | ✅ Detector validado | Detector `68c960313fc4628bdf683f052e953cf5` activo en `us-east-1`. |
+| **OSINT** (AbuseIPDB, OTX) | Ping a endpoints web | ⚠️ HTTP 401/403 | Hay salida a Internet desde R720, pero faltan las API keys reales. |
 
 ### 6.2 Evidencia para ISO 27001 A.5.7 (Inteligencia de Amenazas)
 
-Para cumplir con el control A.5.7, se debe recolectar la siguiente evidencia tras los dry-runs:
-1. **Captura de Pantalla:** Ejecución exitosa del nodo en n8n UI mostrando el JSON de salida normalizado.
-2. **Registro en BD:** Query a la tabla `security_events` confirmando la persistencia del evento de prueba.
-3. **Log de Auditoría:** Entrada en `docs/logs/CODEX_LOG.md` detallando la fecha y resultado del dry-run.
+Para cumplir con el control A.5.7, se ha recolectado la siguiente evidencia de los dry-runs:
+1. **Verificación de Red:** Comandos cURL exitosos documentados en `CODEX_LOG.md` (Entrada 024).
+2. **Validación de Parseo:** Tabla de mapeo documentada en `MAPPING_ANALYSIS.md`.
+3. **Persistencia (Test):** Query a la tabla `iocs` confirmando inserción de datos de prueba (upsert) validada por Codex (Entradas previas).
+*Nota: Capturas de pantalla de la UI de n8n completas quedan pendientes hasta configurar todas las credenciales de producción.*
 
 ---
 
