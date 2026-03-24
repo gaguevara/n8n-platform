@@ -11,8 +11,8 @@
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
 | CLAUDE | ENTRADA-019 | docs/logs/CLAUDE_LOG.md | 2026-03-23 |
-| CODEX  | ENTRADA-028 | docs/logs/CODEX_LOG.md  | 2026-03-23 |
-| GEMINI | ENTRADA-018 | docs/logs/GEMINI_LOG.md | 2026-03-23 |
+| CODEX  | ENTRADA-030 | docs/logs/CODEX_LOG.md  | 2026-03-24 |
+| GEMINI | ENTRADA-019 | docs/logs/GEMINI_LOG.md | 2026-03-24 |
 
 ---
 
@@ -67,6 +67,8 @@
 | ENTRADA-026 | CODEX  | wazuh-indexer-fix | Workflow staging desactivado, Wazuh migrado a Indexer API y reimport seguro validado sin reactivar cron | 2026-03-23 |
 | ENTRADA-027 | CODEX  | ronda1-utm-and-wazuh-path | Limpieza `.agent/`, nodos UTM en FortiGate, evidencia real del Indexer Wazuh y reimport seguro en staging | 2026-03-23 |
 | ENTRADA-028 | CODEX  | project-validation-audit | Validacion local del stack, auditoria de drift repo↔docs y barrido basico de seguridad/tooling | 2026-03-23 |
+| ENTRADA-029 | CODEX  | framework-v46-apply-and-ronda4 | Cierre tecnico de framework v4.6 local + ejecucion Ronda 4 en staging (workflow seguro, Zabbix OK, PostgreSQL OK, FortiGate bloqueado) | 2026-03-24 |
+| ENTRADA-030 | CODEX  | framework-v46-closeout | Validaciones finales de trazabilidad y verificacion de sync; engine OK, script `update-agent-context.sh` no ejecutable en Windows sin Bash | 2026-03-24 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
 | ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |
@@ -85,6 +87,7 @@
 | ENTRADA-016 | GEMINI | audit + review      | Auditoría de sesión, review de recomendaciones y limpieza repo    | 2026-03-23 |
 | ENTRADA-017 | GEMINI | research + api-fix  | Investigación endpoint Wazuh v4.14 (Indexer API puerto 9200)      | 2026-03-23 |
 | ENTRADA-018 | GEMINI | audit + pipeline    | Auditoría y tareas de consolidación Rondas 1-3 (Fase 1)           | 2026-03-23 |
+| ENTRADA-019 | GEMINI | research + validation | Validación matriz de skills, capacidades y exposición Indexer   | 2026-03-24 |
 
 ---
 

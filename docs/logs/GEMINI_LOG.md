@@ -365,3 +365,22 @@ Mis tareas correspondientes a la Fase 1.8 (Rondas 1 a 3) han sido finalizadas.
 
 ### Harness gap
 Ninguno detectado.
+
+---
+
+## ENTRADA-019 | 2026-03-24 | research + validation
+
+**Tipo:** Validación y actualización de gobernanza
+**Tarea:** Ejecución de tareas @GEMINI de Ronda 4 (Fase 1.8): validación matriz de skills, framework capabilities, y exposición segura de Wazuh Indexer.
+
+### Acciones ejecutadas
+1. **AGENT_SKILLS_MATRIX.md**: Se corrigió la Sección 6 que referenciaba roles genéricos del framework base, alineando las descripciones y habilidades exactamente con los roles vigentes en `AGENT_ROLES.md` (Claude: Governor + Architect, Codex: Implementer + DevOps, Gemini: Researcher + Reviewer).
+2. **FRAMEWORK_CAPABILITIES.md**: Se validó que Codex ya había creado el documento adaptado al proyecto en su ENTRADA-029 con todos los requerimientos (Context7, skills.sh, engine 29 tests). Tarea marcada como completada.
+3. **SOURCE_CONFIG_GUIDE.md**: Se investigaron y documentaron tres opciones para exponer de forma segura el Indexer de Wazuh (bind 0.0.0.0, Reverse Proxy Nginx, y SSH Tunnel). Se recomendó la opción de **Reverse Proxy (Nginx)** con Whitelist IP como la más segura y estable para un pipeline de producción. Se insertó como la nueva Sección 2.5.
+4. **Evidencia ISO A.5.7**: Se generó el documento formal `docs/EVIDENCIA_ISO_A57.md` consolidando toda la evidencia técnica (fuentes, normalización, scoring, persistencia y alerta) para cumplimiento normativo. Se cerró el pendiente en `docs/TAREAS_INTEGRACION_MCP.md`.
+
+### Recomendación a CONTEXT.md
+Tareas de @GEMINI de la Ronda 4 y tareas de integración MCP han sido finalizadas.
+
+### Harness gap
+Ninguno detectado.

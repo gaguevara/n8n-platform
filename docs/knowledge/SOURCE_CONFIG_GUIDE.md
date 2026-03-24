@@ -92,6 +92,42 @@ En Wazuh v4, el **Manager API (puerto 55000)** no provee un endpoint para buscar
 ```
 *Nota: El campo `rule.level` >= 7 filtra eventos de seguridad relevantes.*
 
+### 2.5 Exposición Segura del Indexer hacia n8n
+Por defecto, el Wazuh Indexer escucha en `127.0.0.1:9200`. Para permitir que n8n (desde el Dell R720) consulte las alertas sin romper el clúster local de Wazuh, se recomiendan las siguientes opciones (ordenadas de mayor a menor preferencia para producción):
+
+**Opción A: Reverse Proxy (Nginx) en el servidor Wazuh (Recomendada)**
+Instalar Nginx en el servidor Wazuh y usarlo como proxy inverso, filtrando por IP. Es la opción más segura porque no altera la configuración nativa de OpenSearch ni requiere manejar certificados en el origen.
+```nginx
+# /etc/nginx/conf.d/wazuh-indexer-proxy.conf
+server {
+    listen 9200 ssl;
+    server_name wazuh.delcop.local;
+    
+    # Certificados (pueden ser los mismos del dashboard o autofirmados)
+    ssl_certificate /etc/wazuh-indexer/certs/admin.pem;
+    ssl_certificate_key /etc/wazuh-indexer/certs/admin-key.pem;
+
+    # Whitelist de la IP de n8n staging (Dell R720)
+    allow 192.168.0.70;
+    deny all;
+
+    location / {
+        proxy_pass https://127.0.0.1:9200;
+        proxy_set_header Host $host;
+    }
+}
+```
+
+**Opción B: SSH Tunnel (Persistente desde R720)**
+Establecer un túnel reverso usando `autossh` como servicio `systemd` en el R720. n8n apuntará a `localhost:9200` y el tráfico viajará encriptado al servidor Wazuh. Es altamente seguro pero requiere mantener el estado del túnel.
+```bash
+# Ejecutar en el Dell R720
+autossh -M 0 -N -L 9200:127.0.0.1:9200 wazuh_admin@192.168.206.10
+```
+
+**Opción C: Modificar `opensearch.yml` (No recomendada)**
+Cambiar `network.host: 0.0.0.0` en `/etc/wazuh-indexer/opensearch.yml`. Esto expone el Indexer directamente a la red y requiere configurar estrictamente el firewall local (`firewalld` o `iptables`) para admitir tráfico solo desde `192.168.0.70`, de lo contrario es un riesgo crítico de seguridad. Además, cambiar la interfaz de binding puede requerir regenerar o ajustar los certificados de los nodos del clúster de Wazuh para evitar errores de validación de hostname/IP.
+
 ---
 
 ## 3. Zabbix (API Tokens)

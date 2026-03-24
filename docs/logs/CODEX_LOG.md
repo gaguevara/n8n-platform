@@ -1452,3 +1452,123 @@
 ### Harness gap
 
 - Ninguno nuevo; el gap principal fue de especificacion del prompt, no del entorno.
+
+---
+
+## ENTRADA-029 | 2026-03-24 | framework-v46-apply-and-ronda4
+
+**Tipo:** Framework sync + validacion local + ejecucion de staging
+**Tarea:** Validar y completar la aplicacion del framework multi-agente v4.6, sincronizar archivos de agente, validar las tareas nuevas de `@CODEX` y ejecutar la Ronda 4 posible en staging.
+
+### Archivos afectados
+
+- `.multiagent/adapters/n8n-platform.json`
+- `AGENTS.md`
+- `GEMINI.md`
+- `docs/governance/FRAMEWORK_CAPABILITIES.md`
+- `docs/governance/CONTEXT.md`
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+- `.tmp/codex-staging/threat-intel-main.before-2026-03-24.json` (temporal, no versionado)
+- `.tmp/codex-staging/threat-intel-main.ronda4-2026-03-24.json` (temporal, no versionado)
+- `.tmp/codex-staging/threat-intel-main.verify-2026-03-24.json` (temporal, no versionado)
+- Runtime de staging en R720 (`/srv/n8n-platform`, `n8n_staging`, `n8n_threat_db`)
+
+### Comandos ejecutados + output
+
+1. `git fetch origin main`, `git rev-list --left-right --count HEAD...origin/main`, `git log --oneline ...`
+   - Resultado: `HEAD` ya estaba en `origin/main` (`0 0`). La actualizacion v4.6 existia en `main`, pero la adaptacion del proyecto estaba incompleta.
+2. Lectura de bootstrap, adapter, changelog, skill matrix, template de capacidades y archivos de agente
+   - Resultado: se confirmo v4.6 parcialmente aplicado. Faltaban `FRAMEWORK_CAPABILITIES.md`, sincronizacion de `AGENTS.md`/`GEMINI.md` y el adapter seguia declarando `framework_version: 4.3`.
+3. Edicion local de `.multiagent/adapters/n8n-platform.json`, `AGENTS.md`, `GEMINI.md` y alta de `docs/governance/FRAMEWORK_CAPABILITIES.md`
+   - Resultado: cierre tecnico local del framework v4.6 con rutas/skills/capacidades aterrizadas al proyecto `n8n-platform`.
+4. `python -m pytest .multiagent/tests -q`
+   - Resultado: `29 passed`.
+5. `python -m json.tool .multiagent/adapters/n8n-platform.json`, `python .multiagent/core/engine.py ... status`, `python .multiagent/core/proto_watch.py --status`
+   - Resultado: adapter JSON valido, engine operativo y `proto_watch` activo.
+6. `python -m pre_commit run --all-files`
+   - Resultado: primera corrida reformateo archivos; segunda corrida paso en verde. Se revirtio el diff accidental sobre `.multiagent/core/engine.py` y `.multiagent/core/proto_watch.py` para mantener el blast radius acotado.
+7. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && git pull --ff-only origin main && git rev-parse --short HEAD"`
+   - Resultado: R720 actualizado de `2306ade` a `4cfb764`.
+8. `docker compose --env-file /srv/n8n-platform/.env -f /srv/n8n-platform/infra/docker-compose.staging.yml ps -a`
+   - Resultado: `n8n_staging`, `n8n_threat_cache` y `n8n_threat_db` permanecieron `healthy`.
+9. Export del workflow real de staging + generacion local de `.tmp/codex-staging/threat-intel-main.ronda4-2026-03-24.json`
+   - Resultado: se genero una variante segura fresca preservando IDs/credenciales/runtime de staging y resincando `code-normalizer`, `code-persist`, `code-alert` desde `app/code-nodes/*`.
+10. `docker exec n8n_staging n8n import:workflow --input=/tmp/threat-intel-main.ronda4-2026-03-24.json`
+    - Resultado: `Successfully imported 1 workflow.`
+11. Verificacion del export reimportado con script Python local
+    - Resultado: `active_false=True`, `zabbix_bearer=True`, `normalizer_embedded=True`, `alert_env_fix=True`, `error_workflow_real=True`.
+12. Dry-run Zabbix desde R720
+    - Resultado: `HTTP 200`; devolvio JSON-RPC con `result[]` y triggers activos.
+13. Inspeccion de la funcion `upsert_ioc` + test de persistencia
+    - Resultado: firma real detectada `upsert_ioc(p_value text, p_type ioc_type, p_tags text[], p_metadata jsonb)`; `SELECT upsert_ioc('1.2.3.4', 'ip_v4', ARRAY['test'], '{}'::jsonb)` inserto correctamente y luego se limpio el dato de prueba.
+14. Dry-run FortiGate desde R720
+    - Resultado: `FORTIGATE_HOST=https://192.168.0.14`, pero la llamada efectiva devolvio `HTTP_STATUS=000`.
+15. Limpieza remota de temporales
+    - Resultado: `CLEAN_TMP` y `CLEAN_HOME`; no quedaron `threat-intel-main*.json` temporales en `/tmp` ni `/home/gabo`.
+
+### Estado final
+
+- Framework v4.6 quedo coherente en el workspace local para este proyecto: adapter actualizado, bootstraps de agentes sincronizados y `FRAMEWORK_CAPABILITIES.md` generado.
+- La validacion local del framework paso con `29` tests verdes y engine operativo.
+- En staging se completo la parte ejecutable de la Ronda 4:
+  - repo del R720 actualizado,
+  - workflow seguro reimportado y verificado,
+  - Zabbix respondio datos reales,
+  - PostgreSQL `upsert_ioc` validado con insercion y limpieza,
+  - staging continuo sano.
+- FortiGate queda como unico punto abierto de la ronda desde la perspectiva de Codex.
+
+### Riesgo residual
+
+- FortiGate devuelve `HTTP 000` desde el R720 aun con `FORTIGATE_HOST=https://192.168.0.14`; hace falta confirmar reachability, firewall o ruta desde ese host.
+- Wazuh Indexer sigue bloqueado por topologia de red (`127.0.0.1:9200` en el servidor Wazuh).
+- El JSON versionado en Git de `app/workflows/threat-intel-main.json` no reemplaza por si solo la variante segura de runtime usada en staging; la importacion segura sigue siendo un paso operativo necesario.
+
+### Harness gap
+
+- El proyecto sigue necesitando un mecanismo estandar para reconstruir y reimportar automaticamente la variante segura del workflow de n8n a partir del JSON versionado + `app/code-nodes/*`, sin depender de operaciones manuales o temporales en `.tmp/codex-staging/`.
+
+---
+
+## ENTRADA-030 | 2026-03-24 | framework-v46-closeout
+
+**Tipo:** Validacion final de trazabilidad
+**Tarea:** Cerrar la aplicacion del framework v4.6 con verificacion final de contexto/logs/indice y confirmar el estado del mecanismo de sincronizacion de agentes en esta estacion Windows.
+
+### Archivos afectados
+
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+
+### Comandos ejecutados + output
+
+1. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/governance/CONTEXT.md --json`
+   - Resultado: `configured: true`.
+2. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/logs/CODEX_LOG.md --json`
+   - Resultado: `configured: true`.
+3. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . validate docs/governance/LOG_INDEX.md --json`
+   - Resultado: `configured: true`.
+4. `git diff --check -- docs/governance/CONTEXT.md docs/logs/CODEX_LOG.md docs/governance/LOG_INDEX.md`
+   - Resultado: sin errores de whitespace; Git advirtio conversion futura `LF -> CRLF` al tocar archivos.
+5. `git status --short`, `git diff --stat -- ...`, `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status`
+   - Resultado: `CODEX` ya refleja `ENTRADA-029`; el workspace mantiene cambios preexistentes no tocados (`.claude/settings.local.json`, `docs/knowledge/SOURCE_CONFIG_GUIDE.md`, `docs/skills/AGENT_SKILLS_MATRIX.md`, skills `.claude/`, `.tmp/`, `data/`).
+6. `bash update-agent-context.sh`
+   - Resultado: fallo local por ausencia de `/bin/bash` en esta estacion (`execvpe(/bin/bash) failed`).
+7. Revision manual de `update-agent-context.sh`
+   - Resultado: la sincronizacion quedo cubierta manualmente por contenido en `AGENTS.md` / `GEMINI.md` y por validacion positiva del engine; el script sigue siendo dependiente de Bash.
+
+### Estado final
+
+- La actualizacion del framework multi-agente v4.6 queda aplicada y auditada localmente.
+- La trazabilidad final quedo consistente: `CONTEXT`, `LOG_INDEX` y `CODEX_LOG` validan con el engine.
+- El mecanismo de sincronizacion de agentes funciona por contenido, pero su automatizacion actual no es portable a esta estacion Windows.
+
+### Riesgo residual
+
+- `update-agent-context.sh` sigue siendo shell-only; en Windows requiere Bash/WSL funcional o un equivalente en PowerShell para automatizar la sincronizacion.
+- Persisten cambios ajenos/preexistentes en el workspace que no fueron revertidos para evitar sobrescribir trabajo en curso.
+
+### Harness gap
+
+- Falta una variante nativa para Windows de `update-agent-context.sh` o un wrapper portable que permita usar la sincronizacion automatica del framework sin depender de `/bin/bash`.

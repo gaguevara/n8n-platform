@@ -1,7 +1,7 @@
 {
   "project_name": "n8n-platform",
   "display_name": "n8n Platform - DELCOP",
-  "framework_version": "4.3",
+  "framework_version": "4.6",
   "agents": [
     {"id": "CLAUDE", "role": "governor", "log": "docs/logs/CLAUDE_LOG.md"},
     {"id": "CODEX",  "role": "implementer", "log": "docs/logs/CODEX_LOG.md"},

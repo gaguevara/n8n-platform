@@ -81,20 +81,20 @@
 
 ## 6. Habilidades por Rol de Agente
 
-### Claude Code — Arquitecto / Validador
+### 6.1 Claude Code — Governor + Architect
 
-Habilidades primarias: Arquitectura, Refactoring, Docker, ADRs, Revisión final
-Habilidades de soporte: Security review, Documentación técnica
+Habilidades primarias: Arquitectura, Gobernanza, Seguridad (Security-scan), Cross-review, Definición de reglas (Failure-to-rule)
+Habilidades de soporte: Refactoring profundo, Docker avanzado
 
-### Codex CLI — Código / Seguridad
+### 6.2 Codex CLI — Implementer + DevOps
 
-Habilidades primarias: Escritura de código, Tests, Security scan, Dependencias
-Habilidades de soporte: Refactoring, Code review
+Habilidades primarias: Docker / Compose, Shell scripting, CI/CD, Escritura de código (nodos n8n), Pre-commit hooks
+Habilidades de soporte: Pruebas locales, Resolución de dependencias
 
-### Gemini Code Assist — Optimización / Performance
+### 6.3 Gemini CLI — Researcher + Reviewer
 
-Habilidades primarias: Análisis de performance, Queries SQL, Costos cloud, Algoritmos
-Habilidades de soporte: Refactoring, Documentación
+Habilidades primarias: Documentación técnica (Specs, Onboarding), Mapeo de variables, Análisis de brechas (Drift documental), Revisión cruzada de coherencia
+Habilidades de soporte: Análisis de logs, Mapeo de contexto de seguridad
 
 ### 6.4 Fuentes externas (Community Skills)
 

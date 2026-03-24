@@ -11,9 +11,9 @@
 | Campo         | Valor |
 |---------------|-------|
 | Fase          | Fase 1.8 — Framework v4.6 aplicado. Rondas 1-3 Gemini completadas. Codex: Ronda 2-3 pendientes. |
-| Estabilidad   | Staging healthy. Workflow desactivado. UTM nodes agregados. Framework v4.6: 29 tests, Pattern 09, proto_watch. |
-| Bloqueantes   | Wazuh Indexer: `127.0.0.1:9200` en servidor Wazuh — no accesible desde R720. Requiere exposición/túnel por usuario. |
-| Ultimo cambio | Framework v4.6 aplicado + cross-review Codex 027-028 + Gemini 018 aprobados. No hay secretos en Git. |
+| Estabilidad   | Staging healthy. Workflow desactivado. UTM nodes agregados. Framework v4.6 validado localmente (29 tests, Pattern 09, proto_watch) y R720 actualizado a `4cfb764`. |
+| Bloqueantes   | Wazuh Indexer: `127.0.0.1:9200` en servidor Wazuh — no accesible desde R720. FortiGate desde R720 devolvió `HTTP 000` el 2026-03-24 pese a que Zabbix y PostgreSQL sí respondieron. |
+| Ultimo cambio | Codex aplicó el cierre técnico de framework v4.6 en local, reimportó workflow seguro en staging y ejecutó dry-runs Ronda 4 (Zabbix OK, PostgreSQL OK, FortiGate bloqueado por conectividad). |
 
 ---
 
@@ -41,9 +41,9 @@
 - [x] @CODEX: SSH al R720 y agregar vars Zabbix al `.env` (completado 2026-03-23)
 - [x] @CODEX: Reiniciar compose en R720 (`docker compose down && docker compose up -d`) y verificar healthchecks (completado 2026-03-23; Redis recuperado y 3 servicios healthy)
 - [x] @CODEX: Reimportar workflow `threat-intel-main.json` actualizado (normalizers Wazuh/Zabbix/GuardDuty con soporte arrays) (completado 2026-03-23 via import seguro preservando IDs y credenciales de staging)
-- [ ] @CODEX: Dry-run nodo FortiGate en staging UI — capturar respuesta JSON (equivalente HTTP ejecutado 2026-03-23 con `HTTP 200`; pendiente evidencia UI)
+- [ ] @CODEX: Dry-run nodo FortiGate en staging UI — capturar respuesta JSON (equivalente HTTP ejecutado 2026-03-23 con `HTTP 200`; desde R720 el 2026-03-24 devolvió `HTTP 000`, por lo que sigue pendiente evidencia UI o remediación de reachability)
 - [ ] @CODEX: Dry-run nodo Wazuh en staging UI — capturar respuesta JSON (bloqueado: el workflow ya apunta al Indexer API, pero falta validar la URL/credencial efectiva accesible desde el R720)
-- [ ] @CODEX: Dry-run nodo Zabbix en staging UI — capturar respuesta JSON (equivalente HTTP ejecutado 2026-03-23 con `HTTP 200`; pendiente evidencia UI)
+- [ ] @CODEX: Dry-run nodo Zabbix en staging UI — capturar respuesta JSON (equivalente HTTP ejecutado 2026-03-24 con JSON-RPC `result[]`; pendiente evidencia UI)
 - [x] @CODEX: Migrar auth Zabbix de body `auth` a header `Authorization: Bearer` (best practice Zabbix 7.0+) (completado 2026-03-23 en workflow reimportado de staging)
 - [x] @CODEX: Corregir endpoint de ingesta Wazuh para la version real del API en staging (hallazgo 2026-03-23: `/alerts` devuelve `404` tras auth exitosa)
 
@@ -90,11 +90,11 @@
 
 ### @CODEX - Implementer/DevOps (Ronda 2)
 
-- [ ] @CODEX: SSH al R720 y ejecutar dry-run HTTP equivalente de FortiGate desde el servidor: `curl -k -H "Authorization: Bearer $FORTIGATE_API_KEY" "https://$FORTIGATE_HOST/api/v2/log/memory/event/system?vdom=root&rows=5"` — capturar respuesta JSON completa en log
+- [ ] @CODEX: SSH al R720 y ejecutar dry-run HTTP equivalente de FortiGate desde el servidor: `curl -k -H "Authorization: Bearer $FORTIGATE_API_KEY" "https://$FORTIGATE_HOST/api/v2/log/memory/event/system?vdom=root&rows=5"` — capturar respuesta JSON completa en log (intentado 2026-03-24; resultado `HTTP 000`)
 - [ ] @CODEX: SSH al R720 y ejecutar dry-run HTTP equivalente de Wazuh Indexer: `curl -k -u "$WAZUH_USER:$WAZUH_PASS" "https://$WAZUH_INDEXER:9200/wazuh-alerts-*/_search" -H "Content-Type: application/json" -d '{"size":5,"query":{"range":{"rule.level":{"gte":7}}}}'` — capturar respuesta
-- [ ] @CODEX: SSH al R720 y ejecutar dry-run HTTP equivalente de Zabbix: `curl -s "$ZABBIX_API_URL" -H "Authorization: Bearer $ZABBIX_API_TOKEN" -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"trigger.get","params":{"output":"extend","limit":5,"min_severity":3},"id":1}'` — capturar respuesta
-- [ ] @CODEX: Ejecutar test de persistencia PostgreSQL desde R720: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "INSERT INTO iocs (ioc_value, ioc_type, severity, confidence, source, tags, metadata) VALUES ('1.2.3.4', 'ip_v4', 'medium', 50, 'dry-run-test', ARRAY['test'], '{}') ON CONFLICT DO NOTHING; SELECT count(*) FROM iocs WHERE source='dry-run-test';"` — confirmar que pg-upsert funciona
-- [ ] @CODEX: Limpiar dato de test: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "DELETE FROM iocs WHERE source='dry-run-test';"`
+- [x] @CODEX: SSH al R720 y ejecutar dry-run HTTP equivalente de Zabbix: `curl -s "$ZABBIX_API_URL" -H "Authorization: Bearer $ZABBIX_API_TOKEN" -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"trigger.get","params":{"output":"extend","limit":5,"min_severity":3},"id":1}'` — capturar respuesta (completado 2026-03-24; devolvió JSON-RPC con `result[]`)
+- [x] @CODEX: Ejecutar test de persistencia PostgreSQL desde R720: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "INSERT INTO iocs (ioc_value, ioc_type, severity, confidence, source, tags, metadata) VALUES ('1.2.3.4', 'ip_v4', 'medium', 50, 'dry-run-test', ARRAY['test'], '{}') ON CONFLICT DO NOTHING; SELECT count(*) FROM iocs WHERE source='dry-run-test';"` — confirmar que pg-upsert funciona (completado 2026-03-24 via `SELECT upsert_ioc(...)`; inserción confirmada)
+- [x] @CODEX: Limpiar dato de test: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "DELETE FROM iocs WHERE source='dry-run-test';"` (completado 2026-03-24)
 
 ### @GEMINI - Researcher/Reviewer (Ronda 2)
 
@@ -117,10 +117,10 @@
 
 ### @CODEX - Implementer/DevOps (Ronda 3)
 
-- [ ] @CODEX: Reimportar workflow final en staging (con nodos UTM + Wazuh Indexer) — desactivado
-- [ ] @CODEX: Ejecutar `docker compose -f infra/docker-compose.staging.yml ps -a` y `curl http://192.168.0.70:5678/healthz` — confirmar staging sigue healthy
-- [ ] @CODEX: Ejecutar `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status` para confirmar estado de los 3 agentes
-- [ ] @CODEX: Limpiar archivos temporales en R720 (`/tmp/threat-intel-main.*.json`, `.tmp/codex-staging/`)
+- [x] @CODEX: Reimportar workflow final en staging (con nodos UTM + Wazuh Indexer) — desactivado (completado 2026-03-24 via variante segura preservando IDs/credenciales y `errorWorkflow` real)
+- [x] @CODEX: Ejecutar `docker compose -f infra/docker-compose.staging.yml ps -a` y `curl http://192.168.0.70:5678/healthz` — confirmar staging sigue healthy (completado 2026-03-24; 3 servicios `healthy`, health previa `{\"status\":\"ok\"}`)
+- [x] @CODEX: Ejecutar `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status` para confirmar estado de los 3 agentes (completado 2026-03-24)
+- [x] @CODEX: Limpiar archivos temporales en R720 (`/tmp/threat-intel-main.*.json`, `.tmp/codex-staging/`) (completado 2026-03-24)
 
 ### @GEMINI - Researcher/Reviewer (Ronda 3)
 
@@ -144,19 +144,19 @@
 
 ### @CODEX - Implementer/DevOps (Ronda 4)
 
-- [ ] @CODEX: `git pull` en R720 hasta commit `77a8a4d` (framework v4.6 + normalizer fixes)
-- [ ] @CODEX: Reimportar workflow actualizado en staging (desactivado) — incluye normalizer con soporte `hits.hits[]._source` y `alert_dispatcher` con `$env` fix
-- [ ] @CODEX: Ejecutar dry-run FortiGate desde R720: `curl -k -H "Authorization: Bearer $FORTIGATE_API_KEY" "https://$FORTIGATE_HOST/api/v2/log/memory/event/system?vdom=root&rows=5"` — capturar JSON en log
-- [ ] @CODEX: Ejecutar dry-run Zabbix desde R720: `curl -s "$ZABBIX_API_URL" -H "Authorization: Bearer $ZABBIX_API_TOKEN" -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"trigger.get","params":{"output":"extend","limit":5,"min_severity":3},"id":1}'` — capturar JSON
-- [ ] @CODEX: Test PostgreSQL upsert desde R720: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "SELECT upsert_ioc('1.2.3.4', 'ip_v4', 'medium', 50, 'dry-run-test', ARRAY['test'], '{}');"` — si la función no existe, usar INSERT directo. Luego DELETE del dato de test.
-- [ ] @CODEX: Verificar staging health: `docker compose ps -a` + `curl healthz` + engine status
-- [ ] @CODEX: Limpiar temporales en R720: `/tmp/threat-intel-main.*.json`, `.tmp/codex-staging/`
+- [x] @CODEX: `git pull` en R720 hasta commit `77a8a4d` (framework v4.6 + normalizer fixes) (completado 2026-03-24; R720 actualizado a `4cfb764`)
+- [x] @CODEX: Reimportar workflow actualizado en staging (desactivado) — incluye normalizer con soporte `hits.hits[]._source` y `alert_dispatcher` con `$env` fix (completado 2026-03-24; verificación fresca del export reimportado)
+- [ ] @CODEX: Ejecutar dry-run FortiGate desde R720: `curl -k -H "Authorization: Bearer $FORTIGATE_API_KEY" "https://$FORTIGATE_HOST/api/v2/log/memory/event/system?vdom=root&rows=5"` — capturar JSON en log (intentado 2026-03-24; `FORTIGATE_HOST` resuelve a `https://192.168.0.14` y la llamada devolvió `HTTP 000`)
+- [x] @CODEX: Ejecutar dry-run Zabbix desde R720: `curl -s "$ZABBIX_API_URL" -H "Authorization: Bearer $ZABBIX_API_TOKEN" -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"trigger.get","params":{"output":"extend","limit":5,"min_severity":3},"id":1}'` — capturar JSON (completado 2026-03-24)
+- [x] @CODEX: Test PostgreSQL upsert desde R720: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "SELECT upsert_ioc('1.2.3.4', 'ip_v4', 'medium', 50, 'dry-run-test', ARRAY['test'], '{}');"` — si la función no existe, usar INSERT directo. Luego DELETE del dato de test. (completado 2026-03-24; función real detectada con firma `upsert_ioc(p_value text, p_type ioc_type, p_tags text[], p_metadata jsonb)`)
+- [x] @CODEX: Verificar staging health: `docker compose ps -a` + `curl healthz` + engine status (completado 2026-03-24; compose healthy y engine status OK)
+- [x] @CODEX: Limpiar temporales en R720: `/tmp/threat-intel-main.*.json`, `.tmp/codex-staging/` (completado 2026-03-24)
 
 ### @GEMINI - Researcher/Reviewer (Ronda 4)
 
-- [ ] @GEMINI: Validar que `AGENT_SKILLS_MATRIX.md` (nuevo en v4.6) es coherente con los roles de `AGENT_ROLES.md` — identificar skills faltantes o redundantes para el contexto n8n
-- [ ] @GEMINI: Revisar `docs/templates/FRAMEWORK_CAPABILITIES.md` y adaptarlo al proyecto n8n-platform — actualizar con capacidades reales (Context7 validado, skills.sh instalados, engine 29 tests)
-- [ ] @GEMINI: Investigar cómo exponer el Wazuh Indexer (puerto 9200) desde el servidor Wazuh al R720 — opciones: SSH tunnel, nginx proxy, binding a 0.0.0.0 en opensearch.yml. Documentar la opción más segura en SOURCE_CONFIG_GUIDE.md
+- [x] @GEMINI: Validar que `AGENT_SKILLS_MATRIX.md` (nuevo en v4.6) es coherente con los roles de `AGENT_ROLES.md` — identificar skills faltantes o redundantes para el contexto n8n
+- [x] @GEMINI: Revisar `docs/templates/FRAMEWORK_CAPABILITIES.md` y adaptarlo al proyecto n8n-platform — actualizar con capacidades reales (Context7 validado, skills.sh instalados, engine 29 tests)
+- [x] @GEMINI: Investigar cómo exponer el Wazuh Indexer (puerto 9200) desde el servidor Wazuh al R720 — opciones: SSH tunnel, nginx proxy, binding a 0.0.0.0 en opensearch.yml. Documentar la opción más segura en SOURCE_CONFIG_GUIDE.md
 
 ### @CLAUDE - Governor (Ronda 4)
 
