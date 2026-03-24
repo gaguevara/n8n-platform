@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 1.8 — Ronda 1 en ejecución: hardening + workflow UTM + validación Wazuh |
-| Estabilidad   | Staging healthy (3 servicios). Workflow desactivado. FortiGate UTM (IPS/Antivirus) ya importado en staging. |
-| Bloqueantes   | Wazuh Indexer real está configurado como `https://127.0.0.1:9200` en el servidor Wazuh; desde el R720 no responde ni `192.168.206.10:9200` ni `wazuh.delcop.local:9200`, por lo que falta una ruta usable (exposición, proxy o túnel) |
-| Ultimo cambio | Codex ENTRADA-027: limpieza `.agent/`, UTM nodes en workflow, pull R720 a `2306ade` e import seguro en staging |
+| Fase          | Fase 1.8 — Framework v4.6 aplicado. Rondas 1-3 Gemini completadas. Codex: Ronda 2-3 pendientes. |
+| Estabilidad   | Staging healthy. Workflow desactivado. UTM nodes agregados. Framework v4.6: 29 tests, Pattern 09, proto_watch. |
+| Bloqueantes   | Wazuh Indexer: `127.0.0.1:9200` en servidor Wazuh — no accesible desde R720. Requiere exposición/túnel por usuario. |
+| Ultimo cambio | Framework v4.6 aplicado + cross-review Codex 027-028 + Gemini 018 aprobados. No hay secretos en Git. |
 
 ---
 
@@ -77,9 +77,9 @@
 
 ### @CLAUDE - Governor (Ronda 1)
 
-- [ ] @CLAUDE: Cross-review de Codex Ronda 1 (limpieza .agent/, nodos UTM, conectividad Wazuh Indexer)
-- [ ] @CLAUDE: Cross-review de Gemini Ronda 1 (ECS template, normalizer Indexer, checklist activación)
-- [ ] @CLAUDE: Verificar que no hay secretos en archivos trackeados tras los cambios (`grep -r "API_KEY=\|PASSWORD=\|TOKEN=" --include="*.json" --include="*.yml" --include="*.md" | grep -v example | grep -v CONFIGURAR | grep -v placeholder`)
+- [x] @CLAUDE: Cross-review de Codex Ronda 1 (limpieza .agent/, nodos UTM, conectividad Wazuh Indexer) — Aprobado: `.agent/` limpiado, UTM nodes correctos, Wazuh Indexer bloqueado por red (127.0.0.1:9200)
+- [x] @CLAUDE: Cross-review de Gemini Ronda 1 (ECS template, normalizer Indexer, checklist activación) — Aprobado: `hits.hits[]._source` implementado, ACTIVATION_CHECKLIST completo
+- [x] @CLAUDE: Verificar que no hay secretos en archivos trackeados — Verificado: solo interpolaciones `${VAR}` y defaults dev
 
 ---
 
@@ -134,6 +134,36 @@
 - [ ] @CLAUDE: Registrar ADR-012 consolidando las fuentes validadas y su estado de activación
 - [ ] @CLAUDE: Actualizar `CONTEXT_SECURITY.md` con inventario final de credenciales/fuentes por entorno
 - [ ] @CLAUDE: Commit final de consolidación con todo el trabajo de las 3 rondas
+
+---
+
+## RONDA 4 — Framework v4.6 + staging final (autónoma)
+
+> **Objetivo:** Validar framework v4.6 en staging, ejecutar dry-runs pendientes, preparar activación
+> **Prerequisito:** Rondas 1-3 completadas (Gemini done, Codex parcial por Wazuh bloqueante)
+
+### @CODEX - Implementer/DevOps (Ronda 4)
+
+- [ ] @CODEX: `git pull` en R720 hasta commit `77a8a4d` (framework v4.6 + normalizer fixes)
+- [ ] @CODEX: Reimportar workflow actualizado en staging (desactivado) — incluye normalizer con soporte `hits.hits[]._source` y `alert_dispatcher` con `$env` fix
+- [ ] @CODEX: Ejecutar dry-run FortiGate desde R720: `curl -k -H "Authorization: Bearer $FORTIGATE_API_KEY" "https://$FORTIGATE_HOST/api/v2/log/memory/event/system?vdom=root&rows=5"` — capturar JSON en log
+- [ ] @CODEX: Ejecutar dry-run Zabbix desde R720: `curl -s "$ZABBIX_API_URL" -H "Authorization: Bearer $ZABBIX_API_TOKEN" -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"trigger.get","params":{"output":"extend","limit":5,"min_severity":3},"id":1}'` — capturar JSON
+- [ ] @CODEX: Test PostgreSQL upsert desde R720: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "SELECT upsert_ioc('1.2.3.4', 'ip_v4', 'medium', 50, 'dry-run-test', ARRAY['test'], '{}');"` — si la función no existe, usar INSERT directo. Luego DELETE del dato de test.
+- [ ] @CODEX: Verificar staging health: `docker compose ps -a` + `curl healthz` + engine status
+- [ ] @CODEX: Limpiar temporales en R720: `/tmp/threat-intel-main.*.json`, `.tmp/codex-staging/`
+
+### @GEMINI - Researcher/Reviewer (Ronda 4)
+
+- [ ] @GEMINI: Validar que `AGENT_SKILLS_MATRIX.md` (nuevo en v4.6) es coherente con los roles de `AGENT_ROLES.md` — identificar skills faltantes o redundantes para el contexto n8n
+- [ ] @GEMINI: Revisar `docs/templates/FRAMEWORK_CAPABILITIES.md` y adaptarlo al proyecto n8n-platform — actualizar con capacidades reales (Context7 validado, skills.sh instalados, engine 29 tests)
+- [ ] @GEMINI: Investigar cómo exponer el Wazuh Indexer (puerto 9200) desde el servidor Wazuh al R720 — opciones: SSH tunnel, nginx proxy, binding a 0.0.0.0 en opensearch.yml. Documentar la opción más segura en SOURCE_CONFIG_GUIDE.md
+
+### @CLAUDE - Governor (Ronda 4)
+
+- [ ] @CLAUDE: Cross-review dry-runs Codex Ronda 4 (FortiGate, Zabbix, PostgreSQL)
+- [ ] @CLAUDE: Cross-review adaptación Gemini Ronda 4 (skills matrix, capabilities, Wazuh Indexer exposure)
+- [ ] @CLAUDE: Registrar ADR-012: fuentes validadas y su estado de activación post dry-runs
+- [ ] @CLAUDE: Commit + push de consolidación Ronda 4
 
 ---
 
