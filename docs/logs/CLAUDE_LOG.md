@@ -6,6 +6,34 @@
 
 ---
 
+## ENTRADA-020 | 2026-03-24 | SPEC-005 calibration review (Governor)
+
+**Tipo:** Review de gobernanza — calibración SPEC-005
+**Tarea:** Evaluar sostenibilidad del flujo de validación, viabilidad de auto-dispatch, y clasificación de tareas por nivel de riesgo.
+
+### Hallazgos principales
+
+1. **20 rondas de cross-review** en 8 días (~101 min total, ~5 min/ronda promedio)
+2. **284 falsos positivos** de hallucination en `watch --once` — invalida la señal completamente
+3. **0 role_violations** pero con falsos negativos — las zonas actuales no reflejan el trabajo real
+4. **Auto-dispatch viable** para carril rápido (docs, logs, limpieza) — no para código ni infra
+5. **Deadman gradual** adecuado con ajuste a 5→10→15 rondas para este proyecto
+
+### Clasificación de tareas
+- **Auto-dispatch seguro:** 8 tipos de tareas (logs, context marks, docs, cleanup)
+- **Requieren Governor:** 7 tipos (workflows, code-nodes, infra, ADRs, reimports)
+- **Requieren humano:** 5 tipos (activación producción, AWS resources, credenciales, force push, PROJECT_RULES)
+
+### Archivos afectados
+- `docs/reviews/SPEC_005_CALIBRATION_n8n-platform.md` (append a review de Codex)
+- `docs/logs/CLAUDE_LOG.md` (esta entrada)
+- `docs/governance/LOG_INDEX.md`
+
+### Harness gap
+- `watch --once` no es usable como señal de gobernanza hasta que el parser de hallucinations se calibre. El Governor no puede confiar en un sistema que genera 284 FP por ronda.
+
+---
+
 ## ENTRADA-019 | 2026-03-23 | cross-review Wazuh fix — cierre de sesión
 
 **Tipo:** Cross-review final de sesión
