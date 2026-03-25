@@ -162,25 +162,6 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.WAZUH_API_URL }}/security/user/authenticate",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": []
-        },
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpBasicAuth",
-        "options": { "timeout": 15000 }
-      },
-      "id": "http-wazuh-auth",
-      "name": "DEPRECATED Wazuh Manager Auth",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [350, 250],
-      "typeVersion": 4.2,
-      "notes": "No usar para alertas historicas en Wazuh v4. El endpoint /alerts del Manager API ya no existe."
-    },
-    {
-      "parameters": {
-        "method": "POST",
         "url": "={{ $env.WAZUH_INDEXER_URL }}/wazuh-alerts-*/_search",
         "sendHeaders": true,
         "headerParameters": {
