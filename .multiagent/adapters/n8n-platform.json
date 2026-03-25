@@ -3,9 +3,21 @@
   "display_name": "n8n Platform - DELCOP",
   "framework_version": "4.6",
   "agents": [
-    {"id": "CLAUDE", "role": "governor", "log": "docs/logs/CLAUDE_LOG.md"},
-    {"id": "CODEX",  "role": "implementer", "log": "docs/logs/CODEX_LOG.md"},
-    {"id": "GEMINI", "role": "researcher", "log": "docs/logs/GEMINI_LOG.md"}
+    {
+      "id": "CLAUDE",
+      "role": "governor",
+      "log": "docs/logs/CLAUDE_LOG.md"
+    },
+    {
+      "id": "CODEX",
+      "role": "implementer",
+      "log": "docs/logs/CODEX_LOG.md"
+    },
+    {
+      "id": "GEMINI",
+      "role": "researcher",
+      "log": "docs/logs/GEMINI_LOG.md"
+    }
   ],
   "paths": {
     "log_index": "docs/governance/LOG_INDEX.md",
@@ -28,15 +40,74 @@
   },
   "stack": {
     "primary": "n8n (Node.js/Docker)",
-    "languages": ["JSON", "Shell"],
+    "languages": [
+      "JSON",
+      "Shell"
+    ],
     "containers": "Docker",
     "ci_cd": "pre-commit + Makefile",
-    "environments": ["local", "staging", "production"],
+    "environments": [
+      "local",
+      "staging",
+      "production"
+    ],
     "cloud": "AWS ECS Fargate",
-    "databases": {"local": "SQLite", "production": "PostgreSQL RDS"},
+    "databases": {
+      "local": "SQLite",
+      "production": "PostgreSQL RDS"
+    },
     "observability": "Structured Logs (Markdown)"
   },
   "log_entry_pattern": "## ENTRADA-{number}",
   "task_file_pattern": "SPEC_*.md",
-  "state": "brownfield"
+  "state": "brownfield",
+  "auto_validate": {
+    "enabled": true,
+    "interval_minutes": 3,
+    "round_counter": 9,
+    "baseline": {
+      "CLAUDE": 0,
+      "CODEX": 0,
+      "GEMINI": 0
+    },
+    "on_new_entry": [
+      "verify_files",
+      "commit",
+      "sync_index",
+      "notify"
+    ],
+    "hallucination_check": true,
+    "auto_commit": true,
+    "notify": "stdout",
+    "subagent_pattern": "SUB-{AGENT}-{N}",
+    "deadman_interval": 5,
+    "role_boundaries": {
+      "CLAUDE": [
+        "docs/governance/",
+        "docs/sdlc/",
+        "docs/reviews/",
+        "*.md",
+        "SESSION_BOOTSTRAP.md"
+      ],
+      "CODEX": [
+        ".multiagent/core/",
+        ".multiagent/tests/",
+        ".claude/skills/",
+        "*.py",
+        "pyproject.toml"
+      ],
+      "GEMINI": [
+        "docs/knowledge/",
+        "docs/architecture/",
+        "docs/governance/ONBOARDING.md",
+        "docs/templates/",
+        "docs/reviews/"
+      ]
+    },
+    "shared_zones": [
+      "docs/logs/",
+      "docs/governance/CONTEXT.md",
+      "docs/governance/LOG_INDEX.md"
+    ]
+  }
 }

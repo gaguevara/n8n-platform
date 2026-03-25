@@ -11,7 +11,7 @@
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
 | CLAUDE | ENTRADA-020 | docs/logs/CLAUDE_LOG.md | 2026-03-24 |
-| CODEX  | ENTRADA-031 | docs/logs/CODEX_LOG.md  | 2026-03-24 |
+| CODEX  | ENTRADA-032 | docs/logs/CODEX_LOG.md  | 2026-03-24 |
 | GEMINI | ENTRADA-019 | docs/logs/GEMINI_LOG.md | 2026-03-24 |
 
 ---
@@ -70,6 +70,7 @@
 | ENTRADA-029 | CODEX  | framework-v46-apply-and-ronda4 | Cierre tecnico de framework v4.6 local + ejecucion Ronda 4 en staging (workflow seguro, Zabbix OK, PostgreSQL OK, FortiGate bloqueado) | 2026-03-24 |
 | ENTRADA-030 | CODEX  | framework-v46-closeout | Validaciones finales de trazabilidad y verificacion de sync; engine OK, script `update-agent-context.sh` no ejecutable en Windows sin Bash | 2026-03-24 |
 | ENTRADA-031 | CODEX  | spec-005-calibration-review | Review tecnico SPEC-005 con evidencia real del watcher/status; 284 falsas `hallucinations`, 0 `ROLE_VIOLATION`, adapter descalibrado para Codex | 2026-03-24 |
+| ENTRADA-032 | CODEX  | backlog-validation-execution | Revalidacion de backlog @CODEX: FortiGate OK desde R720 con `HTTP 200`; Wazuh Indexer sigue bloqueado por `connection refused` en `192.168.206.10:9200` | 2026-03-24 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
 | ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |

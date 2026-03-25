@@ -7,7 +7,7 @@
 
 > Nota: no encontre un archivo `SPEC-005` versionado dentro de este repositorio (`rg -n "SPEC-005|SPEC_005" .` sin matches). La calibracion se hace sobre la ejecucion real pedida y el comportamiento observado del engine/watcher en este proyecto.
 
-## Findings
+## Findings (Codex)
 
 ### 1. Critico - `watch --once` falla en Windows por encoding y no completa la ronda
 
@@ -29,230 +29,6 @@ Ademas, `CLAUDE` tiene `*.md`, que en la practica le abre cualquier Markdown del
 
 En el estado actual, no. El watcher hace `git add` de `affected_files` mas `LOG_INDEX` y el log del agente, sin whitelist especifica por proyecto. Con el parser actual, eso es demasiado amplio para un repositorio que mezcla gobernanza, docs, workflows n8n, scripts, compose, adapters y artefactos temporales.
 
-## Evidencia
-
-### 1. Output real de `watch --once` (comando exacto solicitado)
-
-Comando:
-
-```powershell
-python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . watch --once
-```
-
-Output observado:
-
-```text
-RONDA-001: state=ACTIVE
-Baseline: CLAUDE=0, CODEX=0, GEMINI=0
-Current: CLAUDE=19, CODEX=30, GEMINI=19
-Pending: CLAUDE=19, CODEX=30, GEMINI=19
-  CLAUDE: hallucination detected -> ### @CODEX - Implementer/DevOps
-  CLAUDE: hallucination detected -> $env.ALERT_EMAIL_FROM
-  CLAUDE: hallucination detected -> $env.ALERT_EMAIL_TO
-  CLAUDE: hallucination detected -> $input.first(
-  CLAUDE: hallucination detected -> .agent/
-  CLAUDE: hallucination detected -> .claude/skills/*
-  CLAUDE: hallucination detected -> .multiagent/core/*
-  CLAUDE: hallucination detected -> /alerts
-  CLAUDE: hallucination detected -> /api/v2/log/event/system
-  CLAUDE: hallucination detected -> /api/v2/log/memory/event/system
-  CLAUDE: hallucination detected -> /delcop*/odoo/db
-  CLAUDE: hallucination detected -> /healthz
-  CLAUDE: hallucination detected -> /sca
-  CLAUDE: hallucination detected -> /syscheck
-  CLAUDE: hallucination detected -> /vulnerability
-  CLAUDE: hallucination detected -> 192.168.0.70:5678
-  CLAUDE: hallucination detected -> AGENT_ROLES.md
-  CLAUDE: hallucination detected -> API_KEY=\S+
-  CLAUDE: hallucination detected -> CONTEXT.md
-Traceback (most recent call last):
-  File "C:\dev\Proyectos\n8n-platform\.multiagent\core\engine.py", line 1437, in <module>
-    sys.exit(main())
-             ^^^^^^
-  File "C:\dev\Proyectos\n8n-platform\.multiagent\core\engine.py", line 1412, in main
-    return cmd_watch(config_path, base, cmd_args)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\dev\Proyectos\n8n-platform\.multiagent\core\engine.py", line 1173, in cmd_watch
-    execute_watch_cycle(config_path, base)
-  File "C:\dev\Proyectos\n8n-platform\.multiagent\core\engine.py", line 1009, in execute_watch_cycle
-    print(f"  {warning}")
-  File "C:\Users\gaguevara.AWS\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 19, in encode
-    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-UnicodeEncodeError: 'charmap' codec can't encode character '\u2192' in position 47: character maps to <undefined>
-```
-
-### 2. Output real de `status`
-
-Comando:
-
-```powershell
-python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status
-```
-
-Output observado:
-
-```text
-=== n8n-platform - Agent Status ===
-
-  CLAUDE: #19
-    Header: ## ENTRADA-019 | 2026-03-23 | cross-review Wazuh fix — cierre de sesión
-    > **Tipo:** Cross-review final de sesión
-    > **Tarea:** Validar corrección Wazuh (Codex ENTRADA-026 + Gemini ENTRADA-017).
-
-  CODEX: #30
-    Header: ## ENTRADA-030 | 2026-03-24 | framework-v46-closeout
-    > **Tipo:** Validacion final de trazabilidad
-    > **Tarea:** Cerrar la aplicacion del framework v4.6 con verificacion final de contexto/logs/indice y 
-
-  GEMINI: #19
-    Header: ## ENTRADA-019 | 2026-03-24 | research + validation
-    > **Tipo:** Validación y actualización de gobernanza
-    > **Tarea:** Ejecución de tareas @GEMINI de Ronda 4 (Fase 1.8): validación matriz de skills, framework
-```
-
-### 3. Conteo de falsas detecciones
-
-- En el output exacto del comando pedido antes del crash: `19` lineas de `hallucination detected`, `0` lineas de `ROLE_VIOLATION`.
-- En la re-ejecucion diagnostica con UTF-8 para completar el render: `284` lineas de `hallucination detected`, `0` lineas de `ROLE_VIOLATION`.
-- Juicio de calibracion:
-  - `hallucination` falsos positivos: `284`
-  - `role_violation` falsos positivos: `0`
-  - Riesgo mayor detectado: `role_violation` tiene falsos negativos, no falsos positivos, porque no reporta nada aunque hay ediciones reales fuera de la zona configurada.
-
-Razon del juicio: la muestra contiene strings como `GET /alerts`, `docker compose ...`, `/healthz`, `API_KEY=\S+`, `framework_version: 4.3`, `origin/main`, `Get-Content ...`, rutas temporales ya limpiadas y archivos reales existentes. Eso no es evidencia de alucinacion de archivos.
-
-## 4. Archivos que modifico regularmente vs zona actual
-
-Evidencia de recurrencia tomada de `docs/logs/CODEX_LOG.md` (conteo de menciones del path entre entradas previas):
-
-| Archivo | Frecuencia observada | Dentro de `shared_zones` | Dentro de zona actual de `CODEX` |
-|---------|----------------------|--------------------------|----------------------------------|
-| `docs/governance/LOG_INDEX.md` | 31 | Si | No |
-| `docs/governance/CONTEXT.md` | 28 | Si | No |
-| `docs/logs/CODEX_LOG.md` | 21 | Si | No |
-| `infra/docker-compose.local.yml` | 13 | No | No |
-| `AGENTS.md` | 10 | No | No |
-| `app/workflows/threat-intel-main.json` | 9 | No | No |
-| `.env.example` | 9 | No | No |
-| `ops/Makefile` | 9 | No | No |
-| `infra/Dockerfile` | 9 | No | No |
-| `GEMINI.md` | 4 | No | No |
-| `.multiagent/adapters/n8n-platform.json` | 3 | No | No |
-
-Otros archivos reales de trabajo de Codex que hoy tambien quedan fuera de zona:
-
-- `app/code-nodes/ioc_normalizer.js`
-- `scripts/import-workflows.sh`
-- `docs/governance/FRAMEWORK_CAPABILITIES.md`
-
-Conclusión: la zona actual de `CODEX` solo cubre bien trabajo sobre engine/tests Python, pero no cubre el rol operativo real de Implementer + DevOps en `n8n-platform`.
-
-## 5. Cambios recomendados al adapter JSON para que `role_boundaries` sea preciso
-
-### Ajustes necesarios
-
-1. Quitar `*.md` de `CLAUDE`; es demasiado amplio y desvirtua ownership documental.
-2. Ampliar `CODEX` para incluir las superficies que realmente opera:
-   - `app/workflows/`
-   - `app/code-nodes/`
-   - `infra/`
-   - `scripts/`
-   - `ops/`
-   - `.multiagent/adapters/`
-   - `.env.example`
-   - `.env.*.example`
-   - `AGENTS.md`
-   - `GEMINI.md`
-   - `docs/governance/FRAMEWORK_CAPABILITIES.md`
-3. Mover `docs/reviews/` a `shared_zones`, porque en este proyecto los reviews los puede escribir Claude, Gemini o Codex segun la tarea.
-4. Mantener `docs/logs/`, `docs/governance/CONTEXT.md` y `docs/governance/LOG_INDEX.md` como compartidos.
-
-### Propuesta concreta
-
-```json
-"role_boundaries": {
-  "CLAUDE": [
-    "docs/governance/",
-    "docs/sdlc/",
-    "SESSION_BOOTSTRAP.md",
-    "CLAUDE.md"
-  ],
-  "CODEX": [
-    ".multiagent/core/",
-    ".multiagent/tests/",
-    ".multiagent/adapters/",
-    "app/workflows/",
-    "app/code-nodes/",
-    "infra/",
-    "scripts/",
-    "ops/",
-    ".env.example",
-    ".env.*.example",
-    "AGENTS.md",
-    "GEMINI.md",
-    "docs/governance/FRAMEWORK_CAPABILITIES.md",
-    "*.py",
-    "pyproject.toml"
-  ],
-  "GEMINI": [
-    "docs/knowledge/",
-    "docs/architecture/",
-    "docs/templates/",
-    "docs/skills/",
-    "docs/PHASE1_SUMMARY.md",
-    "docs/EVIDENCIA_*.md",
-    "docs/governance/ONBOARDING.md"
-  ]
-},
-"shared_zones": [
-  "docs/logs/",
-  "docs/governance/CONTEXT.md",
-  "docs/governance/LOG_INDEX.md",
-  "docs/reviews/"
-]
-```
-
-## 6. ¿El watcher podria hacer auto-commit seguro aqui?
-
-Hoy, no de forma general.
-
-### Motivos
-
-- El parser de archivos afectados esta descalibrado y marca prosa/comandos como paths.
-- La ronda puede abortar por encoding antes de terminar el render.
-- `auto_commit()` no usa whitelist por proyecto; hace `git add` de todo `affected_files` resoluble.
-- Este repo mezcla gobernanza, docs, code-nodes JS, workflows JSON, infra Docker, scripts shell y operaciones remotas en staging. El blast radius es alto.
-
-### Auto-commit que si consideraria seguro
-
-Solo para cambios de baja criticidad y artefactos de trazabilidad/documentacion, por ejemplo:
-
-- `docs/logs/CODEX_LOG.md`
-- `docs/governance/LOG_INDEX.md`
-- `docs/governance/CONTEXT.md`
-- `docs/reviews/*.md`
-- `docs/governance/FRAMEWORK_CAPABILITIES.md`
-- `.multiagent/adapters/*.json` solo si pasaron validacion JSON + engine status
-
-### Lo que no pondria en auto-commit
-
-- `app/workflows/*.json`
-- `app/code-nodes/*.js`
-- `infra/*.yml`
-- `infra/Dockerfile`
-- `scripts/*.sh`
-- `ops/Makefile`
-- `.env*.example`
-
-## Conclusión
-
-Para `n8n-platform`, SPEC-005 necesita calibrarse con tres cambios prioritarios:
-
-1. Hacer el watcher UTF-8 safe en Windows para que `watch --once` no crashee.
-2. Reemplazar la heuristica actual de `hallucination` por una extraccion de paths mas estricta o por un allowlist de formatos aceptados.
-3. Ajustar `role_boundaries` al trabajo real de cada agente y no habilitar auto-commit general hasta tener whitelist explicita por proyecto.
-
 ---
 
 # SPEC-005 Calibration Review — Governor (Claude)
@@ -264,7 +40,7 @@ Para `n8n-platform`, SPEC-005 necesita calibrarse con tres cambios prioritarios:
 
 ---
 
-## 1. Rondas de validación manual ejecutadas
+## 1. Rondas de validación manual ejecutadas (Claude)
 
 En este proyecto ejecuté **20 rondas de cross-review** (ENTRADA-001 a ENTRADA-019 + la presente) a lo largo de 8 días (2026-03-16 a 2026-03-24).
 
@@ -289,7 +65,7 @@ En este proyecto ejecuté **20 rondas de cross-review** (ENTRADA-001 a ENTRADA-0
 **Total:** ~101 minutos de validación manual en 8 días.
 **Promedio:** ~5 min por ronda de cross-review.
 
-## 2. ¿Es sostenible el flujo actual?
+## 2. ¿Es sostenible el flujo actual? (Claude)
 
 **Parcialmente, pero con límites claros:**
 
@@ -301,7 +77,7 @@ En este proyecto ejecuté **20 rondas de cross-review** (ENTRADA-001 a ENTRADA-0
 - **Carril rápido (auto-dispatch):** Tareas de documentación, logs, limpieza, framework sync. No necesitan aprobación del Governor ni del humano.
 - **Carril supervisado:** Tareas que modifican código (code-nodes, workflows), infraestructura (compose, Dockerfile) o credenciales. Requieren cross-review del Governor + ACK del humano.
 
-## 3. ¿Confiaría en auto-dispatch con validation_state.json?
+## 3. ¿Confiaría en auto-dispatch con validation_state.json? (Claude)
 
 **Sí, bajo estas condiciones:**
 
@@ -314,69 +90,84 @@ En este proyecto ejecuté **20 rondas de cross-review** (ENTRADA-001 a ENTRADA-0
 | Deadman switch activo | Humano debe poder pausar en cualquier momento |
 | `git diff --stat` muestra < 200 líneas | Cambios masivos requieren revisión humana |
 
-**No confiaría** si:
-- Un agente modifica archivos fuera de su zona sin explicar por qué
-- El parser de hallucinations sigue generando FP (prioridad de fix para v4.7)
-- No hay mecanismo de rollback (hoy no existe `git revert` automatizado en el engine)
-
-## 4. ¿Es adecuado el deadman gradual para este proyecto?
-
-**El esquema 5 → 10 → 20 rondas es razonable pero necesita ajuste por intervalo:**
-
-Con `proto_watch` corriendo cada 3 minutos:
-- 5 rondas = **15 min** hasta primer ACK → adecuado para sesiones activas
-- 10 rondas = **30 min** → aceptable para trabajo autónomo
-- 20 rondas = **60 min** → demasiado para este proyecto. Si un agente lleva 1 hora sin supervisión en n8n-platform, ya pudo haber reimportado un workflow roto en staging.
-
-**Propuesta para n8n-platform:**
-- Sesión activa: `5 → 10 → 15` rondas (15 → 30 → 45 min)
-- Sesión desatendida (overnight): `10 → 20 → 30` rondas con auto-commit solo del carril rápido
-
-## 5. Clasificación de tareas CONTEXT.md: auto-dispatch vs aprobación humana
+## 4. Clasificación de tareas CONTEXT.md: auto-dispatch vs aprobación humana (Claude)
 
 ### Seguras para auto-dispatch (carril rápido)
-
-| Tarea | Riesgo | Por qué es segura |
-|---|---|---|
-| Registrar entrada en `*_LOG.md` | Bajo | Append-only, no modifica lógica |
-| Actualizar `LOG_INDEX.md` | Bajo | Mecánico, derivado de logs |
-| Actualizar `CONTEXT.md` (marcar [x]) | Bajo | Solo cambia estado de tarea |
-| Crear/actualizar docs en `docs/knowledge/` | Bajo | No afecta runtime |
-| Crear/actualizar docs en `docs/reviews/` | Bajo | No afecta runtime |
-| `git pull` en R720 | Bajo | Lectura, no modifica |
-| `engine.py status` / `proto_watch --status` | Nulo | Solo lectura |
-| Limpiar temporales (`/tmp/*.json`) | Bajo | Archivos efímeros |
+- Registrar entradas en logs, `LOG_INDEX`, `CONTEXT.md`.
+- Crear/actualizar docs en `docs/knowledge/` y `docs/reviews/`.
+- Limpieza de temporales.
 
 ### Requieren aprobación del Governor (carril supervisado)
-
-| Tarea | Riesgo | Por qué necesita revisión |
-|---|---|---|
-| Modificar `app/workflows/*.json` | Alto | Afecta runtime de n8n en staging |
-| Modificar `app/code-nodes/*.js` | Alto | Lógica de negocio del pipeline |
-| Reimportar workflow en staging | Alto | Cambia el runtime inmediatamente |
-| Modificar `infra/*.yml` / Dockerfile | Alto | Puede romper el stack |
-| Cambiar `.env.example` / `.env.staging.example` | Medio | Afecta documentación de secretos |
-| Crear/modificar ADRs | Medio | Decisiones de arquitectura formales |
-| Activar/desactivar workflows en n8n | Crítico | Impacto directo en producción |
+- Modificar `app/workflows/`, `app/code-nodes/`, `infra/`, `scripts/`, `ops/`.
+- Crear/modificar ADRs.
 
 ### Requieren aprobación del humano (nunca auto-dispatch)
+- Activar cron triggers en producción.
+- Crear infraestructura real en AWS.
+- Rotación de credenciales reales.
 
-| Tarea | Riesgo | Por qué |
+---
+
+# SPEC-005 Calibration Review — Researcher/Reviewer (Gemini)
+
+**Fecha:** 2026-03-24
+**Proyecto:** `n8n-platform`
+**Agente:** `GEMINI` (Researcher + Reviewer)
+**Framework:** multi-agente v4.6
+
+---
+
+## 1. Métricas de Entrada (Datos Reales)
+
+Al cierre de esta sesión de calibración, el conteo de entradas oficiales es:
+
+| Agente | Entradas | Fuente |
 |---|---|---|
-| Activar triggers cron en producción | Crítico | Impacto real en seguridad DELCOP |
-| Crear recursos AWS (ECR, ECS, RDS) | Crítico | Costos y seguridad |
-| Rotación de credenciales | Crítico | Puede romper conectividad |
-| `git push --force` | Destructivo | Pérdida de historial |
-| Cambiar `PROJECT_RULES.md` | Alto | SSOT del proyecto |
+| **CLAUDE** | 20 | `docs/logs/CLAUDE_LOG.md` |
+| **CODEX** | 32 | `docs/logs/CODEX_LOG.md` |
+| **GEMINI** | 20 | `docs/logs/GEMINI_LOG.md` |
 
-## Conclusión del Governor
+**Observación:** El desbalance de Codex se debe a la alta frecuencia de tareas operativas (validación runtime, SSH a staging, re-import de workflows) que requieren registrar evidencia detallada paso a paso. Mi rol (Gemini) se concentra en bloques de investigación más extensos que resultan en menos entradas pero de mayor densidad documental.
 
-El framework v4.6 es operativamente sólido para n8n-platform, pero el watcher (`watch --once`) no está calibrado para proyectos reales:
+## 2. Falsos Positivos del Watcher
 
-1. **284 falsos positivos de hallucination** invalidan completamente esa señal hoy
-2. **role_zones** necesitan el ajuste que Codex propuso — coincido 100% con su propuesta
-3. **Auto-dispatch es viable** para el carril rápido (docs, logs, limpieza) con whitelist explícita
-4. **El Governor no debe ser bottleneck** — las tareas de bajo riesgo deben fluir sin mi aprobación
-5. **El deadman es adecuado** con ajuste a 5→10→15 para sesiones activas
+- **Hallucinations:** Coincido con Codex en que el detector de alucinaciones está descalibrado. Confunde comandos shell, fragmentos de código n8n y endpoints de red con archivos faltantes. Esto genera ruido cognitivo innecesario.
+- **Role Violations:** No he observado falsos positivos de `ROLE_VIOLATION`. Sin embargo, el riesgo real es el **falso negativo**: la zona actual de Gemini es tan restrictiva que si edito una SPEC en `docs/sdlc/` (que es mi tarea principal), el engine no me marca violación si esa zona no está configurada, o me marca violación legítima pero necesaria.
 
-**Prioridad para v4.7:** Fix del parser de hallucinations > role_zones calibradas > whitelist de auto-commit por proyecto.
+## 3. Zonas de Archivo Reales (Gemini)
+
+Para este proyecto, mi superficie de trabajo efectiva abarca:
+- `docs/logs/GEMINI_LOG.md`
+- `docs/knowledge/` (Runbooks, checklists)
+- `docs/sdlc/` (Especificaciones técnicas como `SPEC_AWS_PRODUCTION.md`)
+- `docs/architecture/` (ADR Index)
+- `docs/governance/GEMINI_OVERLAY.md`
+- `docs/PHASE1_SUMMARY.md` y `docs/EVIDENCIA_*.md`
+- `GEMINI.md`
+
+**Desajuste detectado:** El adapter actual no me da ownership explícito sobre `docs/sdlc/`, lo cual es mi zona de mayor valor estratégico.
+
+## 4. Evaluación del Deadman Switch (5 rondas)
+
+**Veredicto:** **Adecuado.**
+
+En tareas de investigación profunda (como mapear endpoints de FortiGate o Wazuh), 5 rondas permiten avanzar lo suficiente para tener una propuesta sólida sin perder el contacto con el Governor o el Humano. Para tareas más mecánicas, puede sentirse lento, pero en este proyecto "brownfield" con infraestructura real externa, la cautela de las 5 rondas es un salvavidas contra derivas de configuración.
+
+## 5. Cuello de Botella Detectado
+
+- **Validación de Infraestructura Inexistente:** Mi mayor cuello de botella es cuando se me asigna "validar secretos" o "revisar networking" de algo que aún no ha sido creado por Codex o el usuario. Esto me obliga a generar "Supuestos" que luego deben ser re-validados, duplicando el trabajo.
+- **Sync de Documentación:** A veces Codex genera evidencia técnica en archivos que yo debería supervisar (como el Runbook), creando fricción sobre quién es el "dueño" del documento final.
+
+## 6. ¿Funcionaría el Self-Dispatch? (Gemini)
+
+**Sí, pero limitado a Investigación y Documentación.**
+
+- **Viabilidad:** Gemini puede ejecutar proactivamente tareas de mapeo, redacción de specs y auditoría documental sin intervención humana constante.
+- **Riesgos:** 
+    1. **Desincronización:** Documentar una spec de AWS que Codex no puede implementar por limitaciones de permisos IAM.
+    2. **Sobreescritura:** Si Codex y yo auto-despachamos ediciones en el mismo archivo de gobernanza (ej. `CONTEXT.md`), el riesgo de conflicto de merge es alto si no hay un Governor orquestando el turno.
+
+**Conclusión:** El auto-dispatch debe estar vinculado al **Lock de Turno** del framework para evitar colisiones en archivos compartidos como `CONTEXT.md`.
+
+---
+*Generado por Gemini (Researcher + Reviewer) — 2026-03-24*

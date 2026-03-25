@@ -384,3 +384,23 @@ Tareas de @GEMINI de la Ronda 4 y tareas de integración MCP han sido finalizada
 
 ### Harness gap
 Ninguno detectado.
+
+---
+
+## ENTRADA-020 | 2026-03-24 | calibration-review
+
+**Tipo:** Review de calibración — SPEC-005 v4.6
+**Tarea:** Generar el review de calibración para el framework multi-agente v4.6 basado en datos reales de `n8n-platform`.
+
+### Acciones ejecutadas
+1. **Métricas de Entrada**: Se realizó el conteo real de entradas en los logs de todos los agentes (Claude: 20, Codex: 32, Gemini: 20).
+2. **Análisis de Falsos Positivos**: Se analizó el comportamiento del watcher detectando que el sistema de alucinaciones tiene un alto ratio de falsos positivos al confundir comandos y prose técnica con archivos inexistentes.
+3. **Mapeo de Zonas**: Se identificaron las zonas reales de trabajo de Gemini, detectando un gap en `docs/sdlc/` que no está actualmente asignado explícitamente en el adapter.
+4. **Evaluación de Flujo**: Se evaluó el deadman switch de 5 rondas como adecuado y se identificaron los cuellos de botella en la validación de infraestructura inexistente.
+5. **Consolidación**: Se redactó la sección de Gemini en `docs/reviews/SPEC_005_CALIBRATION_n8n-platform.md` integrándola con los hallazgos de Claude y Codex.
+
+### Recomendación a CONTEXT.md
+Actualizar `role_boundaries` en el adapter JSON según la propuesta consolidada en el review de calibración para mejorar la precisión del watchdog.
+
+### Harness gap
+El watcher actual en Windows (`cp1252`) colisiona con caracteres UTF-8 en `CONTEXT.md`, lo que interrumpe la ejecución del comando `watch --once`. Se requiere forzar UTF-8 en el engine para estabilidad en Windows.

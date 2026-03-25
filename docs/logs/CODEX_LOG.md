@@ -1,4 +1,4 @@
-# CODEX_LOG.md - Implementer Log
+﻿# CODEX_LOG.md - Implementer Log
 
 > Agente: Codex CLI (Implementer + DevOps)
 > Proyecto: n8n Platform - DELCOP
@@ -1572,3 +1572,88 @@
 ### Harness gap
 
 - Falta una variante nativa para Windows de `update-agent-context.sh` o un wrapper portable que permita usar la sincronizacion automatica del framework sin depender de `/bin/bash`.
+
+---
+
+## ENTRADA-031 | 2026-03-24 | spec-005-calibration-review
+
+**Tipo:** Review tecnico de calibracion
+**Tarea:** Ejecutar la calibracion de SPEC-005 del framework multi-agente v4.6 sobre `n8n-platform`, con evidencia real del watcher/status, analisis de falsos positivos y propuesta de ajuste de `role_boundaries`.
+
+### Archivos afectados
+
+- `docs/reviews/SPEC_005_CALIBRATION_n8n-platform.md`
+- `docs/logs/CODEX_LOG.md`
+- `docs/governance/LOG_INDEX.md`
+
+### Comandos ejecutados + output
+
+1. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . watch --once`
+   - Resultado: el watcher inicio `RONDA-001`, imprimio detecciones de `hallucination`, y termino en `UnicodeEncodeError` por `cp1252` al intentar renderizar `→`.
+2. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status`
+   - Resultado: `CLAUDE #19`, `CODEX #30`, `GEMINI #19`.
+3. `$env:PYTHONIOENCODING='utf-8'; python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . watch --once`
+   - Resultado: ronda completa renderizada; `284` lineas de `hallucination detected`, `0` `ROLE_VIOLATION`.
+4. `rg -n "SPEC-005|SPEC_005|hallucination|role_violation|watch --once|role_zone|role_zones" .`
+   - Resultado: no existe un `SPEC-005` local versionado; se localizaron las secciones del engine/adapter relevantes para calibracion.
+5. Scripts locales de conteo sobre `docs/logs/CODEX_LOG.md` y `.multiagent/adapters/n8n-platform.json`
+   - Resultado: se confirmo que los archivos mas recurrentes de Codex son `LOG_INDEX.md`, `CONTEXT.md`, `CODEX_LOG.md`, `infra/docker-compose.local.yml`, `app/workflows/threat-intel-main.json`, `AGENTS.md`, `Makefile`, `Dockerfile`, etc.; la mayoria cae fuera de la zona actual de `CODEX`.
+
+### Estado final
+
+- Se genero el review tecnico `docs/reviews/SPEC_005_CALIBRATION_n8n-platform.md` con output real, conteo, findings y propuesta concreta de calibracion.
+- Queda demostrado con evidencia que el watcher esta descalibrado para este proyecto en dos frentes:
+  - `hallucination_check` produce una tormenta de falsos positivos,
+  - `role_boundaries` de `CODEX` no representan su superficie real de trabajo.
+- `auto_commit` no se considera seguro de forma general para este repositorio hasta introducir whitelist por proyecto y endurecer la extraccion de paths.
+
+### Riesgo residual
+
+- El bug de encoding en Windows sigue activo; cualquier uso normal de `watch --once` puede producir output parcial y cortar la ronda.
+- Las `hallucinations` falsas siguen ocultando potenciales `ROLE_VIOLATION` reales porque el flujo del engine hace `continue` antes de evaluar limites de rol.
+
+### Harness gap
+
+- SPEC-005 necesita explicitar compatibilidad UTF-8 en Windows y una estrategia de whitelisting/path parsing por proyecto; con la heuristica actual, el watcher no es un calibrador confiable para repositorios con logs ricos en comandos, endpoints y prose tecnica.
+
+---
+
+## ENTRADA-032 | 2026-03-24 | backlog-validation-execution
+
+**Tipo:** Validacion y ejecucion de backlog
+**Tarea:** Validar las tareas pendientes activas de `@CODEX` en `CONTEXT.md` y ejecutar las que siguieran siendo accionables desde el R720 sin introducir cambios de alto riesgo no validados.
+
+### Archivos afectados
+
+- `docs/governance/CONTEXT.md`
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CODEX_LOG.md`
+
+### Comandos ejecutados + output
+
+1. `git fetch origin main`, `git rev-list --left-right --count HEAD...origin/main`
+   - Resultado: `0 0`; el workspace local ya estaba sincronizado con `origin/main`.
+2. Bootstrap de contexto + lectura de `CONTEXT.md`
+   - Resultado: backlog real de `@CODEX` reducido a tres frentes tecnicos: evidencia UI de FortiGate/Zabbix y bloqueo de Wazuh Indexer desde el R720.
+3. `ssh gabo@192.168.0.70 "hostname && whoami && cd /srv/n8n-platform && git rev-parse --short HEAD && docker compose --env-file .env -f infra/docker-compose.staging.yml ps -a"`
+   - Resultado: host `docker-server`, usuario `gabo`, repo en `4cfb764`, y `n8n_staging`, `n8n_threat_cache`, `n8n_threat_db` siguen `healthy`.
+4. Diagnostico FortiGate desde R720 usando extraccion limpia de `FORTIGATE_HOST` y `FORTIGATE_API_KEY` desde `.env` (sin `source` para evitar ruido `CRLF`)
+   - Resultado: `FORTI_HOST=https://192.168.0.14`, `FORTI_KEY_LEN=30`, `HTTP_STATUS=200`, `REMOTE_IP=192.168.0.14`, `CURL_EXIT=0`. Se capturo body real con `results[]` y campos como `type=event`, `subtype=sdwan`, `level=notice`.
+5. Diagnostico Wazuh Indexer desde R720 contra `https://192.168.206.10:9200/` y `.../wazuh-alerts-*/_search`
+   - Resultado: ambos `curl -kv` devolvieron `HTTP_STATUS=000`, `CURL_EXIT=7`, con stderr real `connect to 192.168.206.10 port 9200 ... failed: Connection refused`.
+
+### Estado final
+
+- FortiGate deja de estar bloqueado a nivel de conectividad desde el R720: el dry-run HTTP equivalente ya quedo validado con respuesta real.
+- Wazuh Indexer sigue bloqueado por red/topologia: el puerto `9200` en `192.168.206.10` no acepta conexiones desde `192.168.0.70`.
+- El runtime staging permanece sano tras la validacion (`4cfb764`, 3 servicios healthy).
+- En `CONTEXT.md` quedaron actualizadas las tareas de FortiGate como completadas a nivel HTTP equivalente; la evidencia UI de n8n sigue pendiente donde asi se indica.
+
+### Riesgo residual
+
+- El dry-run de nodos en la UI de n8n para FortiGate y Zabbix sigue sin evidencia capturada desde interfaz; hoy la validacion es por HTTP equivalente desde el R720.
+- Wazuh Indexer requiere cambio de red/topologia (proxy/tunel/bind controlado) antes de poder completar el pending de conectividad y el dry-run real.
+
+### Harness gap
+
+- La carga de `.env` con `source` sobre archivos con `CRLF` degrada la confiabilidad de los comandos de diagnostico remotos; para este proyecto conviene extraer variables con `grep | cut | tr -d '\r'` o normalizar EOL antes de automatizar dry-runs por shell.

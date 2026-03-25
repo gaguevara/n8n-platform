@@ -99,7 +99,7 @@ ZABBIX_API_TOKEN=4d9bba4020832b25a85f11d0dd132e0d47899cbe1189ef78918031d475ad785
 - [ ] 5. @CODEX: Dry-run nodo Wazuh (bloqueado: .env pendiente)
 - [ ] 6. @CODEX: Dry-run nodo Zabbix (bloqueado: .env pendiente)
 - [ ] 7. @CLAUDE: Validar resultados de cada dry-run
-- [ ] 8. @GEMINI: Documentar evidencia para A.5.7 (Inteligencia de amenazas)
+- [x] 8. @GEMINI: Documentar evidencia para A.5.7 (Inteligencia de amenazas) — Ver `docs/EVIDENCIA_ISO_A57.md`
 
 ### Hallazgo adicional (validado 2026-03-22)
 - Zabbix: el nodo usa `auth` en body JSON-RPC (legacy). Zabbix 7.0+ recomienda `Authorization: Bearer` en header. Funcional pero mejorable.
