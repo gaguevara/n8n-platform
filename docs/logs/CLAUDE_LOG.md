@@ -6,6 +6,37 @@
 
 ---
 
+## ENTRADA-021 | 2026-03-25 | Wazuh Indexer desbloqueado + Ronda 5 distribuida
+
+**Tipo:** Infraestructura + distribución de tareas
+**Tarea:** Resolver bloqueante Wazuh Indexer y distribuir Ronda 5 para activación de fuentes internas.
+
+### Acciones ejecutadas
+
+1. **SSH al servidor Wazuh** (`192.168.206.10` via PEM)
+2. **Verificación:** 3 servicios Wazuh activos, Indexer en `127.0.0.1:9200`, certs en `/etc/wazuh-indexer/certs/`
+3. **Instalación nginx** como reverse proxy
+4. **Configuración:** puerto `9201` SSL → proxy a `127.0.0.1:9200`, whitelist `192.168.0.70` (R720)
+5. **Validación local:** cluster info OK, `5,773,210` alertas totales
+6. **Validación desde R720:** `5,962` alertas nivel >= 7 en últimas 24h — IPs atacantes reales
+7. **Variables staging:** `WAZUH_INDEXER_URL=https://192.168.206.10:9201` + Basic Auth en `.env` del R720
+8. **Restart n8n staging:** healthy con nuevas variables cargadas
+9. **Ronda 5 distribuida:** 7 Codex (dry-runs UI + pipeline E2E), 3 Gemini (checklist + intervalos), 4 Claude (cross-review + ADR-012)
+
+### Estado de fuentes internas (post-desbloqueo)
+
+| Fuente | Dry-run HTTP | Dry-run n8n UI | IoCs reales |
+|---|---|---|---|
+| FortiGate | ✅ HTTP 200 | Pendiente Ronda 5 | Pendiente |
+| Wazuh Indexer | ✅ 5,962 alertas | Pendiente Ronda 5 | Pendiente |
+| Zabbix | ✅ JSON-RPC OK | Pendiente Ronda 5 | Pendiente |
+| PostgreSQL | ✅ upsert_ioc OK | Pendiente Ronda 5 | Pendiente |
+
+### Harness gap
+- Ninguno. Nginx proxy es no-invasivo — si falla, solo se pierde el acceso de n8n, Wazuh sigue intacto.
+
+---
+
 ## ENTRADA-020 | 2026-03-24 | SPEC-005 calibration review (Governor)
 
 **Tipo:** Review de gobernanza — calibración SPEC-005

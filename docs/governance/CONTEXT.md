@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 1.8 — Framework v4.6 aplicado. Rondas 1-4 Gemini completadas. Codex: Ronda 4 parcial. |
-| Estabilidad   | Staging healthy. Workflow desactivado. UTM nodes agregados. Framework v4.6 validado localmente (29 tests, Pattern 09, proto_watch) y R720 actualizado a `4cfb764`. |
-| Bloqueantes   | Wazuh Indexer: `127.0.0.1:9200` en servidor Wazuh — no accesible desde R720. Evidencia fresca 2026-03-24: `192.168.206.10:9200` responde `connection refused` desde `192.168.0.70`. |
-| Ultimo cambio | Codex revalidó su backlog: FortiGate respondió `HTTP 200` con JSON `results[]` desde el R720 usando extracción limpia de `.env`; Wazuh Indexer quedó reconfirmado como bloqueo de red (`connection refused`). |
+| Fase          | Fase 1.9 — Wazuh Indexer desbloqueado. 3/3 fuentes internas responden desde R720. Listo para activación. |
+| Estabilidad   | Staging healthy. Workflow desactivado. FortiGate, Wazuh Indexer y Zabbix responden datos reales desde R720. |
+| Bloqueantes   | Ninguno de red. Pendiente: activar triggers cron tras dry-run E2E completo en n8n UI. |
+| Ultimo cambio | Claude instaló nginx proxy en servidor Wazuh (puerto 9201, whitelist R720). Dry-run: 5,962 alertas nivel >= 7. Variables `.env` staging actualizadas. |
 
 ---
 
@@ -64,8 +64,8 @@
 
 - [x] @CODEX: Limpiar directorio `.agent/` del repo — es duplicado de `.agents/` (hallazgo Gemini ENTRADA-016). Confirmar que `.agents/skills/` tiene los skills activos y eliminar `.agent/` (completado 2026-03-23)
 - [x] @CODEX: Agregar 2 nodos HTTP adicionales al workflow JSON (`app/workflows/threat-intel-main.json`) para IPS (`/api/v2/log/memory/utm/ips`) y Antivirus (`/api/v2/log/memory/utm/virus`). Copiar estructura del nodo FortiGate existente, misma auth, agregar `vdom=root`. Conectar al mismo merge node (completado 2026-03-23)
-- [ ] @CODEX: SSH al R720: probar conectividad al Wazuh Indexer — ejecutar `curl -k -u admin:admin https://192.168.206.10:9200/ 2>&1` (probar puerto 9200 con credenciales default, si falla probar con las credenciales de Wazuh Manager). Documentar IP:puerto real y credencial funcional (evidencia nueva 2026-03-24: `curl -kv https://192.168.206.10:9200/` y `.../wazuh-alerts-*/_search` fallan con `connection refused` desde `192.168.0.70`; sigue sin existir credencial funcional porque el puerto no acepta conexiones)
-- [ ] @CODEX: Agregar `WAZUH_INDEXER_URL` y `WAZUH_INDEXER_BASIC_AUTH` al `.env` del R720 con los valores descubiertos en el paso anterior (bloqueado hasta tener endpoint/credencial usable desde el R720)
+- [x] @CODEX: SSH al R720: probar conectividad al Wazuh Indexer (Resuelto por Claude 2026-03-25: nginx proxy instalado en servidor Wazuh, puerto 9201 con whitelist R720. Dry-run desde R720: 5,962 alertas nivel >= 7)
+- [x] @CODEX: Agregar `WAZUH_INDEXER_URL` y `WAZUH_INDEXER_BASIC_AUTH` al `.env` del R720 (Completado por Claude 2026-03-25: `WAZUH_INDEXER_URL=https://192.168.206.10:9201`, Basic Auth configurado)
 - [x] @CODEX: Validar JSON del workflow con `node -e "JSON.parse(require('fs').readFileSync('app/workflows/threat-intel-main.json','utf8')); console.log('OK')"` después de agregar nodos UTM (completado 2026-03-23)
 - [x] @CODEX: Ejecutar `git pull` en R720, reimportar workflow actualizado (con nodos UTM) desactivado en staging (completado 2026-03-23; R720 actualizado a `2306ade` e import seguro aplicado)
 
@@ -160,10 +160,41 @@
 
 ### @CLAUDE - Governor (Ronda 4)
 
-- [ ] @CLAUDE: Cross-review dry-runs Codex Ronda 4 (FortiGate, Zabbix, PostgreSQL)
-- [ ] @CLAUDE: Cross-review adaptación Gemini Ronda 4 (skills matrix, capabilities, Wazuh Indexer exposure)
+- [x] @CLAUDE: Cross-review dry-runs Codex Ronda 4 (FortiGate HTTP 200, Zabbix JSON-RPC OK, PostgreSQL upsert_ioc OK)
+- [x] @CLAUDE: Cross-review adaptación Gemini Ronda 4 (skills matrix alineado, capabilities creado, Wazuh exposure documentado)
+- [x] @CLAUDE: Desbloqueo Wazuh Indexer: nginx proxy instalado en servidor Wazuh (puerto 9201, whitelist R720), dry-run 5,962 alertas, .env staging actualizado
 - [ ] @CLAUDE: Registrar ADR-012: fuentes validadas y su estado de activación post dry-runs
-- [ ] @CLAUDE: Commit + push de consolidación Ronda 4
+- [ ] @CLAUDE: Commit + push de consolidación Ronda 4+5
+
+---
+
+## RONDA 5 — Activación de fuentes internas (autónoma)
+
+> **Objetivo:** Reimportar workflow con Wazuh desbloqueado, dry-run E2E de las 3 fuentes internas, preparar activación de triggers cron
+> **Prerequisito:** Wazuh Indexer accesible desde R720 ✅ (nginx proxy en 9201)
+
+### @CODEX - Implementer/DevOps (Ronda 5)
+
+- [ ] @CODEX: `git pull` en R720 hasta último commit y reimportar workflow actualizado (desactivado) con vars Wazuh Indexer cargadas
+- [ ] @CODEX: Dry-run Wazuh Indexer desde R720: `curl -sk -u 'admin:<pass>' 'https://192.168.206.10:9201/wazuh-alerts-*/_search' -H 'Content-Type: application/json' -d '{"size":3,"sort":[{"timestamp":{"order":"desc"}}],"query":{"bool":{"must":[{"range":{"rule.level":{"gte":7}}},{"range":{"timestamp":{"gte":"now-1h"}}}]}}}'` — capturar JSON con IPs atacantes reales
+- [ ] @CODEX: Ejecutar nodo Wazuh manualmente en n8n UI (staging) — trigger manual → verificar que el normalizer parsea `hits.hits[]._source` correctamente y extrae IoCs
+- [ ] @CODEX: Ejecutar nodo FortiGate manualmente en n8n UI — verificar datos reales fluyen hasta el merge node
+- [ ] @CODEX: Ejecutar nodo Zabbix manualmente en n8n UI — verificar datos reales fluyen hasta el merge node
+- [ ] @CODEX: Ejecutar pipeline completo manualmente (trigger manual del workflow completo) — verificar que los datos fluyen desde ingesta → normalizer → scorer → persistence (PostgreSQL) → no alerting (sin webhooks configurados)
+- [ ] @CODEX: Consultar PostgreSQL tras pipeline manual: `SELECT ioc_value, ioc_type, severity, source, sighting_count FROM iocs ORDER BY last_seen DESC LIMIT 10;` — confirmar que hay IoCs reales persistidos
+
+### @GEMINI - Researcher/Reviewer (Ronda 5)
+
+- [ ] @GEMINI: Verificar que el workflow JSON en Git tiene `WAZUH_INDEXER_URL` (no `WAZUH_API_URL`) en el nodo de alertas — confirmar coherencia con `.env.example`
+- [ ] @GEMINI: Actualizar ACTIVATION_CHECKLIST.md marcando Wazuh Indexer como desbloqueado y documentando la configuración del proxy nginx
+- [ ] @GEMINI: Preparar recomendación de intervalos de cron para producción — ¿2 min para Wazuh es demasiado agresivo con 5.7M alertas? Calcular carga estimada
+
+### @CLAUDE - Governor (Ronda 5)
+
+- [ ] @CLAUDE: Cross-review dry-runs Codex Ronda 5 (Wazuh real, pipeline E2E, IoCs en PostgreSQL)
+- [ ] @CLAUDE: Cross-review Gemini Ronda 5 (checklist, intervalos de cron)
+- [ ] @CLAUDE: Decisión de activación: ¿activar triggers cron de fuentes internas (FortiGate, Wazuh, Zabbix) en staging?
+- [ ] @CLAUDE: Registrar ADR-012 con decisión final de activación
 
 ---
 
