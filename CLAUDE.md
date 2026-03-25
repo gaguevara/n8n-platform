@@ -1,4 +1,4 @@
-# CLAUDE.md — n8n Platform DELCOP (Framework Multi-Agente v4.6)
+# CLAUDE.md — n8n Platform DELCOP (Framework Multi-Agente v4.7)
 
 ## Protocolo obligatorio
 

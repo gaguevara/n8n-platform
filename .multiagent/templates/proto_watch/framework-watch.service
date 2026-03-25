@@ -1,0 +1,13 @@
+[Unit]
+Description=Framework Multiagent Watcher
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/framework_multiagent
+ExecStart=/usr/bin/python3 %h/framework_multiagent/.multiagent/core/proto_watch.py --loop
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

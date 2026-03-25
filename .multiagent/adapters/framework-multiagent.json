@@ -1,9 +1,18 @@
 {
   "project_name": "framework-multiagent",
   "agents": [
-    {"id": "CLAUDE", "log": "docs/logs/CLAUDE_LOG.md"},
-    {"id": "CODEX", "log": "docs/logs/CODEX_LOG.md"},
-    {"id": "GEMINI", "log": "docs/logs/GEMINI_LOG.md"}
+    {
+      "id": "CLAUDE",
+      "log": "docs/logs/CLAUDE_LOG.md"
+    },
+    {
+      "id": "CODEX",
+      "log": "docs/logs/CODEX_LOG.md"
+    },
+    {
+      "id": "GEMINI",
+      "log": "docs/logs/GEMINI_LOG.md"
+    }
   ],
   "paths": {
     "log_index": "docs/governance/LOG_INDEX.md",
@@ -20,5 +29,68 @@
     ".yaml": "python -c \"import yaml; yaml.safe_load(open('{file}'))\""
   },
   "log_entry_pattern": "## ENTRADA-{number}",
-  "task_file_pattern": "SPEC_*.md"
+  "task_file_pattern": "SPEC_*.md",
+  "auto_validate": {
+    "enabled": true,
+    "interval_minutes": 3,
+    "on_new_entry": [
+      "verify_files",
+      "commit",
+      "sync_index",
+      "notify"
+    ],
+    "hallucination_check": true,
+    "auto_commit": true,
+    "notify": "stdout",
+    "subagent_pattern": "SUB-{AGENT}-{N}",
+    "deadman_interval": 5,
+    "deadman_intervals": {
+      "security": 3,
+      "implementation": 5,
+      "documentation": 7
+    },
+    "role_zones": {
+      "CLAUDE": [
+        "docs/governance/",
+        "docs/sdlc/",
+        "docs/reviews/",
+        "SESSION_BOOTSTRAP.md"
+      ],
+      "CODEX": [
+        ".multiagent/core/",
+        ".multiagent/tests/",
+        ".multiagent/adapters/",
+        ".multiagent/templates/",
+        ".multiagent/hooks/",
+        ".claude/skills/",
+        "*.py",
+        "pyproject.toml",
+        "docs/reviews/SPEC_005_CALIBRATION_*.md"
+      ],
+      "GEMINI": [
+        "docs/knowledge/",
+        "docs/architecture/",
+        "docs/sdlc/",
+        "docs/governance/ONBOARDING.md",
+        "docs/templates/",
+        "docs/reviews/"
+      ]
+    },
+    "shared_zones": [
+      "docs/logs/",
+      "docs/governance/CONTEXT.md",
+      "docs/governance/LOG_INDEX.md",
+      "docs/governance/CLAUDE_OVERLAY.md",
+      "docs/governance/CODEX_OVERLAY.md",
+      "docs/governance/GEMINI_OVERLAY.md"
+    ],
+    "auto_commit_paths": [
+      ".multiagent/core/*.py",
+      ".multiagent/tests/*.py",
+      "docs/logs/CODEX_LOG.md",
+      "docs/governance/LOG_INDEX.md",
+      "docs/governance/CONTEXT.md",
+      "docs/reviews/SPEC_005_CALIBRATION_*.md"
+    ]
+  }
 }

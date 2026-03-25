@@ -68,8 +68,9 @@ def resolve_project_root(payload: dict) -> Path:
         env_candidate = Path(env_root)
         env_candidate_resolved = env_candidate.resolve()
         resolved = find_project_root(env_candidate)
-        if resolved == env_candidate_resolved or env_candidate_resolved.is_relative_to(
-            resolved
+        if (
+            resolved == env_candidate_resolved
+            or env_candidate_resolved.is_relative_to(resolved)
         ):
             return resolved
 
@@ -78,8 +79,9 @@ def resolve_project_root(payload: dict) -> Path:
         cwd_candidate = Path(payload_cwd)
         cwd_candidate_resolved = cwd_candidate.resolve()
         resolved = find_project_root(cwd_candidate)
-        if resolved == cwd_candidate_resolved or cwd_candidate_resolved.is_relative_to(
-            resolved
+        if (
+            resolved == cwd_candidate_resolved
+            or cwd_candidate_resolved.is_relative_to(resolved)
         ):
             return resolved
 
@@ -316,7 +318,9 @@ def main() -> int:
     raw_file_path = args.file or extract_file_path(payload)
     is_hook_payload = bool(payload)
 
-    file_path = relativize_path(project_root, raw_file_path) if raw_file_path else ""
+    file_path = (
+        relativize_path(project_root, raw_file_path) if raw_file_path else ""
+    )
     results = collect_validation_results(
         project_root,
         config_path,

@@ -34,6 +34,15 @@ Agente ejecutor para tareas técnicas concretas, verificables y de bajo a medio 
 
 ---
 
+## Preservación y tooling externo
+
+- Los logs `*_LOG.md` son append-only. Solo agregar nuevas entradas al final del archivo; nunca truncar ni editar entradas previas sin aprobación explícita.
+- En `PROJECT_RULES.md`, `SESSION_BOOTSTRAP.md`, overlays, `CONTEXT.md` y `LOG_INDEX.md`, preferir append o inserción después de anchor. No reemplazar bloques completos para una regla puntual.
+- `Context7` es tooling externo vía MCP (`.mcp.json` + `npx`); no es una carpeta del repo.
+- `skills.sh` es tooling externo vía `npx skills ...`; instala skills comunitarios cuando aplica, no forma parte de los archivos base del repo.
+
+---
+
 ## Reglas de ejecución
 
 - No repetir el mismo intento sin nueva evidencia.
@@ -73,3 +82,14 @@ Después de cada cambio relevante, registrar:
 - Siguiente paso recomendado
 - Entrada en `docs/logs/CODEX_LOG.md`
 - Actualización de `docs/governance/LOG_INDEX.md`
+
+---
+
+## Self-Dispatch Protocol (SPEC-005)
+
+- Al iniciar: leer `.multiagent/state/validation_state.json`.
+- Si `last_validated < last_seen_entry` o `status` está en `pending_validation`, `blocked`, `awaiting_governor`, `awaiting_human`, `awaiting_governor_dispatch` o `awaiting_human_dispatch`: no iniciar nueva tarea.
+- Si `status` está aprobado y existe `next_task`: tomar esa tarea como siguiente trabajo activo.
+- Si `next_task` ya viene con reservation en `CONTEXT.md`, respetarla; no reclamar otra tarea en paralelo.
+- Si no hay `next_task`, releer `docs/governance/CONTEXT.md` y detenerse si no hay pendientes `@CODEX`.
+- Nunca marcar `[x]` tus propias tareas en `CONTEXT.md`; el cierre pasa por watcher/gobernanza.

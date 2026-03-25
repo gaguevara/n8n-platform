@@ -1,0 +1,15 @@
+{
+  "state": "ACTIVE",
+  "project": "framework-multiagent",
+  "round_counter": 6,
+  "baseline": {
+    "CLAUDE": 12,
+    "CODEX": 23,
+    "GEMINI": 13
+  },
+  "deadman_counter": 2,
+  "effective_interval_minutes": 3,
+  "message": "",
+  "last_check": "2026-03-25T19:20:23+00:00",
+  "pid": null
+}

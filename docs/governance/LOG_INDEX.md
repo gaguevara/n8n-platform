@@ -10,9 +10,9 @@
 
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
-| CLAUDE | ENTRADA-021 | docs/logs/CLAUDE_LOG.md | 2026-03-25 |
-| CODEX  | ENTRADA-032 | docs/logs/CODEX_LOG.md  | 2026-03-24 |
-| GEMINI | ENTRADA-019 | docs/logs/GEMINI_LOG.md | 2026-03-24 |
+| CLAUDE | ENTRADA-022 | docs/logs/CLAUDE_LOG.md | 2026-03-25 |
+| CODEX  | ENTRADA-035 | docs/logs/CODEX_LOG.md  | 2026-03-25 |
+| GEMINI | ENTRADA-022 | docs/logs/GEMINI_LOG.md | 2026-03-25 |
 
 ---
 
@@ -71,6 +71,9 @@
 | ENTRADA-030 | CODEX  | framework-v46-closeout | Validaciones finales de trazabilidad y verificacion de sync; engine OK, script `update-agent-context.sh` no ejecutable en Windows sin Bash | 2026-03-24 |
 | ENTRADA-031 | CODEX  | spec-005-calibration-review | Review tecnico SPEC-005 con evidencia real del watcher/status; 284 falsas `hallucinations`, 0 `ROLE_VIOLATION`, adapter descalibrado para Codex | 2026-03-24 |
 | ENTRADA-032 | CODEX  | backlog-validation-execution | Revalidacion de backlog @CODEX: FortiGate OK desde R720 con `HTTP 200`; Wazuh Indexer sigue bloqueado por `connection refused` en `192.168.206.10:9200` | 2026-03-24 |
+| ENTRADA-033 | CODEX  | session-start-and-pending-validation | Inicio de sesion, lectura de CONTEXT actualizado, `git pull` R720 a `33ba439` y validacion exitosa de Wazuh via proxy `9201` con `HTTP 200` | 2026-03-25 |
+| ENTRADA-034 | CODEX  | pending-reimport-validation | Validacion de pendientes Ronda 5: staging tiene los 2 workflows esperados y no hubo cambios de workflow/code-nodes entre `4cfb764..33ba439`; el reimport queda como chequeo de runtime | 2026-03-25 |
+| ENTRADA-035 | CODEX  | session-bootstrap-runtime-validation | Bootstrap de sesion, lectura de `CONTEXT.md` y revalidacion de staging healthy; los pendientes reales de @CODEX siguen siendo UI/E2E manuales y Fase 2 AWS | 2026-03-25 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
 | ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |
@@ -90,6 +93,9 @@
 | ENTRADA-017 | GEMINI | research + api-fix  | Investigación endpoint Wazuh v4.14 (Indexer API puerto 9200)      | 2026-03-23 |
 | ENTRADA-018 | GEMINI | audit + pipeline    | Auditoría y tareas de consolidación Rondas 1-3 (Fase 1)           | 2026-03-23 |
 | ENTRADA-019 | GEMINI | research + validation | Validación matriz de skills, capacidades y exposición Indexer   | 2026-03-24 |
+| ENTRADA-020 | GEMINI | calibration-review    | Review de calibración SPEC-005 v4.6 (n8n-platform)              | 2026-03-24 |
+| ENTRADA-021 | GEMINI | ronda-5-execution     | Validación workflow Git, checklist y recomendación cron        | 2026-03-25 |
+| ENTRADA-022 | GEMINI | documentation-update  | Actualizacion de evidencia ISO A.5.7 y resumen de Fase 1 con Wazuh desbloqueado | 2026-03-25 |
 
 ---
 

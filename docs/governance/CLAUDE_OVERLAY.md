@@ -48,6 +48,15 @@ Revisor técnico de alto contexto, analista de impacto multiarchivo, apoyo para 
 
 ---
 
+## Preservación y tooling externo
+
+- Los logs `*_LOG.md` son append-only. Solo agregar nuevas entradas al final del archivo; nunca truncar ni editar entradas previas sin aprobación explícita.
+- En `PROJECT_RULES.md`, `SESSION_BOOTSTRAP.md`, overlays, `CONTEXT.md` y `LOG_INDEX.md`, preferir append o inserción después de anchor. No reemplazar bloques completos para una regla puntual.
+- `Context7` es tooling externo vía MCP (`.mcp.json` + `npx`); no es una carpeta del repo.
+- `skills.sh` es tooling externo vía `npx skills ...`; instala skills comunitarios cuando aplica, no forma parte de los archivos base del repo.
+
+---
+
 ## Validación cruzada (revisando trabajo de otros agentes)
 
 - Verificar cumplimiento de `PROJECT_RULES.md` (estándares, seguridad, tipado).
@@ -92,3 +101,13 @@ Redacción como producto de equipo interno de ingeniería. La gobernanza de herr
 - Veredicto de revisión (si aplica)
 - Entrada en `docs/logs/CLAUDE_LOG.md`
 - Actualización de `docs/governance/LOG_INDEX.md`
+
+---
+
+## Self-Dispatch Protocol (SPEC-005)
+
+- Leer `.multiagent/state/validation_state.json` antes de revisar o liberar nuevas tareas.
+- Si un agente tiene `status` en `awaiting_governor` o `awaiting_governor_dispatch`, esa tarea requiere tu revisión antes de que continúe el pipeline.
+- Solo el Governor o el watcher para tareas `AUTO` pueden convertir una tarea validada en `[x]` dentro de `CONTEXT.md`.
+- Si `validation_state` muestra `blocked`, registrar veredicto o contradicción en log; no liberar nueva tarea en silencio.
+- Usar `next_task` y `dispatch_level` como contrato operativo al decidir si una tarea queda en `AUTO`, `GOVERNOR` o `HUMAN`.

@@ -36,6 +36,15 @@ Sintetizador técnico, verificador de cobertura, apoyo documental y validador de
 
 ---
 
+## Preservación y tooling externo
+
+- Los logs `*_LOG.md` son append-only. Solo agregar nuevas entradas al final del archivo; nunca truncar ni editar entradas previas sin aprobación explícita.
+- En `PROJECT_RULES.md`, `SESSION_BOOTSTRAP.md`, overlays, `CONTEXT.md` y `LOG_INDEX.md`, preferir append o inserción después de anchor. No reemplazar bloques completos para una regla puntual.
+- `Context7` es tooling externo vía MCP (`.mcp.json` + `npx`); no es una carpeta del repo.
+- `skills.sh` es tooling externo vía `npx skills ...`; instala skills comunitarios cuando aplica, no forma parte de los archivos base del repo.
+
+---
+
 ## Validación cruzada (revisando trabajo de otros agentes)
 
 - Confirmar que el cambio quedó explicable para terceros.
@@ -84,3 +93,13 @@ Formato de salida:
 - Recomendación de actualización a `CONTEXT.md` si aplica
 - Entrada en `docs/logs/GEMINI_LOG.md`
 - Actualización de `docs/governance/LOG_INDEX.md`
+
+---
+
+## Self-Dispatch Protocol (SPEC-005)
+
+- Al iniciar, leer `.multiagent/state/validation_state.json`.
+- Si `last_validated < last_seen_entry` o `status` está en espera (`pending_validation`, `awaiting_governor`, `awaiting_human`, `awaiting_governor_dispatch`, `awaiting_human_dispatch`), no arrancar una tarea nueva.
+- Si existe `next_task` para `@GEMINI` y el `dispatch_level` lo permite, ejecutar esa tarea antes de pedir instrucciones humanas.
+- Si no hay `next_task`, releer `docs/governance/CONTEXT.md` y detenerse si no hay pendientes `@GEMINI`.
+- Nunca marcar `[x]` tus propias tareas; el cierre lo hace watcher/gobernanza.

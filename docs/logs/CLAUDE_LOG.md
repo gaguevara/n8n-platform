@@ -6,6 +6,36 @@
 
 ---
 
+## ENTRADA-022 | 2026-03-25 | upgrade framework v4.6 → v4.7
+
+**Tipo:** Upgrade de framework
+**Tarea:** Aplicar framework multi-agente v4.7, calibrar adapter, validar engine.
+
+### Cambios v4.7 vs v4.6
+- Engine: 41 tests (was 29)
+- `validation_state.json` + `watch_state.json` en `.multiagent/state/`
+- proto_watch actualizado con templates (systemd, PowerShell, post-commit)
+- Overlays actualizados con Self-Dispatch Protocol (SPEC-005)
+- FRAMEWORK_CAPABILITIES.md movido a `docs/governance/`
+- role_boundaries calibradas según consenso SPEC-005 de los 3 agentes
+
+### Adapter calibrado
+- `framework_version`: 4.6 → 4.7
+- `CLAUDE` zone: removido `*.md` catch-all, solo `docs/governance/`, `docs/sdlc/`, `CLAUDE.md`
+- `CODEX` zone: agregado `app/`, `infra/`, `scripts/`, `ops/`, `.env.*example`, `AGENTS.md`, `GEMINI.md`
+- `GEMINI` zone: agregado `docs/sdlc/`, `docs/skills/`, `FRAMEWORK_CAPABILITIES.md`
+- `shared_zones`: agregado `docs/reviews/`
+
+### Validación
+- Ruff: all checks passed ✅
+- Pytest: 41 passed ✅
+- Engine status: CLAUDE #21, CODEX #35, GEMINI #23 ✅
+
+### Harness gap
+- Ninguno.
+
+---
+
 ## ENTRADA-021 | 2026-03-25 | Wazuh Indexer desbloqueado + Ronda 5 distribuida
 
 **Tipo:** Infraestructura + distribución de tareas

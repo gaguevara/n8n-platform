@@ -1,0 +1,47 @@
+{
+  "updated_at": "2026-03-25T19:20:23+00:00",
+  "agents": {
+    "CLAUDE": {
+      "agent": "CLAUDE",
+      "last_seen_entry": 12,
+      "last_validated": 12,
+      "status": "idle",
+      "timestamp": "2026-03-25T04:47:59+00:00",
+      "next_task": null,
+      "dispatch_level": null,
+      "task_type": "implementation",
+      "claimed_task": null,
+      "reservation": null,
+      "task_line_index": -1,
+      "blocked_reason": ""
+    },
+    "CODEX": {
+      "agent": "CODEX",
+      "last_seen_entry": 23,
+      "last_validated": 23,
+      "status": "approved",
+      "timestamp": "2026-03-25T19:20:23+00:00",
+      "next_task": "Fase B de SPEC-005 \u2014 implementar 17 ISC (Autor: Claude, Fecha: 2026-03-25) :",
+      "dispatch_level": "AUTO",
+      "task_type": "implementation",
+      "claimed_task": "Fase B de SPEC-005 \u2014 implementar 17 ISC (Autor: Claude, Fecha: 2026-03-25) :",
+      "reservation": "[RESERVED @CODEX 2026-03-25T04:50:28+00:00]",
+      "task_line_index": 118,
+      "blocked_reason": ""
+    },
+    "GEMINI": {
+      "agent": "GEMINI",
+      "last_seen_entry": 13,
+      "last_validated": 13,
+      "status": "idle",
+      "timestamp": "2026-03-25T04:47:59+00:00",
+      "next_task": null,
+      "dispatch_level": null,
+      "task_type": "implementation",
+      "claimed_task": null,
+      "reservation": null,
+      "task_line_index": -1,
+      "blocked_reason": ""
+    }
+  }
+}

@@ -50,7 +50,7 @@
 |---------|-------------------|
 | `docs/governance/CONTEXT.md` | El agente necesita estado actual del proyecto |
 | `docs/knowledge/DESIGN_PRINCIPLES.md` | El agente va a generar o revisar código |
-| `docs/skills/SKILLS.md` | Se evalúa capacidad del agente o se asigna tarea |
+| `docs/skills/AGENT_SKILLS_MATRIX.md` | Se evalúa capacidad del agente o se asigna tarea |
 | `docs/sdlc/SPEC_*.md` | El agente va a implementar una feature específica |
 | `docs/security/RISK_REGISTER*.md` | Cambio en área crítica |
 

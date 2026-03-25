@@ -1,0 +1,4 @@
+#!/bin/sh
+set -eu
+
+python .multiagent/core/proto_watch.py --once

@@ -1,7 +1,7 @@
 {
   "project_name": "n8n-platform",
   "display_name": "n8n Platform - DELCOP",
-  "framework_version": "4.6",
+  "framework_version": "4.7",
   "agents": [
     {
       "id": "CLAUDE",
@@ -85,29 +85,40 @@
       "CLAUDE": [
         "docs/governance/",
         "docs/sdlc/",
-        "docs/reviews/",
-        "*.md",
-        "SESSION_BOOTSTRAP.md"
+        "SESSION_BOOTSTRAP.md",
+        "CLAUDE.md"
       ],
       "CODEX": [
         ".multiagent/core/",
         ".multiagent/tests/",
-        ".claude/skills/",
+        ".multiagent/adapters/",
+        "app/workflows/",
+        "app/code-nodes/",
+        "infra/",
+        "scripts/",
+        "ops/",
+        ".env.example",
+        ".env.staging.example",
+        "AGENTS.md",
+        "GEMINI.md",
         "*.py",
         "pyproject.toml"
       ],
       "GEMINI": [
         "docs/knowledge/",
         "docs/architecture/",
+        "docs/sdlc/",
+        "docs/skills/",
         "docs/governance/ONBOARDING.md",
-        "docs/templates/",
-        "docs/reviews/"
+        "docs/governance/FRAMEWORK_CAPABILITIES.md",
+        "docs/PHASE1_SUMMARY.md"
       ]
     },
     "shared_zones": [
       "docs/logs/",
       "docs/governance/CONTEXT.md",
-      "docs/governance/LOG_INDEX.md"
+      "docs/governance/LOG_INDEX.md",
+      "docs/reviews/"
     ]
   }
 }

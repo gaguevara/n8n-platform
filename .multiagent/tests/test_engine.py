@@ -54,9 +54,20 @@ def build_watch_config() -> dict:
         "notify": "stdout",
         "subagent_pattern": "SUB-{AGENT}-{N}",
         "deadman_interval": 5,
-        "role_boundaries": {
+        "deadman_intervals": {
+            "security": 3,
+            "implementation": 5,
+            "documentation": 7,
+        },
+        "role_zones": {
             "CLAUDE": ["docs/governance/", "docs/sdlc/", "*.md"],
-            "CODEX": [".multiagent/core/", ".multiagent/tests/", "*.py"],
+            "CODEX": [
+                ".multiagent/core/",
+                ".multiagent/tests/",
+                ".multiagent/templates/",
+                ".multiagent/hooks/",
+                "*.py",
+            ],
             "GEMINI": ["docs/reviews/", "docs/architecture/"],
         },
         "shared_zones": [
@@ -314,6 +325,68 @@ def test_verify_files_reports_missing_path(tmp_path: Path) -> None:
     assert missing == ["docs/missing.md"]
 
 
+def test_extract_paths_from_text_ignores_commands_and_status_tokens() -> None:
+    text = "\n".join(
+        [
+            "- Evidencia: `python -m ruff check .multiagent/core .multiagent/tests`",
+            "- Estado: `READY/QUEUED`",
+            "- Directorio: `.multiagent/`",
+            "- Referencia: `@docs/reviews/report.md`",
+        ]
+    )
+
+    assert engine.extract_paths_from_text(text) == ["docs/reviews/report.md"]
+
+
+def test_extract_affected_paths_ignores_traceability_references() -> None:
+    lines = (
+        (
+            "- **Archivos afectados:** `.multiagent/core/engine.py`, "
+            "`docs/logs/CODEX_LOG.md`"
+        ),
+        "- **Relacionado con:** `SPEC_004_AUTO_VALIDATE_WATCH.md`, `LOG_INDEX.md`",
+    )
+
+    assert engine.extract_affected_paths(lines) == [
+        ".multiagent/core/engine.py",
+        "docs/logs/CODEX_LOG.md",
+    ]
+
+
+def test_verify_files_resolves_unique_basenames_without_false_positives(
+    tmp_path: Path,
+) -> None:
+    entry = engine.LogEntry(
+        number=1,
+        header="## ENTRADA-001",
+        body=(
+            "- Se releyeron `CONTEXT.md`, `LOG_INDEX.md`, `engine.py`, `GEMINI_LOG.md`",
+            "- Evidencia: `python -m ruff check .multiagent/core .multiagent/tests`",
+            "- Estado watcher: `READY/QUEUED`",
+        ),
+    )
+    write_file(tmp_path / "Docs" / "governance" / "CONTEXT.md", "ctx\n")
+    write_file(tmp_path / "Docs" / "governance" / "LOG_INDEX.md", "log\n")
+    write_file(tmp_path / ".multiagent" / "core" / "engine.py", "print('ok')\n")
+    write_file(tmp_path / "logs" / "GEMINI_LOG.md", "## ENTRADA-001\n")
+
+    missing = engine.verify_files(tmp_path, [entry])
+
+    assert missing == []
+
+
+def test_verify_files_ignores_optional_runtime_watch_paths(tmp_path: Path) -> None:
+    entry = engine.LogEntry(
+        number=1,
+        header="## ENTRADA-001",
+        body=("- Runtime watcher: `.watch.pid`, `.multiagent/.watch.status`",),
+    )
+
+    missing = engine.verify_files(tmp_path, [entry])
+
+    assert missing == []
+
+
 def test_detect_antiloop_when_same_error_repeats(tmp_path: Path) -> None:
     log_path = tmp_path / "CODEX_LOG.md"
     write_file(
@@ -406,6 +479,181 @@ def test_parse_context_tasks_stops_before_non_agent_sections() -> None:
     assert "Riesgos tecnicos abiertos" not in tasks[0]["combined_text"]
 
 
+def test_parse_context_tasks_extracts_dispatch_and_reservation_metadata() -> None:
+    context_text = "\n".join(
+        [
+            "### @CODEX - Implementer",
+            (
+                "- [ ] @CODEX: Implementar watcher [dispatch:governor] "
+                "[type:security] [RESERVED @CODEX 2026-03-25T01:00:00Z]"
+            ),
+        ]
+    )
+
+    tasks = engine.parse_context_tasks(context_text)
+
+    assert tasks[0]["dispatch_level"] == "GOVERNOR"
+    assert tasks[0]["task_type"] == "security"
+    assert tasks[0]["reservation_agent"] == "CODEX"
+
+
+def test_check_role_boundaries_supports_role_zones_config() -> None:
+    config = build_watch_config()
+    config["auto_validate"].pop("role_zones")
+    config["auto_validate"]["role_boundaries"] = {
+        "CODEX": [".multiagent/adapters/"],
+    }
+
+    warnings = engine.check_role_boundaries(
+        "CODEX",
+        [".multiagent/adapters/framework-multiagent.json"],
+        config,
+    )
+
+    assert warnings == []
+
+
+def test_check_role_boundaries_resolves_unique_basenames_in_shared_zone(
+    tmp_path: Path,
+) -> None:
+    config = build_watch_config()
+    write_file(tmp_path / "docs" / "logs" / "CODEX_LOG.md", "entry\n")
+
+    warnings = engine.check_role_boundaries(
+        "CODEX",
+        ["CODEX_LOG.md"],
+        config,
+        base=tmp_path,
+    )
+
+    assert warnings == []
+
+
+def test_compute_deadman_policy_uses_task_type_threshold() -> None:
+    config = build_watch_config()
+    validation_state = {
+        "agents": {
+            "CODEX": {
+                "next_task": "Fix security issue",
+                "claimed_task": None,
+                "task_type": "security",
+            }
+        }
+    }
+
+    policy = engine.compute_deadman_policy(config, validation_state, 4)
+
+    assert policy == ("AWAITING_ACK", 10)
+
+
+def test_execute_watch_cycle_writes_validation_state_next_task_and_reservation(
+    tmp_path: Path,
+) -> None:
+    config = build_watch_config()
+    config_path = tmp_path / "adapter.json"
+    write_json(config_path, config)
+    write_file(tmp_path / "Docs" / "governance" / "LOG_INDEX.md", "# LOG\n")
+    write_file(
+        tmp_path / "Docs" / "governance" / "CONTEXT.md",
+        "\n".join(
+            [
+                "### @CODEX - Implementer",
+                "- [ ] @CODEX: Implementar Fase B [dispatch:auto]",
+            ]
+        )
+        + "\n",
+    )
+
+    engine.execute_watch_cycle(str(config_path), tmp_path)
+    validation_state = engine.read_json(
+        engine.get_watch_paths(tmp_path).validation_state
+    )
+    context_text = (
+        tmp_path / "Docs" / "governance" / "CONTEXT.md"
+    ).read_text(encoding="utf-8")
+
+    assert validation_state["agents"]["CODEX"]["next_task"] is not None
+    assert validation_state["agents"]["CODEX"]["claimed_task"] is not None
+    assert "[RESERVED @CODEX" in context_text
+
+
+def test_execute_watch_cycle_auto_completes_auto_task_after_validation(
+    tmp_path: Path,
+) -> None:
+    config = build_watch_config()
+    config_path = tmp_path / "adapter.json"
+    write_json(config_path, config)
+    write_file(tmp_path / "Docs" / "governance" / "LOG_INDEX.md", "# LOG\n")
+    context_path = tmp_path / "Docs" / "governance" / "CONTEXT.md"
+    write_file(
+        context_path,
+        "\n".join(
+            [
+                "### @CODEX - Implementer",
+                "- [ ] @CODEX: Implementar Fase B [dispatch:auto]",
+            ]
+        )
+        + "\n",
+    )
+
+    engine.execute_watch_cycle(str(config_path), tmp_path)
+    write_file(
+        tmp_path / "logs" / "CODEX_LOG.md",
+        (
+            "## ENTRADA-001\n"
+            "- **Archivos afectados:** `.multiagent/core/engine.py`\n"
+        ),
+    )
+    write_file(tmp_path / ".multiagent" / "core" / "engine.py", "print('ok')\n")
+
+    engine.execute_watch_cycle(str(config_path), tmp_path)
+    validation_state = engine.read_json(
+        engine.get_watch_paths(tmp_path).validation_state
+    )
+
+    assert "- [x] @CODEX: Implementar Fase B [dispatch:auto]" in context_path.read_text(
+        encoding="utf-8"
+    )
+    assert validation_state["agents"]["CODEX"]["last_validated"] == 1
+
+
+def test_execute_watch_cycle_governor_task_waits_for_review(tmp_path: Path) -> None:
+    config = build_watch_config()
+    config_path = tmp_path / "adapter.json"
+    write_json(config_path, config)
+    write_file(tmp_path / "Docs" / "governance" / "LOG_INDEX.md", "# LOG\n")
+    write_file(
+        tmp_path / "Docs" / "governance" / "CONTEXT.md",
+        "\n".join(
+            [
+                "### @CODEX - Implementer",
+                "- [ ] @CODEX: Cambiar motor [dispatch:governor]",
+            ]
+        )
+        + "\n",
+    )
+
+    engine.execute_watch_cycle(str(config_path), tmp_path)
+    write_file(
+        tmp_path / "logs" / "CODEX_LOG.md",
+        (
+            "## ENTRADA-001\n"
+            "- **Archivos afectados:** `.multiagent/core/engine.py`\n"
+        ),
+    )
+    write_file(tmp_path / ".multiagent" / "core" / "engine.py", "print('ok')\n")
+
+    engine.execute_watch_cycle(str(config_path), tmp_path)
+    validation_state = engine.read_json(
+        engine.get_watch_paths(tmp_path).validation_state
+    )
+
+    assert (
+        validation_state["agents"]["CODEX"]["status"]
+        == "awaiting_governor_dispatch"
+    )
+
+
 def test_execute_watch_cycle_updates_round_and_baseline(
     tmp_path: Path,
 ) -> None:
@@ -429,10 +677,17 @@ def test_execute_watch_cycle_updates_round_and_baseline(
 
     state = engine.execute_watch_cycle(str(config_path), tmp_path)
     saved = engine.read_json(config_path)
+    watch_state = engine.read_json(engine.get_watch_paths(tmp_path).watch_state)
+    validation_state = engine.read_json(
+        engine.get_watch_paths(tmp_path).validation_state
+    )
 
     assert state["round_counter"] == 1
-    assert saved["auto_validate"]["round_counter"] == 1
-    assert saved["auto_validate"]["baseline"]["CODEX"] == 1
+    assert saved["auto_validate"]["round_counter"] == 0
+    assert saved["auto_validate"]["baseline"]["CODEX"] == 0
+    assert watch_state["round_counter"] == 1
+    assert watch_state["baseline"]["CODEX"] == 1
+    assert validation_state["agents"]["CODEX"]["last_validated"] == 1
 
 
 def test_execute_watch_cycle_detects_hallucination_and_keeps_baseline(
@@ -453,16 +708,19 @@ def test_execute_watch_cycle_detects_hallucination_and_keeps_baseline(
 
     state = engine.execute_watch_cycle(str(config_path), tmp_path)
     saved = engine.read_json(config_path)
+    watch_state = engine.read_json(engine.get_watch_paths(tmp_path).watch_state)
 
     assert state["hallucinations"] == [
         "CODEX: hallucination detected -> docs/missing.md"
     ]
     assert saved["auto_validate"]["baseline"]["CODEX"] == 0
+    assert watch_state["baseline"]["CODEX"] == 0
 
 
 def test_execute_watch_cycle_deadman_awaits_then_pauses(tmp_path: Path) -> None:
     config = build_watch_config()
     config["auto_validate"]["deadman_interval"] = 1
+    config["auto_validate"]["deadman_intervals"]["implementation"] = 1
     config_path = tmp_path / "adapter.json"
     write_json(config_path, config)
     write_file(tmp_path / "Docs" / "governance" / "LOG_INDEX.md", "# LOG\n")
@@ -473,14 +731,19 @@ def test_execute_watch_cycle_deadman_awaits_then_pauses(tmp_path: Path) -> None:
 
     first = engine.execute_watch_cycle(str(config_path), tmp_path)
     second = engine.execute_watch_cycle(str(config_path), tmp_path)
+    third = engine.execute_watch_cycle(str(config_path), tmp_path)
+    fourth = engine.execute_watch_cycle(str(config_path), tmp_path)
 
-    assert first["state"] == "AWAITING_ACK"
-    assert second["state"] == "PAUSED"
+    assert first["state"] == "ACTIVE"
+    assert second["state"] == "AWAITING_ACK"
+    assert third["state"] == "DEGRADED"
+    assert fourth["state"] == "PAUSED"
 
 
 def test_watch_ack_clears_pause_on_next_cycle(tmp_path: Path) -> None:
     config = build_watch_config()
     config["auto_validate"]["deadman_interval"] = 2
+    config["auto_validate"]["deadman_intervals"]["implementation"] = 2
     config_path = tmp_path / "adapter.json"
     write_json(config_path, config)
     write_file(tmp_path / "Docs" / "governance" / "LOG_INDEX.md", "# LOG\n")
@@ -491,12 +754,14 @@ def test_watch_ack_clears_pause_on_next_cycle(tmp_path: Path) -> None:
 
     engine.execute_watch_cycle(str(config_path), tmp_path)
     second = engine.execute_watch_cycle(str(config_path), tmp_path)
-    rc = engine.cmd_watch(str(config_path), tmp_path, ["--ack"])
     third = engine.execute_watch_cycle(str(config_path), tmp_path)
+    rc = engine.cmd_watch(str(config_path), tmp_path, ["--ack"])
+    fourth = engine.execute_watch_cycle(str(config_path), tmp_path)
 
-    assert second["state"] == "AWAITING_ACK"
+    assert second["state"] == "ACTIVE"
+    assert third["state"] == "AWAITING_ACK"
     assert rc == 0
-    assert third["state"] == "ACTIVE"
+    assert fourth["state"] == "ACTIVE"
 
 
 def test_render_watch_status_includes_queue_and_round(tmp_path: Path) -> None:
@@ -522,6 +787,34 @@ def test_render_watch_status_includes_queue_and_round(tmp_path: Path) -> None:
 
     assert "RONDA-003" in output
     assert "CODEX: QUEUED" in output
+
+
+def test_render_watch_status_ignores_stale_pid_without_live_process(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    config = build_watch_config()
+    config_path = tmp_path / "adapter.json"
+    write_json(config_path, config)
+    write_file(
+        tmp_path / "Docs" / "governance" / "CONTEXT.md",
+        "### @CODEX - Implementer\n- [ ] @CODEX: Fase B\n",
+    )
+    write_file(tmp_path / ".multiagent" / ".watch.pid", "9876\n")
+    engine.write_watch_state(
+        engine.get_watch_paths(tmp_path),
+        {
+            "state": "ACTIVE",
+            "pid": 9876,
+            "last_check": "2026-03-24T18:20:08+00:00",
+        },
+    )
+    monkeypatch.setattr(engine, "is_process_running", lambda pid: False)
+
+    output = engine.render_watch_status(str(config_path), tmp_path)
+
+    assert "Watch state: INACTIVE" in output
+    assert "PID:" not in output
 
 
 def test_auto_commit_invokes_git_with_safe_paths(tmp_path: Path, monkeypatch) -> None:

@@ -5,20 +5,20 @@ paths: ["**/*"]
 
 # Project Adapter Template (v4.1)
 
-> Purpose: This file demonstrates how a new project should adopt and extend the
+> Purpose: This file demonstrates how a new project should adopt and extend the 
 > universal Multi-Agent Framework rules. It acts as the "glue" between universal
 > SYSTEM rules and specific project USER needs.
 
 ## 1. Framework Principles (Ref: RES-04)
 
-- Context Curation (F-02): Adapters must only provide the minimum necessary
+- Context Curation (F-02): Adapters must only provide the minimum necessary 
   context to avoid token bloat and cognitive load for the agents.
 - Technology Independence (F-07): SYSTEM rules are agnostic. Adapters provide
   the project-specific technology mapping (e.g., Odoo, React, AWS).
 
 ## 2. Failure-to-Rule Mechanic (FTR)
 
-When an agent encounters the same failure twice without new evidence, the
+When an agent encounters the same failure twice without new evidence, the 
 anti-loop protocol triggers a STOP. To resolve this structurally:
 
 1. Fill the template: Use `.claude/templates/FAILURE_TO_RULE.md`.
@@ -28,11 +28,11 @@ anti-loop protocol triggers a STOP. To resolve this structurally:
 
 ## 3. Verification Criteria (ISC)
 
-Every project rule must be verifiable. Following the Ideal State Criteria (ISC)
+Every project rule must be verifiable. Following the Ideal State Criteria (ISC) 
 pattern from `Docs/sdlc/SPEC_TEMPLATE.md`:
 
 - Criteria must be boolean statements of 8-12 words.
-- Method must be explicitly defined: test (automated), inspection (code review),
+- Method must be explicitly defined: test (automated), inspection (code review), 
   or demo (functional verification).
 
 Example:
@@ -41,7 +41,7 @@ Example:
 
 ## 4. Pattern: Inheriting and Extending Core Rules
 
-To extend a core rule (e.g., `python.md`), create a rule file in `project/` named
+To extend a core rule (e.g., `python.md`), create a rule file in `project/` named 
 `python-[project-name].md`.
 
 ### Example: Specific Python Linter
@@ -50,12 +50,12 @@ If the CORE rule says "Run a linter", the ADAPTER should specify WHICH linter:
 
 ## 5. Pattern: Overriding Core Rules
 
-If a CORE rule is incompatible with project requirements, explicitly state the
+If a CORE rule is incompatible with project requirements, explicitly state the 
 override in the project-specific rule file.
 
 ### Example: Indentation
 - CORE: "Use 4 spaces for all text files."
-- ADAPTER Override: "For this project, use 2 spaces for all .yml and .yaml
+- ADAPTER Override: "For this project, use 2 spaces for all .yml and .yaml 
   files to comply with external standards."
 
 ## 6. Pattern: Adding Project-Only Rules
@@ -67,12 +67,12 @@ Unique business logic or specific governance should live only in `project/`.
 
 ## 7. Security and Anti-Patterns (What NOT to put here)
 
-- Secrets: Never include API keys, passwords, or tokens. Use environment
+- Secrets: Never include API keys, passwords, or tokens. Use environment 
   variables or secret managers.
 - Credentials: No hardcoded usernames or sensitive identifiers.
-- Absolute Local Paths: Avoid paths like C:\Users\.... Use relative
+- Absolute Local Paths: Avoid paths like C:\Users\.... Use relative 
   repository paths.
-- Temporary TODOs: Use logs for session-specific notes; rule files are
+- Temporary TODOs: Use logs for session-specific notes; rule files are 
   for persistent governance.
 
 ---
