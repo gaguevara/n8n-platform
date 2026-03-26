@@ -9,6 +9,7 @@ Durante la Fase 1, se diseñó, implementó y validó el pipeline de Threat Inte
 - **Workflow Implementado:** Workflow principal JSON versionado e importado con éxito (30 nodos). Contiene nodos para recolección de 7 fuentes (FortiGate, Wazuh, GuardDuty, Zabbix, AbuseIPDB, OTX AlienVault, Trellix), deduplicación, scoring, y despacho de alertas.
 - **Correcciones Estructurales Clave:**
   - Migración de Wazuh de su Manager API obsoleto (`/alerts`) a su **Indexer API** (puerto 9200) para búsqueda de alertas en Elasticsearch.
+  - **Desbloqueo Wazuh:** Implementación de Nginx Proxy en el servidor Wazuh (`192.168.206.10:9201`) con whitelist IP para permitir acceso desde el R720. Conectividad validada con datos reales.
   - Corrección de endpoint de FortiGate a `/api/v2/log/memory/event/system?vdom=root`.
   - Migración de autenticación Zabbix a *Bearer Token*.
 - **Arquitectura y Gobernanza:** Formalización de ADRs (001 a 011), implementación de un workflow secundario de "Error Handler", y generación de runbooks operativos y checklist de activación cron.
@@ -20,11 +21,11 @@ Se revisaron `DATA-CONTRACTS.md`, `01-schema.sql` y `ioc_normalizer.js`.
 - **Impacto:** Ninguno a nivel funcional porque el nodo persistidor fue adaptado para consumir este formato aplanado directamente, pero requiere que `DATA-CONTRACTS.md` sea actualizado en la Fase 2 para reflejar que la mensajería interna en n8n es "IoC-centric" por facilidad de procesamiento en batch.
 
 ## 3. Métricas
-- **Fuentes validadas en conectividad:** 4 (FortiGate, Wazuh, Zabbix, GuardDuty).
+- **Fuentes validadas en conectividad:** 4 (FortiGate, Wazuh Indexer, Zabbix, GuardDuty).
 - **Fuentes pendientes de credenciales:** 3 (AbuseIPDB, OTX, Trellix).
 - **Nodos en workflow principal:** 30
 - **Nodos en workflow de error:** 6
-- **Entradas de Log:** > 60 entradas cruzadas entre Claude, Codex y Gemini garantizando trazabilidad y cross-review.
+- **Entradas de Log:** > 75 entradas cruzadas entre Claude, Codex y Gemini garantizando trazabilidad y cross-review.
 - **ADRs generados:** 11 vigentes.
 
 ## 4. Qué queda pendiente (Bloqueantes del Usuario)

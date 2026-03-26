@@ -11,7 +11,7 @@
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
 | CLAUDE | ENTRADA-022 | docs/logs/CLAUDE_LOG.md | 2026-03-25 |
-| CODEX  | ENTRADA-035 | docs/logs/CODEX_LOG.md  | 2026-03-25 |
+| CODEX  | ENTRADA-037 | docs/logs/CODEX_LOG.md  | 2026-03-25 |
 | GEMINI | ENTRADA-022 | docs/logs/GEMINI_LOG.md | 2026-03-25 |
 
 ---
@@ -74,6 +74,8 @@
 | ENTRADA-033 | CODEX  | session-start-and-pending-validation | Inicio de sesion, lectura de CONTEXT actualizado, `git pull` R720 a `33ba439` y validacion exitosa de Wazuh via proxy `9201` con `HTTP 200` | 2026-03-25 |
 | ENTRADA-034 | CODEX  | pending-reimport-validation | Validacion de pendientes Ronda 5: staging tiene los 2 workflows esperados y no hubo cambios de workflow/code-nodes entre `4cfb764..33ba439`; el reimport queda como chequeo de runtime | 2026-03-25 |
 | ENTRADA-035 | CODEX  | session-bootstrap-runtime-validation | Bootstrap de sesion, lectura de `CONTEXT.md` y revalidacion de staging healthy; los pendientes reales de @CODEX siguen siendo UI/E2E manuales y Fase 2 AWS | 2026-03-25 |
+| ENTRADA-036 | CODEX  | adapter-validation-and-runtime-reimport | Bootstrap completo, adapter v4.7 validado (`41 passed`) y reimport de coherencia en staging; el export revela drift real en Zabbix y placeholders del workflow | 2026-03-25 |
+| ENTRADA-037 | CODEX  | pending-validation-after-v47 | Inicio de sesion, lectura de CONTEXT v4.7 y validacion del workflow exportado en staging: runtime healthy, credenciales reales enlazadas, pero siguen Zabbix `auth` en body y placeholders funcionales | 2026-03-25 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
 | ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |

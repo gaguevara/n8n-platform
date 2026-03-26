@@ -1657,3 +1657,230 @@
 ### Harness gap
 
 - La carga de `.env` con `source` sobre archivos con `CRLF` degrada la confiabilidad de los comandos de diagnostico remotos; para este proyecto conviene extraer variables con `grep | cut | tr -d '\r'` o normalizar EOL antes de automatizar dry-runs por shell.
+
+---
+
+## ENTRADA-033 | 2026-03-25 | session-start-and-pending-validation
+
+**Tipo:** Inicio de sesion + validacion de pendientes
+**Tarea:** Iniciar sesion, releer `CONTEXT.md`, validar los pendientes activos de `@CODEX` y verificar si el desbloqueo Wazuh reportado por Claude ya es reproducible desde el R720.
+
+### Archivos afectados
+
+- `docs/governance/CONTEXT.md`
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CODEX_LOG.md`
+
+### Comandos ejecutados + output
+
+1. `git status --short`, `git fetch origin main`
+   - Resultado: workspace local con cambios ajenos/no versionados (`.claude/settings.local.json`, `.tmp/`, `data/`, community skills); fetch correcto.
+2. Lectura de `SESSION_BOOTSTRAP.md`, `PROJECT_RULES.md`, `CONTEXT.md`, `CODEX_OVERLAY.md`, `LOG_INDEX.md` y ultimas entradas de Claude/Gemini
+   - Resultado: se detecto que `CONTEXT.md` local ya reflejaba un estado mas nuevo (Fase 1.9, Wazuh desbloqueado) y que las tareas pendientes reales de `@CODEX` migraron a Ronda 5 + evidencias UI.
+3. Script remoto sobre `gabo@192.168.0.70`: `git pull --ff-only origin main`, `git rev-parse --short HEAD`, inspeccion de `.env`
+   - Resultado: R720 actualizado de `4cfb764` a `33ba439`; `.env` ya contiene `WAZUH_INDEXER_URL=https://192.168.206.10:9201` y `WAZUH_INDEXER_BASIC_AUTH=Basic ...`.
+4. Dry-run Wazuh inicial usando `Authorization: Basic $wazuh_auth`
+   - Resultado: `HTTP 401`; hipotesis confirmada: la variable ya trae el prefijo `Basic ` y el header quedo duplicado.
+5. Dry-run Wazuh corregido usando `Authorization: $wazuh_auth`
+   - Resultado: `HTTP 200`, `REMOTE_IP=192.168.206.10`, `CURL_EXIT=0`; body real con `hits.total.value=122` en la ultima hora, muestra de `_source.data.srcip=190.94.224.126` y `agent.ip=192.168.206.12`.
+
+### Estado final
+
+- El desbloqueo Wazuh informado por Claude queda validado con evidencia directa desde el R720.
+- Las tareas antiguas que marcaban Wazuh como bloqueado ya no representan el estado real; `CONTEXT.md` se actualizo para reflejar que el HTTP equivalente esta completado y que lo pendiente es UI/E2E.
+- El siguiente frente operativo real de `@CODEX` es Ronda 5: reimport seguro del workflow actualizado, ejecucion manual de nodos en UI y pipeline E2E.
+
+### Riesgo residual
+
+- Sigue pendiente evidencia manual en la UI de n8n para Wazuh/FortiGate/Zabbix y la corrida E2E del workflow completo.
+- El R720 ya esta en `33ba439`, pero la tarea combinada de reimport seguro del workflow permanece abierta hasta reimportar y verificar export/estado.
+
+### Harness gap
+
+- Las variables auth en `.env` no son uniformes: `WAZUH_INDEXER_BASIC_AUTH` ya incluye el prefijo `Basic `. Si el harness asume que solo contiene el valor base64, se generan falsos `401`. Conviene documentar el contrato exacto del valor esperado.
+
+---
+
+## ENTRADA-034 | 2026-03-25 | pending-reimport-validation
+
+**Tipo:** Validacion de pendientes
+**Tarea:** Validar si el pending de reimport en Ronda 5 sigue siendo un requisito tecnico real o si quedo stale tras el fast-forward a `33ba439`.
+
+### Archivos afectados
+
+- `docs/governance/CONTEXT.md`
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CODEX_LOG.md`
+
+### Comandos ejecutados + output
+
+1. `git diff --name-only 4cfb764..33ba439 -- app/workflows/threat-intel-main.json app/code-nodes app/workflows/error-handler.json infra/docker-compose.staging.yml .env.example .env.staging.example`
+   - Resultado: sin output; no hubo cambios en workflow, code-nodes ni compose/env examples entre ambos commits.
+2. `rg -n "WAZUH_INDEXER_URL|WAZUH_INDEXER_BASIC_AUTH|wazuh-alerts-*/_search" app/workflows/threat-intel-main.json .env.example .env.staging.example`
+   - Resultado: el workflow en Git ya apunta a `WAZUH_INDEXER_URL` + `WAZUH_INDEXER_BASIC_AUTH`, coherente con `.env.example` y `.env.staging.example`.
+3. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && docker exec n8n_staging n8n list:workflow"`
+   - Resultado: staging mantiene exactamente 2 workflows: `DELCOP Threat Intelligence - Main Pipeline` y `DELCOP n8n Error Handler`.
+
+### Estado final
+
+- El pending de reimport en Ronda 5 no responde a un cambio nuevo de Git entre `4cfb764` y `33ba439`; hoy es una validacion de coherencia del runtime, no un bloqueo por drift de codigo.
+- Los pendientes operativos reales de `@CODEX` siguen siendo UI/E2E: ejecutar los nodos manualmente en n8n y correr el pipeline completo hasta PostgreSQL.
+
+### Riesgo residual
+
+- Aunque no hubo cambios en los archivos versionados del workflow entre `4cfb764..33ba439`, el runtime de n8n podria seguir ameritando reimport para dejar evidencia fresca antes del E2E manual.
+
+### Harness gap
+
+- `n8n list:workflow` es util para validar presencia, pero el harness no tiene una comprobacion ligera estandar para comparar el export activo de staging contra el workflow versionado sin pasar por un reimport/export manual.
+
+---
+
+## ENTRADA-035 | 2026-03-25 | session-bootstrap-runtime-validation
+
+**Tipo:** Inicio de sesion + validacion de runtime
+**Tarea:** Iniciar sesion, releer `CONTEXT.md`, validar los pendientes activos de `@CODEX` y confirmar que staging sigue sano antes de intentar tareas UI/E2E.
+
+### Archivos afectados
+
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CODEX_LOG.md`
+
+### Comandos ejecutados + output
+
+1. `git fetch origin main`
+   - Resultado: fetch correcto desde `origin/main`; no se aplico `git pull` local para no pisar el workspace sucio existente.
+2. Lectura de `SESSION_BOOTSTRAP.md`, `PROJECT_RULES.md`, `CONTEXT.md`, `CODEX_OVERLAY.md`, `LOG_INDEX.md` y ultimas entradas de `CLAUDE_LOG.md` / `GEMINI_LOG.md`
+   - Resultado: `CONTEXT.md` confirma Fase 1.9, sin bloqueos de red, con backlog real de `@CODEX` concentrado en evidencia UI/E2E manual y Fase 2 AWS.
+3. `python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status`
+   - Resultado: `CLAUDE #21`, `CODEX #34`, `GEMINI #22`.
+4. `rg -n "\\- \\[ \\] @CODEX:" docs/governance/CONTEXT.md`
+   - Resultado: pendientes abiertos en lineas `44-46`, `178`, `180-184`, `211-215`; los items tecnicos inmediatos siguen siendo dry-runs UI y pipeline manual completo.
+5. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && docker compose --env-file .env -f infra/docker-compose.staging.yml ps -a && wget -qO- http://localhost:5678/healthz"`
+   - Resultado: `n8n_staging`, `n8n_threat_cache` y `n8n_threat_db` continuan `healthy`; `healthz` devolvio `{"status":"ok"}`.
+6. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && docker exec n8n_staging n8n list:workflow"`
+   - Resultado: staging mantiene exactamente `DELCOP Threat Intelligence - Main Pipeline` y `DELCOP n8n Error Handler`.
+7. `git status --short`
+   - Resultado: siguen presentes cambios previos ajenos/no revertidos en `.claude/settings.local.json`, `docs/EVIDENCIA_ISO_A57.md`, `docs/PHASE1_SUMMARY.md`, `docs/governance/CONTEXT.md`, `docs/governance/LOG_INDEX.md`, `docs/knowledge/ACTIVATION_CHECKLIST.md`, `docs/logs/CODEX_LOG.md`, `docs/logs/GEMINI_LOG.md`, ademas de untracked en `.claude/skills/`, `.tmp/` y `data/`.
+
+### Estado final
+
+- Bootstrap de sesion completado siguiendo `AGENTS.md`.
+- `CONTEXT.md` sigue alineado con el estado operativo: no hay bloqueos de red, staging esta healthy y los pendientes reales de `@CODEX` son UI/E2E manuales en n8n mas la Fase 2 AWS.
+- El item de reimport de Ronda 5 sigue abierto solo como chequeo de coherencia de runtime, no como drift de workflow en Git.
+- `LOG_INDEX.md` quedo sincronizado con `CODEX #35` y con el ultimo `GEMINI #22` que ya veia el engine.
+
+### Riesgo residual
+
+- Sin acceso automatizado a la UI de n8n en este turno, no puedo cerrar los pendientes de captura visual/dry-run manual (`FortiGate`, `Wazuh`, `Zabbix`, E2E completo y consulta PostgreSQL posterior).
+- El workspace local sigue sucio con cambios de otras sesiones/agentes; no se tocaron para evitar colisiones.
+
+### Harness gap
+
+- El backlog mezcla pendientes CLI-validables con tareas puramente UI/manuales; sin una convencion mecanica que marque `manual-only`, el agente debe revalidar en cada sesion que esos items siguen abiertos por evidencia y no por bloqueo tecnico.
+
+---
+
+## ENTRADA-036 | 2026-03-25 | adapter-validation-and-runtime-reimport
+
+**Tipo:** Validacion tecnica + reimport de runtime
+**Tarea:** Iniciar sesion siguiendo `SESSION_BOOTSTRAP.md`, validar el adapter/framework v4.7 y ejecutar la tarea accionable de `@CODEX` que seguia abierta por CLI: reimport de coherencia del workflow de staging.
+
+### Archivos afectados
+
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CODEX_LOG.md`
+
+### Comandos ejecutados + output
+
+1. Bootstrap obligatorio: `git status --short`, `git fetch origin main`, lectura de `SESSION_BOOTSTRAP.md`, `PROJECT_RULES.md`, `CONTEXT.md`, `CODEX_OVERLAY.md`, `LOG_INDEX.md`, `CLAUDE_LOG.md`, `GEMINI_LOG.md`, `.multiagent/adapters/n8n-platform.json`, `.multiagent/state/validation_state.json`
+   - Resultado: repo correcto (`project_name=n8n-platform`), workspace local sucio con cambios ajenos, `validation_state.json` marca a `CODEX` como `approved` pero apunta a una `next_task` de SPEC-005 no visible en `CONTEXT.md`; se tomo la tarea accionable real de Ronda 5 (`reimport` de coherencia en staging).
+2. `python -m json.tool .multiagent/adapters/n8n-platform.json > $null`
+   - Resultado: adapter JSON valido.
+3. `python -m pytest .multiagent/tests -q`
+   - Resultado: `41 passed in 0.71s`.
+4. `$env:PYTHONIOENCODING='utf-8'; python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status`
+   - Resultado: `CLAUDE #22`, `CODEX #35`, `GEMINI #23`. Sin `PYTHONIOENCODING=utf-8`, el comando sigue rompiendo en Windows por `UnicodeEncodeError` con `cp1252`.
+5. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && docker exec n8n_staging n8n export:workflow --id=0d5f2e64-0d1b-4a8a-9e13-5fc0f2e7b8ad --output=/tmp/threat-intel-main.reimport-check-2026-03-25.json && docker exec n8n_staging n8n import:workflow --input=/tmp/threat-intel-main.reimport-check-2026-03-25.json && docker exec n8n_staging n8n export:workflow --id=0d5f2e64-0d1b-4a8a-9e13-5fc0f2e7b8ad --output=/tmp/threat-intel-main.reimport-verify-2026-03-25.json && docker compose --env-file .env -f infra/docker-compose.staging.yml ps -a && wget -qO- http://localhost:5678/healthz"`
+   - Resultado: `Successfully exported 1 workflow`, `Successfully imported 1 workflow`, los 3 servicios (`n8n_staging`, `n8n_threat_cache`, `n8n_threat_db`) quedaron `healthy`, y `healthz` devolvio `{"status":"ok"}`.
+6. Export de verificacion reimportado a `.tmp/codex-staging/threat-intel-main.reimport-verify-2026-03-25.json` y analisis local con Python/`rg`
+   - Resultado: `active_false=True`, `has_wazuh_indexer_url=True`, `has_wazuh_basic_auth=True`, `node_count=31`.
+   - Hallazgo critico: el export real de staging sigue mostrando `GET Zabbix Triggers` con `auth: $env.ZABBIX_API_TOKEN` en el `jsonBody` y **no** `Authorization: Bearer`.
+   - Hallazgo critico: el workflow exportado sigue conteniendo placeholders operativos: `CONFIGURAR_ERROR_WORKFLOW_ID`, `COPIAR CONTENIDO DE scripts/...`, y credenciales `CONFIGURAR` para PostgreSQL/SMTP.
+
+### Estado final
+
+- Sesion iniciada siguiendo el protocolo obligatorio.
+- Adapter/framework v4.7 validado tecnicamente: JSON OK, `41 passed`, engine operativo con `UTF-8`.
+- El reimport de coherencia en staging se ejecuto sin romper el runtime; staging sigue `healthy`.
+- El reimport no resolvio la deuda funcional: el export real de staging confirma drift/documentacion inconsistente. Zabbix sigue con auth en body y el workflow activo en staging conserva placeholders en code nodes, `errorWorkflow` y referencias de credenciales.
+
+### Riesgo residual
+
+- No es seguro tratar los pendientes UI/E2E como mero paso cosmetico: el workflow de staging exportado todavia no refleja el estado funcional que la documentacion afirma.
+- Antes de ejecutar dry-runs manuales de nodos/pipeline completo conviene corregir el workflow fuente/runtime (Zabbix header auth, code nodes embebidos, `errorWorkflow` real y referencias de credenciales verificadas).
+- `validation_state.json` queda desalineado respecto al backlog visible: la `next_task` apuntada para `CODEX` no se corresponde con una tarea abierta en `CONTEXT.md`.
+
+### Harness gap
+
+- El self-dispatch actual mezcla dos fuentes de verdad (`validation_state.json` y `CONTEXT.md`) que en esta sesion no apuntan a la misma tarea.
+- `engine status` en Windows sigue requiriendo `PYTHONIOENCODING=utf-8`; sin eso, el output falla por `cp1252`.
+
+---
+
+## ENTRADA-037 | 2026-03-25 | pending-validation-after-v47
+
+**Tipo:** Inicio de sesion + validacion de pendientes
+**Tarea:** Iniciar sesion, releer `CONTEXT.md` tras la actualizacion v4.7 y validar si los pendientes actuales de `@CODEX` son solo evidencia UI o si el workflow de staging aun conserva deuda funcional real.
+
+### Archivos afectados
+
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CODEX_LOG.md`
+
+### Comandos ejecutados + output
+
+1. Bootstrap obligatorio: `git status --short`, `git fetch origin main`, lectura de `SESSION_BOOTSTRAP.md`, `PROJECT_RULES.md`, `CONTEXT.md`, `CODEX_OVERLAY.md`, `LOG_INDEX.md`, `CLAUDE_LOG.md`, `GEMINI_LOG.md`, `.multiagent/state/validation_state.json`
+   - Resultado: `CONTEXT.md` ya refleja Fase 2.0, framework v4.7 y una nueva Ronda 6. El workspace local sigue sucio con cambios ajenos y `validation_state.json` permanece stale (`last_seen_entry=23`, `last_validated=23`) frente al estado real de los logs.
+2. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && docker compose --env-file .env -f infra/docker-compose.staging.yml ps -a && wget -qO- http://localhost:5678/healthz"`
+   - Resultado: `n8n_staging`, `n8n_threat_cache` y `n8n_threat_db` continúan `healthy`; `healthz` devolvio `{"status":"ok"}`.
+3. `python` inline via `ssh` para exportar el workflow real de staging (`0d5f2e64-0d1b-4a8a-9e13-5fc0f2e7b8ad`) y evaluar sus markers de runtime
+   - Resultado:
+     - `active_false=True`
+     - `postgres_cred_real=True`
+     - `smtp_cred_real=True`
+     - `has_CONFIGURAR=True`
+     - `zabbix_uses_auth_body=True`
+     - `zabbix_uses_bearer_header=False`
+     - `code_placeholders=True`
+     - `error_workflow_placeholder=True`
+     - `node_count=31`
+4. Inspeccion puntual de nodos con `credentials` en el export real de staging
+   - Resultado:
+     - `PostgreSQL: Upsert IoC` -> `{"postgres":{"id":"a0K3DCm6QM9FVDAx","name":"Postgres account"}}`
+     - `PostgreSQL: Audit Log` -> `{"postgres":{"id":"a0K3DCm6QM9FVDAx","name":"Postgres account"}}`
+     - `Send Email Alert` -> `{"smtp":{"id":"cFZPbwEu9RSx0KY9","name":"SMTP account"}}`
+5. `rg -n "n8n execute|execute:workflow|workflow_runs" docs/logs/CODEX_LOG.md docs/logs/CLAUDE_LOG.md docs/governance/CONTEXT.md`
+   - Resultado: el propio historial del proyecto confirma que `n8n execute` sigue bloqueado por colision con Task Broker/puerto `5679`, por lo que el E2E automatizable sigue sin una via soportada y el camino recomendado continua siendo UI o API.
+6. `$env:PYTHONIOENCODING='utf-8'; python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status`
+   - Resultado: engine sano y sincronizado a nivel de logs (`CLAUDE #22`, `CODEX #36`, `GEMINI #23`).
+
+### Estado final
+
+- Los pendientes de UI en `CONTEXT.md` siguen siendo reales: no son solo “capturas faltantes”.
+- Validado que Claude si dejo enlazadas las credenciales reales de PostgreSQL y SMTP en staging.
+- Persisten deudas funcionales dentro del workflow exportado de staging:
+  - Zabbix sigue usando `auth` en el `jsonBody` en vez de `Authorization: Bearer`.
+  - Los code nodes siguen con placeholders `COPIAR CONTENIDO DE scripts/...`.
+  - `settings.errorWorkflow` sigue en `CONFIGURAR_ERROR_WORKFLOW_ID`.
+- El pending de Ronda 6 “verificar credenciales correctas” queda parcialmente validado: las credenciales reales existen, pero el workflow de runtime todavia no esta limpio de placeholders.
+- No avance al E2E por CLI porque el proyecto ya tiene documentado que `n8n execute` no es una via soportada en este runtime.
+
+### Riesgo residual
+
+- Ejecutar el pipeline completo o activar cron piloto sin corregir antes Zabbix/body-auth y placeholders puede producir una falsa sensacion de readiness.
+- El backlog visible en `CONTEXT.md` y el estado mecanico de `validation_state.json` siguen desalineados; eso afecta el self-dispatch fiable de la siguiente tarea.
+
+### Harness gap
+
+- El proyecto sigue sin una via automatizable soportada para el dry-run E2E del workflow en staging (`n8n execute` colisiona con el Task Broker); el harness necesita un camino oficial via API/UI o contenedor temporal de ejecucion.

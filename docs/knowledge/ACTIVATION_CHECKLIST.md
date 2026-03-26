@@ -9,7 +9,10 @@ Antes de habilitar el nodo cron que consulta una fuente específica (FortiGate, 
 - [ ] **Conectividad a la API**: El entorno de ejecución (R720 o AWS ECS) puede alcanzar el endpoint de la API por la red sin restricciones de firewall (Security Groups, ACLs).
 - [ ] **Validación de Credencial**: El token, API key, o usuario/contraseña está activo, no ha expirado y tiene los permisos mínimos necesarios (read-only recomendado).
 - [ ] **Dry-Run OK**: Se ejecutó la consulta manualmente (vía interfaz UI de n8n o cURL simulado) devolviendo una respuesta JSON válida (HTTP 200).
-- [ ] **Normalizador OK**: La respuesta de prueba pasó por el nodo `ioc_normalizer.js` de n8n correctamente y los campos extraídos (`ioc_value`, `ioc_type`, `severity`, etc.) son los esperados.
+- [x] **Wazuh Indexer (API)**: Desbloqueado vía Reverse Proxy (Nginx) en el servidor Wazuh (`192.168.206.10:9201`).
+    - **Configuración**: Nginx actúa como terminador SSL y proxy hacia `127.0.0.1:9200`.
+    - **Seguridad**: Whitelist de IP aplicada para permitir solo tráfico desde el Dell R720 (`192.168.0.70`).
+    - **Validación**: Conectividad validada desde R720 con respuesta exitosa del clúster.
 
 ## 2. Verificaciones del Core y Persistencia
 

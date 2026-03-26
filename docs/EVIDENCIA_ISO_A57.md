@@ -14,7 +14,7 @@ El sistema recolecta datos de múltiples fuentes internas y externas (OSINT), ta
 | Fuente | Método de Recolección | Estado de Validación (Staging) |
 |---|---|---|
 | **FortiGate (UTM)** | REST API (v2/log/memory) | ✅ Conectividad validada (HTTP 200) |
-| **Wazuh (XDR)** | Indexer API (Elasticsearch DSL) | ✅ Diseño validado (v4.14 compatible) |
+| **Wazuh (XDR)** | Indexer API (Elasticsearch DSL) | ✅ Conectividad validada (HTTP 200 via Proxy) |
 | **AWS GuardDuty** | AWS SDK (ListFindings/GetFindings) | ✅ Detector habilitado (us-east-1) |
 | **Zabbix (NMS)** | JSON-RPC 2.0 (trigger.get) | ✅ Evidencia de respuesta (result[]) |
 

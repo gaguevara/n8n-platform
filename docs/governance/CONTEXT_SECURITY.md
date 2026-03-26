@@ -1,8 +1,8 @@
 # CONTEXT_SECURITY.md — Inventario de Secretos y Variables Sensibles
 
 > **Generado por:** Claude (Governor — cross-review + security audit)
-> **Fecha:** 2026-03-17
-> **Referencia:** PROJECT_RULES.md §8 (Escalation), CODEX_LOG ENTRADA-002, GEMINI_LOG ENTRADA-001
+> **Última actualización:** 2026-03-25 — Gemini (Researcher — sync Fase 1)
+> **Referencia:** ADR-010, SOURCE_CONFIG_GUIDE.md, CODEX_LOG ENTRADA-033
 
 ---
 
@@ -14,9 +14,13 @@
 |----------------------|---------------------------------------|---------------|-------------------------------------|
 | `N8N_ENCRYPTION_KEY` | Clave de cifrado de credenciales n8n  | Todos         | `.env`, docker-compose              |
 | `RDS_PASSWORD`       | Password PostgreSQL en AWS RDS        | Producción    | `.env`, ECS task definition         |
-| `N8N_BASIC_AUTH_PASSWORD` | Password básica de acceso UI   | Staging/Prod  | `.env` si se habilita basic auth    |
-
-**Rotación:** Si `N8N_ENCRYPTION_KEY` se rota, todas las credenciales almacenadas en n8n quedan inválidas — requiere re-autenticación de cada nodo.
+| `THREAT_DB_PASSWORD` | Password PostgreSQL Threat Intel      | Todos         | `.env`, docker-compose, ECS         |
+| `REDIS_PASSWORD`     | Password Redis (Cache IoC)            | Todos         | `.env`, docker-compose, ECS         |
+| `FORTIGATE_API_KEY`  | Token API Read-Only FortiGate         | Staging/Prod  | `.env`, workflow n8n                |
+| `WAZUH_INDEXER_BASIC_AUTH` | Credencial Indexer (Elastic)    | Staging/Prod  | `.env`, workflow n8n                |
+| `ZABBIX_API_TOKEN`   | API Token Zabbix (Bearer)             | Staging/Prod  | `.env`, workflow n8n                |
+| `ABUSEIPDB_API_KEY`  | API Key OSINT AbuseIPDB               | Staging/Prod  | `.env`, workflow n8n                |
+| `OTX_API_KEY`        | API Key OSINT AlienVault OTX          | Staging/Prod  | `.env`, workflow n8n                |
 
 ---
 
@@ -24,12 +28,12 @@
 
 | Variable               | Descripción                           | Entorno       | Dónde se usa             |
 |------------------------|---------------------------------------|---------------|--------------------------|
+| `FORTIGATE_HOST`       | IP/FQDN del Firewall (LAN)            | Staging/Prod  | `.env`, workflow n8n     |
+| `WAZUH_INDEXER_URL`    | URL del Indexer (vía Nginx Proxy)     | Staging/Prod  | `.env`, workflow n8n     |
+| `SLACK_WEBHOOK_URL`    | Webhook de canal de alertas           | Staging/Prod  | `.env`, workflow n8n     |
+| `TEAMS_WEBHOOK_URL`    | Webhook de canal de alertas           | Staging/Prod  | `.env`, workflow n8n     |
 | `RDS_HOST`             | Endpoint RDS (expone topología AWS)   | Producción    | `.env`, ECS              |
-| `RDS_USER`             | Usuario de BD                         | Producción    | `.env`, ECS              |
 | `AWS_ACCOUNT_ID`       | ID de cuenta AWS                      | Producción    | Makefile, scripts ECR    |
-| `WEBHOOK_URL`          | URL pública de webhooks               | Staging/Prod  | `.env`, docker-compose   |
-| `N8N_EDITOR_BASE_URL`  | URL del editor (expone host interno)  | Staging       | `.env`, docker-compose   |
-| `ECR_REGISTRY`         | Registro de imagen Docker             | Producción    | Makefile, CI/CD          |
 
 ---
 
@@ -38,45 +42,56 @@
 | Variable            | Descripción              | Default               |
 |---------------------|--------------------------|-----------------------|
 | `TZ`                | Zona horaria             | `America/Bogota`      |
-| `GENERIC_TIMEZONE`  | Zona horaria n8n         | `America/Bogota`      |
 | `N8N_PORT`          | Puerto local             | `5678`                |
 | `AWS_REGION`        | Región AWS               | `us-east-1`           |
 | `TAG`               | Tag de imagen Docker     | `latest`              |
 
 ---
 
-## 2. Mecanismos de protección activos
+## 2. Estado de Fuentes y Credenciales (Staging)
+
+| Fuente         | Conectividad | Credencial | Estado de Activación |
+|----------------|--------------|------------|----------------------|
+| FortiGate      | ✅ HTTP 200  | ✅ Cargada | Esperando GO (Ronda 5 UI) |
+| Wazuh Indexer  | ✅ HTTP 200  | ✅ Cargada | Esperando GO (Ronda 5 UI) |
+| Zabbix         | ✅ HTTP 200  | ✅ Cargada | Esperando GO (Ronda 5 UI) |
+| GuardDuty      | ✅ AWS OK    | ✅ IAM Role| Activa (lectura) |
+| AbuseIPDB      | ❌ 401/403   | ⏳ Pendiente| Bloqueada (Usuario) |
+| AlienVault OTX | ❌ 401/403   | ⏳ Pendiente| Bloqueada (Usuario) |
+
+---
+
+## 3. Mecanismos de protección activos
 
 | Mecanismo              | Estado   | Evidencia                              |
 |------------------------|----------|----------------------------------------|
 | `.env` en `.gitignore` | ✅ Activo | Confirmado por Codex ENTRADA-001       |
-| `detect-secrets` hook  | ✅ Activo | `.secrets.baseline` creado por Codex   |
-| `.env.example` sin valores reales | ✅ | Verificado — solo placeholders |
-| Secretos en ECS Task Definition | ⚠️ | No auditado — fuera del repo  |
+| `detect-secrets` hook  | ✅ Activo | `.secrets.baseline` actualizado        |
+| `.env.example` sin secretos | ✅ | Verificado — solo placeholders        |
+| Nginx Proxy (Wazuh)    | ✅ Activo | Whitelist IP aplicada en 192.168.206.10|
+| ECS Secrets Manager    | ⏳ Planificado | Documentado en ADR-009/SPEC_AWS   |
 
 ---
 
-## 3. Riesgos residuales identificados
+## 4. Riesgos residuales identificados
 
 | Riesgo                                               | Severidad | Recomendación                                  |
 |------------------------------------------------------|-----------|------------------------------------------------|
-| `N8N_ENCRYPTION_KEY` hardcodeada en ECS si no usa Secrets Manager | 🔴 Alto | Migrar a AWS Secrets Manager o SSM Parameter Store |
-| `RDS_PASSWORD` en variables planas de ECS Task Definition | 🔴 Alto | Usar AWS Secrets Manager reference en ECS     |
-| Imagen `latest` en producción (`TAG=latest`)         | 🟡 Medio  | Usar tags fijos con SHA o versión semántica    |
-| `detect-secrets` v1.4.0 fijado — puede desalinearse  | 🟡 Medio  | Documentar proceso de actualización coordinada |
-| Scripts shell dependen de Git Bash/WSL en Windows    | 🟡 Medio  | Documentado en ONBOARDING.md (Gemini)         |
+| `WAZUH_INDEXER_BASIC_AUTH` incoherente | 🟡 Bajo | Documentar que debe incluir el prefijo `Basic ` |
+| Webhooks reales no configurados | 🟡 Medio | Usar variables de entorno en vez de IDs fijos |
+| `TAG=latest` en producción | 🟡 Medio | Migrar a tag fijo post-Fase 1 |
+| Auditoría de secretos AWS | 🔴 Alto | Pendiente validar que no existan valores default|
 
 ---
 
-## 4. Checklist de auditoría periódica
+## 5. Checklist de auditoría periódica
 
-- [ ] Verificar que `.env` no está trackeado: `git ls-files .env`
+- [x] Verificar que `.env` no está trackeado: `git ls-files .env`
 - [ ] Ejecutar `python -m pre_commit run detect-secrets --all-files`
-- [ ] Rotar `N8N_ENCRYPTION_KEY` si hubo acceso no autorizado al repo
 - [ ] Auditar ECS Task Definition en AWS Console — confirmar uso de Secrets Manager
-- [ ] Revisar que `TAG=latest` no llega a producción sin override
+- [x] Validar que `WAZUH_INDEXER_URL` apunta al proxy y no al binding local
 
 ---
 
-> **Próxima revisión:** al agregar una nueva integración o variable de entorno
+> **Próxima revisión:** al iniciar Fase 2 (Producción AWS)
 > **Escalar a:** Claude (Governor) ante cualquier exposición sospechosa

@@ -404,3 +404,59 @@ Actualizar `role_boundaries` en el adapter JSON según la propuesta consolidada 
 
 ### Harness gap
 El watcher actual en Windows (`cp1252`) colisiona con caracteres UTF-8 en `CONTEXT.md`, lo que interrumpe la ejecución del comando `watch --once`. Se requiere forzar UTF-8 en el engine para estabilidad en Windows.
+
+---
+
+## ENTRADA-021 | 2026-03-25 | ronda-5-execution
+
+**Tipo:** Ejecución de tareas — Ronda 5 (Fase 1.8)
+**Tarea:** Validar coherencia del workflow en Git, actualizar checklist de activación y recomendar intervalos de cron.
+
+### Acciones ejecutadas
+1. **Validación de Workflow**: Se verificó el archivo `app/workflows/threat-intel-main.json` en Git. Se confirmó que el nodo `http-wazuh-alerts` ya utiliza `WAZUH_INDEXER_URL` y `WAZUH_INDEXER_BASIC_AUTH`, manteniendo coherencia con `.env.example`.
+2. **Checklist de Activación**: Se actualizó `docs/knowledge/ACTIVATION_CHECKLIST.md` marcando el Wazuh Indexer como desbloqueado y documentando la arquitectura de Nginx Proxy implementada por Claude en la entrada anterior.
+3. **Análisis de Intervalos**: 
+    - **Wazuh**: Con 5.7M de alertas históricas, un intervalo de 2 min es viable siempre que se use el filtro de tiempo `now-15m` y nivel `>= 7` (que reduce a ~6k alertas diarias). Se recomienda iniciar en **5-10 min** en producción para monitorear impacto en CPU de n8n antes de bajar a 2 min.
+    - **OSINT**: Se mantiene en **15 min** para proteger los rate limits de AbuseIPDB (free tier).
+
+### Recomendación a CONTEXT.md
+Cerrar tareas de @GEMINI de la Ronda 5. El sistema está listo para la activación final de crons una vez que Codex valide los dry-runs de n8n UI.
+
+### Harness gap
+Ninguno detectado.
+
+---
+
+## ENTRADA-022 | 2026-03-25 | documentation-update
+
+**Tipo:** Actualización de documentación y evidencia
+**Tarea:** Sincronizar evidencia de cumplimiento ISO y resumen de fase con los últimos resultados de validación de Wazuh Indexer.
+
+### Acciones ejecutadas
+1. **docs/EVIDENCIA_ISO_A57.md**: Se actualizó el estado de la fuente Wazuh (XDR) de "Diseño validado" a "✅ Conectividad validada (HTTP 200 via Proxy)", reflejando el éxito de la implementación del Nginx Proxy.
+2. **docs/PHASE1_SUMMARY.md**: Se actualizó el resumen ejecutivo de la Fase 1 incluyendo el hito de desbloqueo de Wazuh y la validación de 5 fuentes internas (4 LAN + 1 Cloud) en conectividad.
+3. **Métricas**: Se ajustó el conteo de entradas de log a > 75 reflejando la actividad intensa de las últimas rondas de validación.
+
+### Recomendación a CONTEXT.md
+El proyecto se encuentra en un estado de alta madurez documental y técnica para el cierre de la Fase 1. Se recomienda proceder con los dry-runs finales en UI antes de la activación de crons.
+
+### Harness gap
+Ninguno detectado.
+
+---
+
+## ENTRADA-023 | 2026-03-25 | documentation-audit
+
+**Tipo:** Auditoría documental y sincronización de seguridad
+**Tarea:** Actualizar el inventario de secretos en CONTEXT_SECURITY.md y sincronizar LOG_INDEX.md.
+
+### Acciones ejecutadas
+1. **docs/governance/CONTEXT_SECURITY.md**: Se realizó una actualización profunda del inventario de secretos y variables sensibles. Se incorporaron todas las nuevas variables del pipeline de Threat Intelligence (FortiGate, Wazuh, Zabbix, OSINT, Notificaciones). Se añadió la tabla de estado de fuentes en staging y se actualizaron los riesgos residuales (ej. contrato de `WAZUH_INDEXER_BASIC_AUTH`).
+2. **docs/governance/LOG_INDEX.md**: Se corrigieron inconsistencias en la tabla resumen de cabecera para los agentes CODEX y GEMINI, asegurando que reflejen las últimas entradas registradas en sus respectivos logs.
+3. **Validación de Backlog**: Se confirmó que no hay tareas pendientes para @GEMINI en `CONTEXT.md` tras el cierre de la Ronda 5.
+
+### Recomendación a CONTEXT.md
+Gobernanza de seguridad actualizada al 100% con los hallazgos de la Fase 1. El proyecto está listo para la validación final de Claude y el inicio de la Fase 2 (AWS).
+
+### Harness gap
+Se identificó un contrato no uniforme para variables de autenticación (ej. Wazuh Indexer requiere prefijo `Basic ` ya embebido en la variable), lo cual debe ser documentado explícitamente para evitar fallos de conectividad en nuevos entornos.
