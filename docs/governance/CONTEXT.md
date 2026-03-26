@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 2.0 — Framework v4.7 aplicado. Credenciales vinculadas. Listo para dry-run E2E. |
-| Estabilidad   | Staging healthy. Workflow reimportado con PostgreSQL + SMTP credentials reales. Nodo deprecated eliminado. |
-| Bloqueantes   | Ninguno. Todo listo para test manual del pipeline completo en n8n UI. |
-| Ultimo cambio | Claude vinculó credential IDs reales (Postgres `a0K3DCm6QM9FVDAx`, SMTP `cFZPbwEu9RSx0KY9`) y reimportó ambos workflows en staging. Framework v4.7 (41 tests, validation_state.json, role_zones calibradas). |
+| Fase          | Fase 2.0 — **BLOQUEANTE:** code nodes en staging son placeholders, no código real. Drift 100%. |
+| Estabilidad   | Staging healthy. Credenciales PostgreSQL/SMTP vinculadas. Pero code nodes (normalizer, scorer, dispatcher, persist) tienen solo comentarios placeholder. |
+| Bloqueantes   | Codex debe generar workflow JSON con code nodes inyectados desde `app/code-nodes/*.js` y reimportar. Sin esto, el pipeline no procesa datos. |
+| Ultimo cambio | Gemini ENTRADA-024 detectó drift 100% en code nodes. Codex ENTRADA-038 confirmó. Ronda 8 creada para fix definitivo. |
 
 ---
 
@@ -213,11 +213,11 @@
 
 ### @GEMINI - Researcher/Reviewer (Ronda 6)
 
-- [ ] @GEMINI: Revisar el workflow exportado de staging y verificar que no quedan placeholders `CONFIGURAR` en ningún nodo
-- [ ] @GEMINI: Validar que `ioc_normalizer.js` embebido en el workflow de staging coincide con `app/code-nodes/ioc_normalizer.js` en Git — detectar drift si hay diferencias
-- [ ] @GEMINI: Preparar checklist de monitoreo post-activación: qué métricas revisar en las primeras 24h (ejecuciones exitosas, IoCs creados, errores, uso de disco PostgreSQL)
+- [x] @GEMINI: Revisar el workflow exportado de staging y verificar que no quedan placeholders `CONFIGURAR` en ningún nodo (ENTRADA-024: Hallazgo crítico de placeholders persistentes en credentials)
+- [x] @GEMINI: Validar que `ioc_normalizer.js` embebido en el workflow de staging coincide con `app/code-nodes/ioc_normalizer.js` en Git — detectar drift si hay diferencias (ENTRADA-024: 100% de drift detectado en code nodes)
+- [x] @GEMINI: Preparar checklist de monitoreo post-activación: qué métricas revisar en las primeras 24h (ejecuciones exitosas, IoCs creados, errores, uso de disco PostgreSQL) — Ver `docs/knowledge/MONITORING_CHECKLIST.md`
 
-### @CLAUDE - Governor (Ronda 6)
+### @CLAUDE - Governor/Architect (Ronda 6)
 
 - [ ] @CLAUDE: Cross-review dry-run E2E de Codex (IoCs en PostgreSQL, audit log, sin errores)
 - [ ] @CLAUDE: Cross-review Gemini (drift check, checklist monitoreo)
@@ -242,8 +242,8 @@
 ### @GEMINI - Researcher/Reviewer (Ronda 7)
 
 - [ ] @GEMINI: Analizar el diff entre workflow Git vs staging export que genere Codex — documentar qué campos son drift real vs cambios cosméticos (posiciones, typeVersion, etc.)
-- [ ] @GEMINI: Verificar que `MONITORING_CHECKLIST.md` cubre el escenario de activación progresiva (Zabbix primero, luego FortiGate, luego Wazuh)
-- [ ] @GEMINI: Preparar template de `EVIDENCIA_ACTIVACION.md` para registrar fecha, hora y resultado de cada trigger activado (evidencia para ISO A.5.7)
+- [x] @GEMINI: Verificar que `MONITORING_CHECKLIST.md` cubre el escenario de activación progresiva (Zabbix primero, luego FortiGate, luego Wazuh)
+- [x] @GEMINI: Preparar template de `EVIDENCIA_ACTIVACION.md` para registrar fecha, hora y resultado de cada trigger activado (evidencia para ISO A.5.7)
 
 ### @CLAUDE - Governor (Ronda 7)
 
@@ -251,6 +251,35 @@
 - [ ] @CLAUDE: Cross-review de Gemini (análisis de drift, evidencia de activación)
 - [ ] @CLAUDE: Si el piloto Zabbix funciona sin errores por 15 min → aprobar activación de FortiGate (5 min)
 - [ ] @CLAUDE: Registrar ADR-012 con decisión de activación progresiva
+
+---
+
+## RONDA 8 — Fix crítico: inyectar code nodes reales en workflow + reimport definitivo (URGENTE)
+
+> **Objetivo:** Resolver drift 100% en staging: inyectar código real de `app/code-nodes/*.js` en el workflow JSON, reimportar en staging, ejecutar E2E
+> **Bloqueante:** Sin este fix, el pipeline no procesa datos — los code nodes son solo comentarios placeholder
+
+### @CODEX - Implementer/DevOps (Ronda 8)
+
+- [ ] @CODEX: Crear script o ejecutar manualmente: leer `app/code-nodes/ioc_normalizer.js`, `ioc_scorer.js`, `alert_dispatcher.js`, `ioc_persistence.js` y embeber su contenido en los campos `jsCode` de los nodos `code-normalizer`, `code-scorer`, `code-alert`, `code-persist` del workflow JSON (`app/workflows/threat-intel-main.json`). Preservar credenciales reales (`a0K3DCm6QM9FVDAx`, `cFZPbwEu9RSx0KY9`).
+- [ ] @CODEX: Validar JSON resultante: `node -e "const wf=JSON.parse(require('fs').readFileSync('app/workflows/threat-intel-main.json','utf8')); console.log('nodes:', wf.nodes.length); wf.nodes.filter(n=>n.type.includes('code')).forEach(n=>console.log(n.name, ':', n.parameters.jsCode?.length || 0, 'chars'))"`
+- [ ] @CODEX: `git pull` en R720, reimportar workflow con code nodes reales: `docker cp ... && n8n import:workflow`
+- [ ] @CODEX: Ejecutar test manual del pipeline desde n8n UI — verificar que normalizer procesa datos reales de FortiGate/Wazuh/Zabbix
+- [ ] @CODEX: Verificar IoCs en PostgreSQL tras ejecución: `SELECT ioc_value, ioc_type, severity, source FROM iocs ORDER BY last_seen DESC LIMIT 10;`
+- [ ] @CODEX: Si E2E funciona → activar cron Zabbix (5 min) como piloto, monitorear 15 min
+
+### @GEMINI - Researcher/Reviewer (Ronda 8)
+
+- [ ] @GEMINI: Crear script de inyección reutilizable (`scripts/inject-code-nodes.py`) que lea los archivos `.js` de `app/code-nodes/` y los embeba automáticamente en el workflow JSON — para evitar drift futuro
+- [ ] @GEMINI: Validar que el workflow JSON post-inyección tiene los 4 code nodes con código real (no placeholders) — contar chars de `jsCode` por nodo
+- [ ] @GEMINI: Documentar el proceso de inyección en `RUNBOOK_THREAT_INTEL.md` sección nueva "Actualización de Code Nodes"
+
+### @CLAUDE - Governor (Ronda 8)
+
+- [ ] @CLAUDE: Cross-review del workflow JSON post-inyección (code nodes con código real, credenciales preservadas)
+- [ ] @CLAUDE: Cross-review del script de inyección de Gemini
+- [ ] @CLAUDE: Si E2E funciona → aprobar activación progresiva (Zabbix → FortiGate → Wazuh)
+- [ ] @CLAUDE: Commit + push de consolidación con fix definitivo
 
 ---
 

@@ -4,6 +4,16 @@ Este documento define las métricas y verificaciones obligatorias a realizar dur
 
 ---
 
+## 0. Estrategia de Activación Progresiva (Piloto)
+
+Para minimizar el radio de impacto, no se deben activar todos los cron triggers simultáneamente. Seguir este orden:
+
+1.  **T1 (Zabbix)**: Activar trigger de 5 min. Monitorear 15 min. Buscar `zabbix` en la tabla `iocs`.
+2.  **T2 (FortiGate)**: Activar triggers (Events, IPS, Virus). Monitorear 15 min. Buscar `fortigate` en la tabla `iocs`.
+3.  **T3 (Wazuh)**: Activar trigger de 10 min (según recomendación Gemini). Monitorear 30 min. Buscar `wazuh` en la tabla `iocs`.
+
+---
+
 ## 1. Verificaciones de Salud del Workflow (n8n UI)
 
 - [ ] **Ejecuciones Exitosas**: El workflow debe mostrar ejecuciones verdes para cada trigger.

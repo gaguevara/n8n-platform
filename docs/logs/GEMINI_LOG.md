@@ -460,3 +460,40 @@ Gobernanza de seguridad actualizada al 100% con los hallazgos de la Fase 1. El p
 
 ### Harness gap
 Se identificó un contrato no uniforme para variables de autenticación (ej. Wazuh Indexer requiere prefijo `Basic ` ya embebido en la variable), lo cual debe ser documentado explícitamente para evitar fallos de conectividad en nuevos entornos.
+
+---
+
+## ENTRADA-024 | 2026-03-25 | validation + monitoring-prep
+
+**Tipo:** Validación de despliegue y preparación operativa
+**Tarea:** Revisar el workflow exportado de staging, detectar drift y preparar checklist de monitoreo post-activación.
+
+### Acciones ejecutadas
+1. **Validación de Workflow Staging**: Se realizó una revisión técnica del export `.tmp/codex-staging/threat-intel-main.reimport-verify-2026-03-25.json`.
+    - **Hallazgo Crítico (Placeholders)**: Se confirmaron múltiples placeholders `CONFIGURAR` en el workflow de Staging que no han sido reemplazados por las credenciales o IDs de error reales (nodos `pg-upsert`, `email-alert`, `pg-audit-log`).
+    - **Hallazgo Crítico (Drift)**: El nodo `code-normalizer` en Staging solo contiene el comentario placeholder y no el código de `app/code-nodes/ioc_normalizer.js`. Esto indica que el re-import anterior de Codex no utilizó los archivos de Git correctamente.
+    - **Zabbix Auth**: Se confirmó que el nodo de Zabbix sigue usando `auth` en el body en lugar de `Authorization` header.
+2. **Monitoring Checklist**: Se creó `docs/knowledge/MONITORING_CHECKLIST.md` con las métricas de PostgreSQL, n8n UI, notificaciones e infraestructura para las primeras 24 horas.
+
+### Recomendación a CONTEXT.md
+Cerrar tareas de @GEMINI de la Ronda 6. Bloqueo crítico: El workflow en Staging tiene un **100% de drift** en los nodos de código y credenciales. Se requiere que Codex realice un import manual o scriptado usando los archivos de Git (`app/workflows/threat-intel-main.json` con los nodos de código inyectados) antes de activar cualquier trigger.
+
+### Harness gap
+El proceso de "import" de n8n no es atómico con los archivos de código en disco (`app/code-nodes/*`). Existe un riesgo persistente de drift si se importa el JSON base sin haber inyectado manualmente los scripts actualizados en el JSON antes del import. Se recomienda automatizar esta inyección en un script de CI/CD para la Fase 2.
+
+---
+
+## ENTRADA-025 | 2026-03-25 | activation-strategy + iso-evidence
+
+**Tipo:** Planificación operativa y cumplimiento normativo
+**Tarea:** Refinar la estrategia de activación progresiva y preparar el template de evidencia para ISO 27001.
+
+### Acciones ejecutadas
+1. **docs/knowledge/MONITORING_CHECKLIST.md**: Se actualizó el checklist para incluir la **Estrategia de Activación Progresiva (Piloto)**. Se definió el orden de activación (Zabbix -> FortiGate -> Wazuh) con tiempos de monitoreo específicos para cada fase para minimizar el radio de impacto.
+2. **docs/knowledge/EVIDENCIA_ACTIVACION.md**: Se creó el template oficial para registrar la activación de los triggers. Este documento servirá como evidencia técnica para el cumplimiento del **Control ISO A.5.7 (Inteligencia de Amenazas)**, permitiendo registrar la fecha, el resultado del pilotaje y la validación de cada fuente.
+
+### Recomendación a CONTEXT.md
+Cerrar tareas de @GEMINI de la Ronda 7 (Estrategia y Evidencia). Pendiente únicamente el análisis del diff formal entre Git y el export de Staging una vez que Codex lo genere.
+
+### Harness gap
+Ninguno detectado.

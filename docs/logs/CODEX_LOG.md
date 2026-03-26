@@ -1884,3 +1884,60 @@
 ### Harness gap
 
 - El proyecto sigue sin una via automatizable soportada para el dry-run E2E del workflow en staging (`n8n execute` colisiona con el Task Broker); el harness necesita un camino oficial via API/UI o contenedor temporal de ejecucion.
+
+---
+
+## ENTRADA-038 | 2026-03-26 | pending-revalidation-2026-03-26
+
+**Tipo:** Inicio de sesion + validacion de pendientes
+**Tarea:** Iniciar sesion, releer `CONTEXT.md` y validar si los pendientes actuales de `@CODEX` siguen siendo solo evidencia UI o si el drift del workflow exportado en staging continua vigente.
+
+### Archivos afectados
+
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CODEX_LOG.md`
+
+### Comandos ejecutados + output
+
+1. Bootstrap obligatorio: `git status --short`, `git fetch origin main`, lectura de `SESSION_BOOTSTRAP.md`, `PROJECT_RULES.md`, `CONTEXT.md`, `CODEX_OVERLAY.md`, `LOG_INDEX.md`, ultimas entradas de `CLAUDE_LOG.md` / `GEMINI_LOG.md`, y `.multiagent/state/validation_state.json`
+   - Resultado: el repo sigue siendo `n8n-platform`; el workspace local mantiene cambios ajenos/no revertidos (`docs/governance/CONTEXT.md`, `docs/governance/LOG_INDEX.md`, `docs/logs/GEMINI_LOG.md`, `docs/knowledge/MONITORING_CHECKLIST.md`, `docs/knowledge/EVIDENCIA_ACTIVACION.md`, etc.). `validation_state.json` sigue stale con `CODEX last_seen_entry=23 / last_validated=23`.
+2. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && docker compose --env-file .env -f infra/docker-compose.staging.yml ps -a && wget -qO- http://localhost:5678/healthz && docker exec n8n_staging n8n list:workflow"`
+   - Resultado: `n8n_staging`, `n8n_threat_cache` y `n8n_threat_db` continúan `healthy`; `healthz` devolvio `{"status":"ok"}` y staging mantiene exactamente 2 workflows (`DELCOP Threat Intelligence - Main Pipeline` y `DELCOP n8n Error Handler`).
+3. Export del workflow real de staging (`0d5f2e64-0d1b-4a8a-9e13-5fc0f2e7b8ad`) y validacion automatizada via `python` + `ssh`
+   - Resultado:
+     - `active_false=True`
+     - `postgres_cred_real=True`
+     - `smtp_cred_real=True`
+     - `has_CONFIGURAR=True`
+     - `zabbix_auth_body=True`
+     - `zabbix_bearer_header=False`
+     - `code_placeholders=True`
+     - `error_workflow_placeholder=True`
+     - `node_count=31`
+4. Inspeccion puntual de nodos con `credentials` dentro del export real
+   - Resultado:
+     - `PostgreSQL: Upsert IoC` -> `{"postgres":{"id":"a0K3DCm6QM9FVDAx","name":"Postgres account"}}`
+     - `PostgreSQL: Audit Log` -> `{"postgres":{"id":"a0K3DCm6QM9FVDAx","name":"Postgres account"}}`
+     - `Send Email Alert` -> `{"smtp":{"id":"cFZPbwEu9RSx0KY9","name":"SMTP account"}}`
+5. `rg -n "\\- \\[ \\] @CODEX:" docs/governance/CONTEXT.md`
+   - Resultado: siguen abiertos los pendientes de UI/E2E (`44-46`, `180-184`), la verificacion de credenciales/export (`208`), y la Ronda 7 de drift/reimport (`236-240`), ademas de Fase 2 AWS (`267-271`).
+
+### Estado final
+
+- El staging sigue sano, con 2 workflows presentes y credenciales reales de PostgreSQL/SMTP enlazadas en runtime.
+- `CONTEXT.md` sobrestima el readiness actual cuando afirma “Todo listo para test manual del pipeline completo en n8n UI”.
+- Los pendientes de drift y reimport definitivo siguen vigentes:
+  - Zabbix sigue usando `auth` en el body.
+  - Los code nodes exportados en staging siguen con placeholders.
+  - `errorWorkflow` sigue en placeholder.
+- En consecuencia, los pendientes UI/E2E no son solo “capturas faltantes”; siguen dependiendo de corregir primero el drift del workflow exportado.
+
+### Riesgo residual
+
+- Ejecutar o activar el pipeline E2E sin corregir antes el drift puede producir falsos positivos de readiness y fallos en runtime.
+- La cabecera de estado en `CONTEXT.md` y el backlog detallado no cuentan la misma historia; hoy conviene confiar mas en el export real de staging y en las tareas de Ronda 7.
+
+### Harness gap
+
+- `validation_state.json` sigue desincronizado respecto a los logs y al backlog visible.
+- El proyecto sigue sin una via soportada de ejecucion E2E automatizable en staging; `n8n execute` permanece documentado como no reutilizable por la colision con el Task Broker.
