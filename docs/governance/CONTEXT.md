@@ -226,6 +226,34 @@
 
 ---
 
+## RONDA 7 — Fix drift staging + reimport definitivo (autónoma)
+
+> **Objetivo:** Corregir drift entre Git y staging (Zabbix auth, code-nodes), reimportar workflow definitivo, ejecutar pipeline E2E
+> **Prerequisito:** Credenciales vinculadas ✅, Ronda 6 tasks
+
+### @CODEX - Implementer/DevOps (Ronda 7)
+
+- [ ] @CODEX: Exportar workflow actual de staging (`n8n export:workflow --id=0d5f2e64...`), comparar contra `app/workflows/threat-intel-main.json` en Git — listar todas las diferencias (drift de code-nodes embebidos, Zabbix auth, posiciones, etc.)
+- [ ] @CODEX: Generar variante segura del workflow: tomar el JSON de Git (con credenciales reales ya vinculadas) y preservar IDs/credenciales del export de staging. Reimportar en staging.
+- [ ] @CODEX: Tras reimport, ejecutar test manual del pipeline completo desde n8n UI o via `curl` al webhook de test si existe
+- [ ] @CODEX: Verificar IoCs en PostgreSQL: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "SELECT ioc_value, ioc_type, severity, source FROM iocs ORDER BY last_seen DESC LIMIT 10;"`
+- [ ] @CODEX: Si E2E funciona, activar cron **Zabbix** (5 min) como piloto y monitorear 15 min sin errores
+
+### @GEMINI - Researcher/Reviewer (Ronda 7)
+
+- [ ] @GEMINI: Analizar el diff entre workflow Git vs staging export que genere Codex — documentar qué campos son drift real vs cambios cosméticos (posiciones, typeVersion, etc.)
+- [ ] @GEMINI: Verificar que `MONITORING_CHECKLIST.md` cubre el escenario de activación progresiva (Zabbix primero, luego FortiGate, luego Wazuh)
+- [ ] @GEMINI: Preparar template de `EVIDENCIA_ACTIVACION.md` para registrar fecha, hora y resultado de cada trigger activado (evidencia para ISO A.5.7)
+
+### @CLAUDE - Governor (Ronda 7)
+
+- [ ] @CLAUDE: Cross-review del diff staging vs Git y del reimport de Codex
+- [ ] @CLAUDE: Cross-review de Gemini (análisis de drift, evidencia de activación)
+- [ ] @CLAUDE: Si el piloto Zabbix funciona sin errores por 15 min → aprobar activación de FortiGate (5 min)
+- [ ] @CLAUDE: Registrar ADR-012 con decisión de activación progresiva
+
+---
+
 ## Pendientes post-rondas (requieren intervención de usuario)
 
 - [ ] @USUARIO: Registrar cuenta en AbuseIPDB y proporcionar API key
