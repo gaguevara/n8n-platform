@@ -416,7 +416,7 @@
       "position": [1600, 400],
       "typeVersion": 2.5,
       "credentials": {
-        "postgres": { "id": "CONFIGURAR", "name": "Threat Intel DB" }
+        "postgres": { "id": "a0K3DCm6QM9FVDAx", "name": "Postgres account" }
       }
     },
     {
@@ -489,7 +489,7 @@
       "position": [1800, 750],
       "typeVersion": 2.1,
       "credentials": {
-        "smtp": { "id": "CONFIGURAR", "name": "DELCOP SMTP" }
+        "smtp": { "id": "cFZPbwEu9RSx0KY9", "name": "SMTP account" }
       }
     },
     {
@@ -504,7 +504,7 @@
       "position": [2000, 500],
       "typeVersion": 2.5,
       "credentials": {
-        "postgres": { "id": "CONFIGURAR", "name": "Threat Intel DB" }
+        "postgres": { "id": "a0K3DCm6QM9FVDAx", "name": "Postgres account" }
       }
     }
   ],
