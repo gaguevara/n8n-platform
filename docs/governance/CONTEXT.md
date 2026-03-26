@@ -1,8 +1,8 @@
 # CONTEXT.md - Estado Actual del Proyecto
 
-> **Ultima actualizacion:** 2026-03-24
-> **Actualizado por:** Codex (Implementer — validacion/ejecucion de backlog)
-> **Proxima revision:** cuando exista una ruta usable desde R720 hacia Wazuh Indexer o se defina un proxy/tunel
+> **Ultima actualizacion:** 2026-03-25
+> **Actualizado por:** Claude (Governor — credenciales vinculadas + framework v4.7 + tareas Ronda 6)
+> **Proxima revision:** al completar dry-runs E2E en n8n UI
 
 ---
 
@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 1.9 — Wazuh Indexer desbloqueado. 3/3 fuentes internas responden desde R720. Listo para activación. |
-| Estabilidad   | Staging healthy. Workflow desactivado. FortiGate, Wazuh Indexer y Zabbix responden datos reales desde R720. |
-| Bloqueantes   | Ninguno de red. Pendiente: activar triggers cron tras dry-run E2E completo en n8n UI. |
-| Ultimo cambio | Claude instaló nginx proxy en servidor Wazuh (puerto 9201, whitelist R720). Dry-run: 5,962 alertas nivel >= 7. Variables `.env` staging actualizadas. |
+| Fase          | Fase 2.0 — Framework v4.7 aplicado. Credenciales vinculadas. Listo para dry-run E2E. |
+| Estabilidad   | Staging healthy. Workflow reimportado con PostgreSQL + SMTP credentials reales. Nodo deprecated eliminado. |
+| Bloqueantes   | Ninguno. Todo listo para test manual del pipeline completo en n8n UI. |
+| Ultimo cambio | Claude vinculó credential IDs reales (Postgres `a0K3DCm6QM9FVDAx`, SMTP `cFZPbwEu9RSx0KY9`) y reimportó ambos workflows en staging. Framework v4.7 (41 tests, validation_state.json, role_zones calibradas). |
 
 ---
 
@@ -42,7 +42,7 @@
 - [x] @CODEX: Reiniciar compose en R720 (`docker compose down && docker compose up -d`) y verificar healthchecks (completado 2026-03-23; Redis recuperado y 3 servicios healthy)
 - [x] @CODEX: Reimportar workflow `threat-intel-main.json` actualizado (normalizers Wazuh/Zabbix/GuardDuty con soporte arrays) (completado 2026-03-23 via import seguro preservando IDs y credenciales de staging)
 - [ ] @CODEX: Dry-run nodo FortiGate en staging UI — capturar respuesta JSON (equivalente HTTP ejecutado 2026-03-23 con `HTTP 200`; revalidado desde R720 el 2026-03-24 con `HTTP 200` y payload `results[]` usando extracción limpia de `.env`; queda pendiente solo evidencia UI)
-- [ ] @CODEX: Dry-run nodo Wazuh en staging UI — capturar respuesta JSON (bloqueado: el workflow ya apunta al Indexer API, pero falta validar la URL/credencial efectiva accesible desde el R720)
+- [ ] @CODEX: Dry-run nodo Wazuh en staging UI — capturar respuesta JSON (equivalente HTTP validado 2026-03-25 contra `https://192.168.206.10:9201`; pendiente solo evidencia UI del nodo)
 - [ ] @CODEX: Dry-run nodo Zabbix en staging UI — capturar respuesta JSON (equivalente HTTP ejecutado 2026-03-24 con JSON-RPC `result[]`; pendiente evidencia UI)
 - [x] @CODEX: Migrar auth Zabbix de body `auth` a header `Authorization: Bearer` (best practice Zabbix 7.0+) (completado 2026-03-23 en workflow reimportado de staging)
 - [x] @CODEX: Corregir endpoint de ingesta Wazuh para la version real del API en staging (hallazgo 2026-03-23: `/alerts` devuelve `404` tras auth exitosa)
@@ -91,7 +91,7 @@
 ### @CODEX - Implementer/DevOps (Ronda 2)
 
 - [x] @CODEX: SSH al R720 y ejecutar dry-run HTTP equivalente de FortiGate desde el servidor: `curl -k -H "Authorization: Bearer $FORTIGATE_API_KEY" "https://$FORTIGATE_HOST/api/v2/log/memory/event/system?vdom=root&rows=5"` — capturar respuesta JSON completa en log (completado 2026-03-24; `HTTP 200`, `REMOTE_IP=192.168.0.14`, payload real con `results[]`)
-- [ ] @CODEX: SSH al R720 y ejecutar dry-run HTTP equivalente de Wazuh Indexer: `curl -k -u "$WAZUH_USER:$WAZUH_PASS" "https://$WAZUH_INDEXER:9200/wazuh-alerts-*/_search" -H "Content-Type: application/json" -d '{"size":5,"query":{"range":{"rule.level":{"gte":7}}}}'` — capturar respuesta (revalidado 2026-03-24 contra `https://192.168.206.10:9200`; `connection refused`)
+- [x] @CODEX: SSH al R720 y ejecutar dry-run HTTP equivalente de Wazuh Indexer: `curl -sk -H "Authorization: $WAZUH_INDEXER_BASIC_AUTH" "$WAZUH_INDEXER_URL/wazuh-alerts-*/_search" -H "Content-Type: application/json" -d '{"size":3,"sort":[{"timestamp":{"order":"desc"}}],"query":{"bool":{"must":[{"range":{"rule.level":{"gte":7}}},{"range":{"timestamp":{"gte":"now-1h"}}}]}}}'` — capturar respuesta (completado 2026-03-25; `HTTP 200`, 122 hits en la ultima hora, evidencia de `srcip=190.94.224.126`)
 - [x] @CODEX: SSH al R720 y ejecutar dry-run HTTP equivalente de Zabbix: `curl -s "$ZABBIX_API_URL" -H "Authorization: Bearer $ZABBIX_API_TOKEN" -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","method":"trigger.get","params":{"output":"extend","limit":5,"min_severity":3},"id":1}'` — capturar respuesta (completado 2026-03-24; devolvió JSON-RPC con `result[]`)
 - [x] @CODEX: Ejecutar test de persistencia PostgreSQL desde R720: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "INSERT INTO iocs (ioc_value, ioc_type, severity, confidence, source, tags, metadata) VALUES ('1.2.3.4', 'ip_v4', 'medium', 50, 'dry-run-test', ARRAY['test'], '{}') ON CONFLICT DO NOTHING; SELECT count(*) FROM iocs WHERE source='dry-run-test';"` — confirmar que pg-upsert funciona (completado 2026-03-24 via `SELECT upsert_ioc(...)`; inserción confirmada)
 - [x] @CODEX: Limpiar dato de test: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "DELETE FROM iocs WHERE source='dry-run-test';"` (completado 2026-03-24)
@@ -175,8 +175,8 @@
 
 ### @CODEX - Implementer/DevOps (Ronda 5)
 
-- [ ] @CODEX: `git pull` en R720 hasta último commit y reimportar workflow actualizado (desactivado) con vars Wazuh Indexer cargadas
-- [ ] @CODEX: Dry-run Wazuh Indexer desde R720: `curl -sk -u 'admin:<pass>' 'https://192.168.206.10:9201/wazuh-alerts-*/_search' -H 'Content-Type: application/json' -d '{"size":3,"sort":[{"timestamp":{"order":"desc"}}],"query":{"bool":{"must":[{"range":{"rule.level":{"gte":7}}},{"range":{"timestamp":{"gte":"now-1h"}}}]}}}'` — capturar JSON con IPs atacantes reales
+- [x] @CODEX: `git pull` en R720 y reimportar workflows con credenciales reales (Completado por Claude 2026-03-25: Postgres `a0K3DCm6QM9FVDAx` + SMTP `cFZPbwEu9RSx0KY9` vinculados, nodo deprecated eliminado, ambos workflows reimportados)
+- [x] @CODEX: Dry-run Wazuh Indexer desde R720: `curl -sk -H "Authorization: $WAZUH_INDEXER_BASIC_AUTH" "$WAZUH_INDEXER_URL/wazuh-alerts-*/_search" -H "Content-Type: application/json" -d '{"size":3,"sort":[{"timestamp":{"order":"desc"}}],"query":{"bool":{"must":[{"range":{"rule.level":{"gte":7}}},{"range":{"timestamp":{"gte":"now-1h"}}}]}}}'` — capturar JSON con IPs atacantes reales (completado 2026-03-25; `HTTP 200`, muestra con `srcip=190.94.224.126`, `agent.ip=192.168.206.12`)
 - [ ] @CODEX: Ejecutar nodo Wazuh manualmente en n8n UI (staging) — trigger manual → verificar que el normalizer parsea `hits.hits[]._source` correctamente y extrae IoCs
 - [ ] @CODEX: Ejecutar nodo FortiGate manualmente en n8n UI — verificar datos reales fluyen hasta el merge node
 - [ ] @CODEX: Ejecutar nodo Zabbix manualmente en n8n UI — verificar datos reales fluyen hasta el merge node
@@ -185,16 +185,44 @@
 
 ### @GEMINI - Researcher/Reviewer (Ronda 5)
 
-- [ ] @GEMINI: Verificar que el workflow JSON en Git tiene `WAZUH_INDEXER_URL` (no `WAZUH_API_URL`) en el nodo de alertas — confirmar coherencia con `.env.example`
-- [ ] @GEMINI: Actualizar ACTIVATION_CHECKLIST.md marcando Wazuh Indexer como desbloqueado y documentando la configuración del proxy nginx
-- [ ] @GEMINI: Preparar recomendación de intervalos de cron para producción — ¿2 min para Wazuh es demasiado agresivo con 5.7M alertas? Calcular carga estimada
+- [x] @GEMINI: Verificar que el workflow JSON en Git tiene `WAZUH_INDEXER_URL` (no `WAZUH_API_URL`) en el nodo de alertas — confirmar coherencia con `.env.example`
+- [x] @GEMINI: Actualizar ACTIVATION_CHECKLIST.md marcando Wazuh Indexer como desbloqueado y documentando la configuración del proxy nginx
+- [x] @GEMINI: Preparar recomendación de intervalos de cron para producción — ¿2 min para Wazuh es demasiado agresivo con 5.7M alertas? Calcular carga estimada (ENTRADA-021: 5-10 min recomendado inicial)
 
-### @CLAUDE - Governor (Ronda 5)
+### @CLAUDE - Governor/Architect (Ronda 5)
 
 - [ ] @CLAUDE: Cross-review dry-runs Codex Ronda 5 (Wazuh real, pipeline E2E, IoCs en PostgreSQL)
 - [ ] @CLAUDE: Cross-review Gemini Ronda 5 (checklist, intervalos de cron)
 - [ ] @CLAUDE: Decisión de activación: ¿activar triggers cron de fuentes internas (FortiGate, Wazuh, Zabbix) en staging?
 - [ ] @CLAUDE: Registrar ADR-012 con decisión final de activación
+
+---
+
+## RONDA 6 — Dry-run E2E y preparación de activación (autónoma)
+
+> **Objetivo:** Ejecutar pipeline completo en staging, verificar persistencia, preparar decisión de activación
+> **Prerequisito:** Credenciales vinculadas ✅, 3 fuentes responden ✅, framework v4.7 ✅
+
+### @CODEX - Implementer/DevOps (Ronda 6)
+
+- [ ] @CODEX: Verificar que el workflow en staging tiene las credenciales correctas: exportar con `n8n export:workflow` y confirmar que `pg-upsert`, `pg-audit-log` y `email-alert` apuntan a `a0K3DCm6QM9FVDAx` / `cFZPbwEu9RSx0KY9` (no `CONFIGURAR`)
+- [ ] @CODEX: SSH al R720, ejecutar pipeline completo manualmente via n8n CLI o trigger: verificar que los datos fluyen ingesta → normalizer → scorer → PostgreSQL
+- [ ] @CODEX: Consultar PostgreSQL tras ejecución: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "SELECT ioc_value, ioc_type, severity, source, sighting_count FROM iocs ORDER BY last_seen DESC LIMIT 10;"` — confirmar IoCs reales persistidos
+- [ ] @CODEX: Verificar tabla `workflow_runs`: `docker exec n8n_threat_db psql -U delcop_threat -d threat_intel -c "SELECT * FROM workflow_runs ORDER BY finished_at DESC LIMIT 5;"` — confirmar audit log
+- [ ] @CODEX: Si el pipeline funciona E2E, activar solo el trigger cron de **Zabbix** (5 min) como piloto — monitorear por 15 minutos que no hay crash loops ni errores repetidos
+
+### @GEMINI - Researcher/Reviewer (Ronda 6)
+
+- [ ] @GEMINI: Revisar el workflow exportado de staging y verificar que no quedan placeholders `CONFIGURAR` en ningún nodo
+- [ ] @GEMINI: Validar que `ioc_normalizer.js` embebido en el workflow de staging coincide con `app/code-nodes/ioc_normalizer.js` en Git — detectar drift si hay diferencias
+- [ ] @GEMINI: Preparar checklist de monitoreo post-activación: qué métricas revisar en las primeras 24h (ejecuciones exitosas, IoCs creados, errores, uso de disco PostgreSQL)
+
+### @CLAUDE - Governor (Ronda 6)
+
+- [ ] @CLAUDE: Cross-review dry-run E2E de Codex (IoCs en PostgreSQL, audit log, sin errores)
+- [ ] @CLAUDE: Cross-review Gemini (drift check, checklist monitoreo)
+- [ ] @CLAUDE: Decisión de activación progresiva: Zabbix primero (5 min), luego FortiGate (5 min), luego Wazuh (10 min según recomendación Gemini)
+- [ ] @CLAUDE: Registrar ADR-012 con decisión de activación y plan de rollback
 
 ---
 
