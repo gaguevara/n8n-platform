@@ -1941,3 +1941,133 @@
 
 - `validation_state.json` sigue desincronizado respecto a los logs y al backlog visible.
 - El proyecto sigue sin una via soportada de ejecucion E2E automatizable en staging; `n8n execute` permanece documentado como no reutilizable por la colision con el Task Broker.
+
+---
+
+## ENTRADA-039 | 2026-03-26 | session-start-drift-blocker-confirmed
+
+**Tipo:** Inicio de sesion + validacion de pendientes
+**Tarea:** Iniciar sesion, releer `CONTEXT.md` actualizado y confirmar con evidencia real si el bloqueo por drift critico en staging sigue vigente o si ya quedo resuelto.
+
+### Archivos afectados
+
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CODEX_LOG.md`
+
+### Comandos ejecutados + output
+
+1. Bootstrap obligatorio: `git status --short`, `git fetch origin main`, lectura de `SESSION_BOOTSTRAP.md`, `PROJECT_RULES.md`, `CONTEXT.md`, `CODEX_OVERLAY.md`, `LOG_INDEX.md`, ultimas entradas de `CLAUDE_LOG.md` / `GEMINI_LOG.md`, y `.multiagent/state/validation_state.json`
+   - Resultado: `CONTEXT.md` ya reconoce explicitamente el bloqueante de drift 100% en code nodes. El workspace local solo muestra cambios ajenos/no revertidos (`.claude/settings.local.json`, `.tmp/`, `data/`). `validation_state.json` sigue stale frente al estado real del proyecto.
+2. `ssh gabo@192.168.0.70 "cd /srv/n8n-platform && docker compose --env-file .env -f infra/docker-compose.staging.yml ps -a && wget -qO- http://localhost:5678/healthz && docker exec n8n_staging n8n list:workflow"`
+   - Resultado: `n8n_staging`, `n8n_threat_cache` y `n8n_threat_db` permanecen `healthy`; `healthz` devolvio `{"status":"ok"}` y staging sigue teniendo exactamente 2 workflows (`DELCOP Threat Intelligence - Main Pipeline` y `DELCOP n8n Error Handler`).
+3. Export del workflow real de staging (`0d5f2e64-0d1b-4a8a-9e13-5fc0f2e7b8ad`) y validacion automatizada via `python` + `ssh`
+   - Resultado:
+     - `active_false=True`
+     - `postgres_cred_real=True`
+     - `smtp_cred_real=True`
+     - `has_CONFIGURAR=True`
+     - `zabbix_auth_body=True`
+     - `zabbix_bearer_header=False`
+     - `code_placeholders=True`
+     - `error_workflow_placeholder=True`
+     - `node_count=31`
+4. Inspeccion puntual de nodos con `credentials` en el export real
+   - Resultado:
+     - `PostgreSQL: Upsert IoC` -> `{"postgres":{"id":"a0K3DCm6QM9FVDAx","name":"Postgres account"}}`
+     - `PostgreSQL: Audit Log` -> `{"postgres":{"id":"a0K3DCm6QM9FVDAx","name":"Postgres account"}}`
+     - `Send Email Alert` -> `{"smtp":{"id":"cFZPbwEu9RSx0KY9","name":"SMTP account"}}`
+5. `rg -n "\\- \\[ \\] @CODEX:" docs/governance/CONTEXT.md`
+   - Resultado: siguen abiertos los pendientes de UI/E2E (`44-46`, `180-184`), la validacion de credenciales/export (`208`), las rondas de drift/reimport (`236-240`, `264-269`) y la Fase 2 AWS (`296-300`).
+6. `$env:PYTHONIOENCODING='utf-8'; python .multiagent/core/engine.py --config .multiagent/adapters/n8n-platform.json --base . status`
+   - Resultado: engine sano; estado visible `CLAUDE #22`, `CODEX #38`, `GEMINI #25`.
+
+### Estado final
+
+- El nuevo `CONTEXT.md` ya quedo alineado con la evidencia tecnica: el bloqueo por drift critico sigue vigente.
+- Validado otra vez que staging esta sano a nivel de contenedores/healthchecks y que las credenciales reales de PostgreSQL/SMTP si estan enlazadas.
+- El workflow exportado en staging sigue sin estar listo para E2E:
+  - Zabbix continua con `auth` en el body.
+  - Los code nodes siguen siendo placeholders.
+  - `errorWorkflow` sigue en placeholder.
+- Por lo tanto, los pendientes prioritarios reales de `@CODEX` son las tareas de Ronda 8 (`264-269`) y no los dry-runs UI aislados.
+
+### Riesgo residual
+
+- Tratar de ejecutar el pipeline o activar cron antes de inyectar los code nodes reales puede dar fallos silenciosos o una falsa señal de readiness.
+- `CONTEXT.md` y `validation_state.json` siguen desalineados como mecanismos de dispatch.
+
+### Harness gap
+
+- El proyecto sigue sin una ruta mecanica soportada para “workflow JSON de Git + code nodes embebidos + credenciales preservadas” antes del import. Mientras esa inyeccion no sea automatizable, el drift puede reaparecer aunque el repo este correcto.
+
+---
+
+## ENTRADA-040 | 2026-03-26 | session-bootstrap-and-ronda8-local-validation
+
+**Tipo:** Inicio de sesion + validacion tecnica de pendientes
+**Tarea:** Iniciar sesion siguiendo `SESSION_BOOTSTRAP.md`, releer `CONTEXT.md` y validar si los pendientes actuales de `@CODEX` siguen vigentes, incluyendo el estado local del fix de Ronda 8.
+
+### Archivos afectados
+
+- `docs/governance/LOG_INDEX.md`
+- `docs/logs/CODEX_LOG.md`
+
+### Comandos ejecutados + output
+
+1. Bootstrap obligatorio: lectura de `SESSION_BOOTSTRAP.md`, `docs/governance/PROJECT_RULES.md`, `docs/governance/CONTEXT.md`, `docs/governance/CODEX_OVERLAY.md`, `docs/governance/LOG_INDEX.md`, ultimas entradas de `docs/logs/CLAUDE_LOG.md` y `docs/logs/GEMINI_LOG.md`
+   - Resultado: sesion iniciada sobre el proyecto correcto. `CONTEXT.md` mantiene como prioridad real la Ronda 8 (inyeccion de code nodes + reimport).
+2. Skill bootstrap-repo: `Get-ChildItem -Depth 2 | Select-Object FullName`
+   - Resultado: stack confirmado del repo: Python (`pyproject.toml`, `.multiagent/tests`), Docker (`infra/docker-compose*.yml`, `infra/Dockerfile`), workflows n8n JSON (`app/workflows/`) y code nodes JavaScript (`app/code-nodes/`). El framework multi-agente existe completo (`AGENTS.md`, `SESSION_BOOTSTRAP.md`, `.multiagent/`, `docs/governance/`, `docs/logs/`).
+3. `git remote -v`
+   - Resultado: `origin` apunta a `https://github.com/gaguevara/n8n-platform.git`.
+4. `git status --short`
+   - Resultado: workspace dirty con cambios locales ya en curso: `.claude/settings.local.json`, `app/workflows/threat-intel-main.json`, `docs/governance/LOG_INDEX.md`, `docs/knowledge/RUNBOOK_THREAT_INTEL.md`, `docs/logs/CODEX_LOG.md`, mas untracked `.tmp/`, `data/`, `scripts/compare-workflows.py`, `scripts/inject-code-nodes.py`.
+5. `rg -n '"project_name"|"role_zone"|"role_zones"' .multiagent/adapters/n8n-platform.json`
+   - Resultado: `project_name` sigue siendo `n8n-platform`, alineado con el directorio actual.
+6. `Get-Content .multiagent/state/validation_state.json`
+   - Resultado: `CODEX` sigue stale en `last_seen_entry=23`, `last_validated=23`, `status=approved`, `next_task="Fase B de SPEC-005..."`; no coincide con `CONTEXT.md` ni con el estado real del backlog.
+7. Validacion local del workflow versionado:
+   - Comando: `node` inline para leer `app/workflows/threat-intel-main.json` y reportar `node_count`, `settings.errorWorkflow`, credenciales y tamano de `jsCode` por code node.
+   - Resultado:
+     - `node_count=31`
+     - `errorWorkflow=e7c2a3b1-4d5e-6f7a-8b9c-0d1e2f3a4b5c`
+     - `pg_cred=Postgres account`
+     - `smtp_cred=SMTP account`
+     - code nodes reales presentes en Git:
+       - `IoC Normalizer & Scorer` (`code-normalizer`) -> `16624 chars`
+       - `Generate Persistence Queries` (`code-persist`) -> `1295 chars`
+       - `Alert Dispatcher` (`code-alert`) -> `7181 chars`
+8. Inspeccion puntual del nodo Zabbix en Git:
+   - Comando: `node` inline filtrando nodos con `zabbix`
+   - Resultado: el nodo real es `GET Zabbix Triggers` (`http-zabbix`) y ya usa `headerParameters.Authorization = Bearer {{ $env.ZABBIX_API_TOKEN }}`. En Git ya no usa `auth` en body.
+9. `Get-Content scripts/inject-code-nodes.py`
+   - Resultado: el script local de inyeccion solo mapea `code-normalizer`, `code-persist` y `code-alert`. Esto coincide con el workflow versionado actual, que tiene 3 code nodes reales, no 4.
+10. `python scripts/compare-workflows.py`
+   - Resultado: fallo en Windows por `UnicodeEncodeError` (`cp1252`) al imprimir `⚠️`.
+11. `$env:PYTHONIOENCODING='utf-8'; python scripts/compare-workflows.py`
+   - Resultado:
+     - drift confirmado contra `.tmp/codex-staging/threat-intel-main.reimport-verify-2026-03-25.json`
+     - `Alert Dispatcher`: Git `7177 chars` vs Staging `84 chars`
+     - `IoC Normalizer & Scorer`: Git `16624 chars` vs Staging `229 chars`
+     - `Generate Persistence Queries`: Git `1295 chars` vs Staging `83 chars`
+     - `errorWorkflow`: Git `e7c2a3b1-4d5e-6f7a-8b9c-0d1e2f3a4b5c` vs Staging `CONFIGURAR_ERROR_WORKFLOW_ID`
+
+### Estado final
+
+- Sesion iniciada correctamente y backlog releido.
+- Los pendientes de `@CODEX` siguen siendo validos, pero con una calibracion importante:
+  - El bloqueo real sigue en staging: export actual conserva placeholders en los code nodes y `errorWorkflow`.
+  - El repo local ya tiene un avance real del fix: workflow Git con code nodes embebidos, `errorWorkflow` real, credenciales preservadas y Zabbix en header Bearer.
+- `CONTEXT.md` describe la Ronda 8 como si existieran 4 code nodes separados (`code-normalizer`, `code-scorer`, `code-alert`, `code-persist`), pero el workflow versionado actual solo tiene 3 nodos de tipo code y el scorer esta fusionado dentro de `IoC Normalizer & Scorer` (`code-normalizer`).
+- En consecuencia, la tarea urgente vigente no es “descubrir el drift”, sino terminar de usar el workflow ya corregido localmente para un reimport definitivo en staging y luego validar E2E.
+
+### Riesgo residual
+
+- Como el workspace esta dirty y contiene trabajo local en curso para Ronda 8, no ejecute `git pull` para evitar pisar cambios no integrados.
+- `CONTEXT.md` y `validation_state.json` siguen desalineados; el self-dispatch mecanico todavia no es confiable.
+- `scripts/inject-code-nodes.py` todavia no cubre el caso descrito literalmente en `CONTEXT.md` porque el workflow real no tiene `code-scorer` separado; si alguien siguiera el backlog al pie de la letra podria intentar editar un nodo inexistente.
+
+### Harness gap
+
+- `scripts/compare-workflows.py` no es portable en Windows sin `PYTHONIOENCODING=utf-8` por el uso de `⚠️`.
+- Hay drift documental entre `CONTEXT.md` y la topologia real del workflow versionado: el scorer aparece como nodo separado en la tarea, pero en Git esta embebido dentro del normalizer.

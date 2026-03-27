@@ -11,8 +11,8 @@
 | Agente | Ultimo ID   | Archivo                 | Fecha      |
 |--------|-------------|-------------------------|------------|
 | CLAUDE | ENTRADA-022 | docs/logs/CLAUDE_LOG.md | 2026-03-25 |
-| CODEX  | ENTRADA-038 | docs/logs/CODEX_LOG.md  | 2026-03-26 |
-| GEMINI | ENTRADA-025 | docs/logs/GEMINI_LOG.md | 2026-03-25 |
+| CODEX  | ENTRADA-040 | docs/logs/CODEX_LOG.md  | 2026-03-26 |
+| GEMINI | ENTRADA-026 | docs/logs/GEMINI_LOG.md | 2026-03-25 |
 
 ---
 
@@ -77,6 +77,8 @@
 | ENTRADA-036 | CODEX  | adapter-validation-and-runtime-reimport | Bootstrap completo, adapter v4.7 validado (`41 passed`) y reimport de coherencia en staging; el export revela drift real en Zabbix y placeholders del workflow | 2026-03-25 |
 | ENTRADA-037 | CODEX  | pending-validation-after-v47 | Inicio de sesion, lectura de CONTEXT v4.7 y validacion del workflow exportado en staging: runtime healthy, credenciales reales enlazadas, pero siguen Zabbix `auth` en body y placeholders funcionales | 2026-03-25 |
 | ENTRADA-038 | CODEX  | pending-revalidation-2026-03-26 | Inicio de sesion y revalidacion de pendientes: staging sigue healthy y con credenciales reales, pero el workflow exportado aun conserva placeholders y Zabbix con `auth` en body; los pendientes de drift/E2E siguen vigentes | 2026-03-26 |
+| ENTRADA-039 | CODEX  | session-start-drift-blocker-confirmed | Inicio de sesion y validacion del CONTEXT actualizado: staging sigue healthy, pero el export real confirma el bloqueante de drift 100% en code nodes, placeholder `errorWorkflow` y Zabbix con `auth` en body | 2026-03-26 |
+| ENTRADA-040 | CODEX  | session-bootstrap-and-ronda8-local-validation | Inicio de sesion, bootstrap completo y validacion de pendientes: staging sigue con drift, pero el workflow local ya incorpora code nodes reales, `errorWorkflow` valido y Zabbix con header Bearer; CONTEXT.md esta descalibrado respecto al scorer | 2026-03-26 |
 | ENTRADA-001 | GEMINI | audit               | Auditoria documentacion, .env, pipeline y onboarding              | 2026-03-17 |
 | ENTRADA-002 | GEMINI | governance          | Adaptación AI Governance y creación de ADR Index                  | 2026-03-17 |
 | ENTRADA-003 | GEMINI | validation          | Validación técnica de propuesta de Threat Intel Automation        | 2026-03-17 |
@@ -102,6 +104,7 @@
 | ENTRADA-023 | GEMINI | documentation-audit   | Auditoría de seguridad (CONTEXT_SECURITY.md) y sincronización de LOG_INDEX      | 2026-03-25 |
 | ENTRADA-024 | GEMINI | validation + monitoring-prep | Hallazgo de drift crítico en staging y creación de MONITORING_CHECKLIST.md      | 2026-03-25 |
 | ENTRADA-025 | GEMINI | activation-strategy + iso-evidence | Estrategia de activación progresiva y template de EVIDENCIA_ACTIVACION.md | 2026-03-25 |
+| ENTRADA-026 | GEMINI | script + sync + drift-analysis | Script de inyección, sync workflow Git y análisis de drift con Staging | 2026-03-25 |
 
 ---
 

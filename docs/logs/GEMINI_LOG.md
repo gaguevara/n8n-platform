@@ -497,3 +497,26 @@ Cerrar tareas de @GEMINI de la Ronda 7 (Estrategia y Evidencia). Pendiente únic
 
 ### Harness gap
 Ninguno detectado.
+
+---
+
+## ENTRADA-026 | 2026-03-25 | script + sync + drift-analysis
+
+**Tipo:** Automatización de despliegue y auditoría de coherencia
+**Tarea:** Crear script de inyección de nodos, sincronizar workflow en Git y analizar drift contra Staging.
+
+### Acciones ejecutadas
+1. **scripts/inject-code-nodes.py**: Se diseñó e implementó un script robusto en Python que lee los archivos `.js` de `app/code-nodes/` y los inyecta automáticamente en los campos `jsCode` del workflow JSON de Git. Esto resuelve el riesgo de desincronización reportado por Codex.
+2. **Sincronización de Workflow**:
+    - Se ejecutó el script actualizando `app/workflows/threat-intel-main.json` con los 3 nodos de código reales (Normalizer, Persistence, Alert Dispatcher).
+    - Se corrigió manualmente el campo `errorWorkflow` con el ID real del Error Handler.
+    - Se migró la autenticación del nodo **Zabbix** de body (legacy) a Header (Bearer Token) para cumplir con mejores prácticas.
+3. **Análisis de Drift**: Se creó y ejecutó `scripts/compare-workflows.py` para comparar el workflow de Git vs el export de Staging (`threat-intel-main.reimport-verify-2026-03-25.json`).
+    - **Resultado**: Se confirmó un **drift del 100% en lógica de código**. Staging conserva placeholders de ~80-200 chars mientras que Git tiene la lógica real de ~7k-16k chars.
+    - **Ajustes Cosméticos**: No se detectaron cambios de `typeVersion` ni posiciones en los nodos core.
+
+### Recomendación a CONTEXT.md
+Cerrar todas las tareas de @GEMINI de la Ronda 7 y 8. Bloqueo resuelto para el import: Git ahora es el **Single Source of Truth (SSOT)** funcional. Codex puede proceder con el import definitivo del archivo inyectado.
+
+### Harness gap
+Se recomienda integrar `scripts/inject-code-nodes.py` como un pre-commit hook o paso obligatorio en `Makefile` para asegurar que el JSON versionado nunca viaje con placeholders.

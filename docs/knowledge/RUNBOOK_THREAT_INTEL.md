@@ -69,6 +69,17 @@ Se recomienda rotar claves cada 90 días o ante sospecha de compromiso.
 2. Hacer commit en el repositorio git.
 3. En el entorno destino, ejecutar `make import` o importar vía UI.
 
+### 3.3 Actualización de Code Nodes (Script de Inyección)
+Para evitar discrepancias (*drift*) entre el código en disco (`app/code-nodes/*.js`) y la lógica embebida en el workflow JSON, se debe utilizar el script de inyección antes de cualquier despliegue:
+
+1. Modificar los archivos `.js` en `app/code-nodes/` según sea necesario.
+2. Ejecutar el script:
+   ```bash
+   python scripts/inject-code-nodes.py
+   ```
+3. El script leerá los archivos JS y actualizará automáticamente los campos `jsCode` dentro de `app/workflows/threat-intel-main.json`.
+4. Verificar los cambios con `git diff` antes de hacer commit del JSON.
+
 ---
 
 ## 4. Escalación de Alertas

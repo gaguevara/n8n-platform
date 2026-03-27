@@ -5,61 +5,101 @@
     {
       "parameters": {
         "rule": {
-          "interval": [{ "field": "minutes", "minutesInterval": 5 }]
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
         }
       },
       "id": "cron-fortigate",
       "name": "Cron: FortiGate (5min)",
       "type": "n8n-nodes-base.scheduleTrigger",
-      "position": [100, 100],
+      "position": [
+        100,
+        100
+      ],
       "typeVersion": 1.2
     },
     {
       "parameters": {
         "rule": {
-          "interval": [{ "field": "minutes", "minutesInterval": 2 }]
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 2
+            }
+          ]
         }
       },
       "id": "cron-wazuh",
       "name": "Cron: Wazuh (2min)",
       "type": "n8n-nodes-base.scheduleTrigger",
-      "position": [100, 300],
+      "position": [
+        100,
+        300
+      ],
       "typeVersion": 1.2
     },
     {
       "parameters": {
         "rule": {
-          "interval": [{ "field": "minutes", "minutesInterval": 5 }]
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
         }
       },
       "id": "cron-guardduty",
       "name": "Cron: GuardDuty (5min)",
       "type": "n8n-nodes-base.scheduleTrigger",
-      "position": [100, 500],
+      "position": [
+        100,
+        500
+      ],
       "typeVersion": 1.2
     },
     {
       "parameters": {
         "rule": {
-          "interval": [{ "field": "minutes", "minutesInterval": 5 }]
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
         }
       },
       "id": "cron-zabbix",
       "name": "Cron: Zabbix (5min)",
       "type": "n8n-nodes-base.scheduleTrigger",
-      "position": [100, 700],
+      "position": [
+        100,
+        700
+      ],
       "typeVersion": 1.2
     },
     {
       "parameters": {
         "rule": {
-          "interval": [{ "field": "minutes", "minutesInterval": 15 }]
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
         }
       },
       "id": "cron-osint",
       "name": "Cron: OSINT Feeds (15min)",
       "type": "n8n-nodes-base.scheduleTrigger",
-      "position": [100, 900],
+      "position": [
+        100,
+        900
+      ],
       "typeVersion": 1.2
     },
     {
@@ -71,19 +111,35 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "Bearer {{ $env.FORTIGATE_API_KEY }}" }
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.FORTIGATE_API_KEY }}"
+            }
           ]
         },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "vdom", "value": "root" },
-            { "name": "rows", "value": "100" },
-            { "name": "filter", "value": "logid=0100032001 or logid=0100032002 or logid=0419016384" }
+            {
+              "name": "vdom",
+              "value": "root"
+            },
+            {
+              "name": "rows",
+              "value": "100"
+            },
+            {
+              "name": "filter",
+              "value": "logid=0100032001 or logid=0100032002 or logid=0419016384"
+            }
           ]
         },
         "options": {
-          "response": { "response": { "fullResponse": false } },
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          },
           "timeout": 30000
         },
         "continueOnFail": true
@@ -91,7 +147,10 @@
       "id": "http-fortigate",
       "name": "GET FortiGate Logs",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [350, 100],
+      "position": [
+        350,
+        100
+      ],
       "typeVersion": 4.2,
       "notes": "FortiOS REST API - Obtiene logs de IPS, antivirus, web filter. Ajustar logids según políticas activas."
     },
@@ -104,18 +163,31 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "Bearer {{ $env.FORTIGATE_API_KEY }}" }
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.FORTIGATE_API_KEY }}"
+            }
           ]
         },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "vdom", "value": "root" },
-            { "name": "rows", "value": "100" }
+            {
+              "name": "vdom",
+              "value": "root"
+            },
+            {
+              "name": "rows",
+              "value": "100"
+            }
           ]
         },
         "options": {
-          "response": { "response": { "fullResponse": false } },
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          },
           "timeout": 30000
         },
         "continueOnFail": true
@@ -123,7 +195,10 @@
       "id": "http-fortigate-ips",
       "name": "GET FortiGate IPS Logs",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [350, 150],
+      "position": [
+        350,
+        150
+      ],
       "typeVersion": 4.2,
       "notes": "FortiOS UTM IPS endpoint. Requiere vdom=root y reutiliza la misma API key."
     },
@@ -136,18 +211,31 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "Bearer {{ $env.FORTIGATE_API_KEY }}" }
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.FORTIGATE_API_KEY }}"
+            }
           ]
         },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "vdom", "value": "root" },
-            { "name": "rows", "value": "100" }
+            {
+              "name": "vdom",
+              "value": "root"
+            },
+            {
+              "name": "rows",
+              "value": "100"
+            }
           ]
         },
         "options": {
-          "response": { "response": { "fullResponse": false } },
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          },
           "timeout": 30000
         },
         "continueOnFail": true
@@ -155,7 +243,10 @@
       "id": "http-fortigate-virus",
       "name": "GET FortiGate Antivirus Logs",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [350, 200],
+      "position": [
+        350,
+        200
+      ],
       "typeVersion": 4.2,
       "notes": "FortiOS UTM Antivirus endpoint. Requiere vdom=root y reutiliza la misma API key."
     },
@@ -166,20 +257,31 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "={{ $env.WAZUH_INDEXER_BASIC_AUTH }}" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "={{ $env.WAZUH_INDEXER_BASIC_AUTH }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ size: 100, sort: [{ timestamp: { order: 'desc' } }], query: { bool: { must: [{ range: { 'rule.level': { gte: 7 } } }, { range: { timestamp: { gte: 'now-15m' } } }] } } }) }}",
-        "options": { "timeout": 30000 },
+        "options": {
+          "timeout": 30000
+        },
         "continueOnFail": true
       },
       "id": "http-wazuh-alerts",
       "name": "GET Wazuh Alerts",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [550, 300],
+      "position": [
+        550,
+        300
+      ],
       "typeVersion": 4.2,
       "notes": "Wazuh v4 usa el Indexer API (OpenSearch) para alertas historicas. Requiere WAZUH_INDEXER_URL y WAZUH_INDEXER_BASIC_AUTH."
     },
@@ -192,13 +294,18 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ DetectorId: $env.GUARDDUTY_DETECTOR_ID, FindingCriteria: { Criterion: { 'severity': { Gte: 4 }, 'updatedAt': { GreaterThanOrEqual: Date.now() - 300000 } } }, MaxResults: 50 }) }}",
-        "options": { "timeout": 30000 },
+        "options": {
+          "timeout": 30000
+        },
         "continueOnFail": true
       },
       "id": "http-guardduty",
       "name": "GET GuardDuty Findings",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [350, 500],
+      "position": [
+        350,
+        500
+      ],
       "typeVersion": 4.2,
       "notes": "Usa AWS SDK auth. Alternativa: usar nodo AWS Lambda que invoque GetFindings"
     },
@@ -206,16 +313,32 @@
       "parameters": {
         "method": "POST",
         "url": "={{ $env.ZABBIX_API_URL }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.ZABBIX_API_TOKEN }}"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ jsonrpc: '2.0', method: 'trigger.get', params: { output: 'extend', selectHosts: ['host'], filter: { value: 1 }, sortfield: 'lastchange', sortorder: 'DESC', limit: 50, min_severity: 3 }, auth: $env.ZABBIX_API_TOKEN, id: 1 }) }}",
-        "options": { "timeout": 15000 },
+        "jsonBody": "={{ JSON.stringify({ jsonrpc: '2.0', method: 'trigger.get', params: { output: 'extend', selectHosts: ['host'], filter: { value: 1 }, sortfield: 'lastchange', sortorder: 'DESC', limit: 50, min_severity: 3 }, id: 1 }) }}",
+        "options": {
+          "timeout": 15000
+        },
         "continueOnFail": true
       },
       "id": "http-zabbix",
       "name": "GET Zabbix Triggers",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [350, 700],
+      "position": [
+        350,
+        700
+      ],
       "typeVersion": 4.2,
       "notes": "JSON-RPC 2.0 API. min_severity 3 = Average+"
     },
@@ -226,24 +349,41 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Key", "value": "={{ $env.ABUSEIPDB_API_KEY }}" },
-            { "name": "Accept", "value": "application/json" }
+            {
+              "name": "Key",
+              "value": "={{ $env.ABUSEIPDB_API_KEY }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
           ]
         },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "confidenceMinimum", "value": "80" },
-            { "name": "limit", "value": "100" }
+            {
+              "name": "confidenceMinimum",
+              "value": "80"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
           ]
         },
-        "options": { "timeout": 30000 },
+        "options": {
+          "timeout": 30000
+        },
         "continueOnFail": true
       },
       "id": "http-abuseipdb",
       "name": "GET AbuseIPDB Blacklist",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [350, 850],
+      "position": [
+        350,
+        850
+      ],
       "typeVersion": 4.2
     },
     {
@@ -253,95 +393,157 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "X-OTX-API-KEY", "value": "={{ $env.OTX_API_KEY }}" }
+            {
+              "name": "X-OTX-API-KEY",
+              "value": "={{ $env.OTX_API_KEY }}"
+            }
           ]
         },
         "sendQuery": true,
         "queryParameters": {
           "parameters": [
-            { "name": "modified_since", "value": "={{ new Date(Date.now() - 900000).toISOString() }}" },
-            { "name": "limit", "value": "20" }
+            {
+              "name": "modified_since",
+              "value": "={{ new Date(Date.now() - 900000).toISOString() }}"
+            },
+            {
+              "name": "limit",
+              "value": "20"
+            }
           ]
         },
-        "options": { "timeout": 30000 },
+        "options": {
+          "timeout": 30000
+        },
         "continueOnFail": true
       },
       "id": "http-otx",
       "name": "GET OTX Pulses",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [350, 950],
+      "position": [
+        350,
+        950
+      ],
       "typeVersion": 4.2
     },
     {
       "parameters": {
         "values": {
-          "string": [{ "name": "_source_name", "value": "fortigate" }]
+          "string": [
+            {
+              "name": "_source_name",
+              "value": "fortigate"
+            }
+          ]
         }
       },
       "id": "set-source-fg",
       "name": "Set Source: FortiGate",
       "type": "n8n-nodes-base.set",
-      "position": [550, 100],
+      "position": [
+        550,
+        100
+      ],
       "typeVersion": 3.4
     },
     {
       "parameters": {
         "values": {
-          "string": [{ "name": "_source_name", "value": "wazuh" }]
+          "string": [
+            {
+              "name": "_source_name",
+              "value": "wazuh"
+            }
+          ]
         }
       },
       "id": "set-source-wazuh",
       "name": "Set Source: Wazuh",
       "type": "n8n-nodes-base.set",
-      "position": [750, 300],
+      "position": [
+        750,
+        300
+      ],
       "typeVersion": 3.4
     },
     {
       "parameters": {
         "values": {
-          "string": [{ "name": "_source_name", "value": "guardduty" }]
+          "string": [
+            {
+              "name": "_source_name",
+              "value": "guardduty"
+            }
+          ]
         }
       },
       "id": "set-source-gd",
       "name": "Set Source: GuardDuty",
       "type": "n8n-nodes-base.set",
-      "position": [550, 500],
+      "position": [
+        550,
+        500
+      ],
       "typeVersion": 3.4
     },
     {
       "parameters": {
         "values": {
-          "string": [{ "name": "_source_name", "value": "zabbix" }]
+          "string": [
+            {
+              "name": "_source_name",
+              "value": "zabbix"
+            }
+          ]
         }
       },
       "id": "set-source-zabbix",
       "name": "Set Source: Zabbix",
       "type": "n8n-nodes-base.set",
-      "position": [550, 700],
+      "position": [
+        550,
+        700
+      ],
       "typeVersion": 3.4
     },
     {
       "parameters": {
         "values": {
-          "string": [{ "name": "_source_name", "value": "abuseipdb" }]
+          "string": [
+            {
+              "name": "_source_name",
+              "value": "abuseipdb"
+            }
+          ]
         }
       },
       "id": "set-source-abuse",
       "name": "Set Source: AbuseIPDB",
       "type": "n8n-nodes-base.set",
-      "position": [550, 850],
+      "position": [
+        550,
+        850
+      ],
       "typeVersion": 3.4
     },
     {
       "parameters": {
         "values": {
-          "string": [{ "name": "_source_name", "value": "otx" }]
+          "string": [
+            {
+              "name": "_source_name",
+              "value": "otx"
+            }
+          ]
         }
       },
       "id": "set-source-otx",
       "name": "Set Source: OTX",
       "type": "n8n-nodes-base.set",
-      "position": [550, 950],
+      "position": [
+        550,
+        950
+      ],
       "typeVersion": 3.4
     },
     {
@@ -349,19 +551,25 @@
       "id": "merge-all",
       "name": "Merge All Sources",
       "type": "n8n-nodes-base.merge",
-      "position": [800, 500],
+      "position": [
+        800,
+        500
+      ],
       "typeVersion": 3,
       "notes": "Merge mode: Append. Todas las fuentes convergen aquí."
     },
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "// === COPIAR CONTENIDO DE scripts/ioc_normalizer.js AQUÍ ===\n// El código completo del normalizador va en este nodo.\n// Ver archivo: scripts/ioc_normalizer.js\n\n// Placeholder - reemplazar con código completo\nreturn $input.all();"
+        "jsCode": "// ============================================================\n// NODO: IoC Normalizer & Scoring Engine\n// Tipo: Code Node (JavaScript) en n8n\n// Input: items[] desde cualquier fuente (FortiGate, Wazuh, etc.)\n// Output: items[] normalizados con score de amenaza\n// ============================================================\n\n// --- Configuración de scoring ---\nconst SCORING_WEIGHTS = {\n  // Pesos por tipo de fuente\n  source_trust: {\n    wazuh: 0.9,\n    fortigate: 0.85,\n    guardduty: 0.9,\n    zabbix: 0.6,\n    abuseipdb: 0.8,\n    otx: 0.75,\n    virustotal: 0.95,\n    osint_feed: 0.5,\n    trellix: 0.85,  // ex-FireEye, buena detección pero via email = menos contexto\n    dian: 0.3  // regulatorio, no es threat intel directo\n  },\n  // Pesos por severidad de la fuente original\n  severity_score: {\n    critical: 100,\n    high: 80,\n    medium: 50,\n    low: 25,\n    info: 10\n  },\n  // Bonus por tipo de IoC (algunos son más accionables)\n  ioc_type_bonus: {\n    ip_v4: 10,\n    ip_v6: 10,\n    domain: 15,\n    url: 20,\n    hash_sha256: 25,\n    hash_sha1: 20,\n    hash_md5: 15,\n    cve: 30,\n    email: 5,\n    file_name: 10,\n    registry_key: 20,\n    user_agent: 5,\n    cidr: 15\n  },\n  // Multiplicador por antigüedad (IoCs recientes pesan más)\n  recency_decay: {\n    hours_1: 1.0,\n    hours_24: 0.9,\n    days_7: 0.7,\n    days_30: 0.5,\n    older: 0.3\n  }\n};\n\n// Umbrales de alerta\nconst ALERT_THRESHOLDS = {\n  critical: 85,  // Alerta inmediata\n  high: 70,      // Alerta en batch (cada 15 min)\n  medium: 50,    // Solo log\n  low: 0         // Descarta\n};\n\n// --- Regex patterns para extracción de IoCs ---\nconst IOC_PATTERNS = {\n  ip_v4: /\\b(?:(?:25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d{2}|[1-9]?\\d)\\b/g,\n  ip_v6: /\\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\\b/g,\n  domain: /\\b(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,}\\b/g,\n  url: /https?:\\/\\/[^\\s<>\"{}|\\\\^`\\[\\]]+/g,\n  hash_md5: /\\b[a-fA-F0-9]{32}\\b/g,\n  hash_sha1: /\\b[a-fA-F0-9]{40}\\b/g,\n  hash_sha256: /\\b[a-fA-F0-9]{64}\\b/g,\n  email: /\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}\\b/g,\n  cve: /CVE-\\d{4}-\\d{4,}/gi\n};\n\n// Whitelist: IPs y dominios internos DELCOP que NO deben generar alertas\nconst WHITELIST = {\n  ips: [\n    '10.0.0.0/8',\n    '172.16.0.0/12',\n    '192.168.0.0/16',\n    '127.0.0.1'\n    // Agregar IPs públicas de DELCOP aquí\n  ],\n  domains: [\n    'delcop.com',\n    'delcop.com.co',\n    'delcop.com.ve',\n    'amazonaws.com',\n    'microsoft.com',\n    'office365.com',\n    'windows.net'\n  ]\n};\n\n// --- Funciones auxiliares ---\n\nfunction isPrivateIP(ip) {\n  const parts = ip.split('.').map(Number);\n  return (\n    parts[0] === 10 ||\n    (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) ||\n    (parts[0] === 192 && parts[1] === 168) ||\n    ip === '127.0.0.1'\n  );\n}\n\nfunction isWhitelistedDomain(domain) {\n  return WHITELIST.domains.some(wl => domain === wl || domain.endsWith('.' + wl));\n}\n\nfunction getRecencyMultiplier(timestamp) {\n  if (!timestamp) return SCORING_WEIGHTS.recency_decay.older;\n  const ageMs = Date.now() - new Date(timestamp).getTime();\n  const ageHours = ageMs / (1000 * 60 * 60);\n\n  if (ageHours <= 1) return SCORING_WEIGHTS.recency_decay.hours_1;\n  if (ageHours <= 24) return SCORING_WEIGHTS.recency_decay.hours_24;\n  if (ageHours <= 168) return SCORING_WEIGHTS.recency_decay.days_7;\n  if (ageHours <= 720) return SCORING_WEIGHTS.recency_decay.days_30;\n  return SCORING_WEIGHTS.recency_decay.older;\n}\n\nfunction mapSeverity(sourceSeverity, sourceName) {\n  // Normaliza severidades de distintas fuentes al enum interno\n  const normalized = String(sourceSeverity).toLowerCase();\n\n  // FortiGate usa números (0-4)\n  if (sourceName === 'fortigate') {\n    const map = { '0': 'info', '1': 'low', '2': 'medium', '3': 'high', '4': 'critical' };\n    return map[normalized] || 'info';\n  }\n\n  // Wazuh usa niveles 0-15\n  if (sourceName === 'wazuh') {\n    const level = parseInt(normalized);\n    if (level >= 12) return 'critical';\n    if (level >= 8) return 'high';\n    if (level >= 5) return 'medium';\n    if (level >= 3) return 'low';\n    return 'info';\n  }\n\n  // GuardDuty usa severity float 0.0-8.9\n  if (sourceName === 'guardduty') {\n    const sev = parseFloat(normalized);\n    if (sev >= 7.0) return 'critical';\n    if (sev >= 5.0) return 'high';\n    if (sev >= 3.0) return 'medium';\n    if (sev >= 1.0) return 'low';\n    return 'info';\n  }\n\n  // Genérico: busca match directo\n  if (['critical', 'high', 'medium', 'low', 'info'].includes(normalized)) {\n    return normalized;\n  }\n\n  return 'info';\n}\n\nfunction calculateThreatScore(ioc) {\n  const sourceTrust = SCORING_WEIGHTS.source_trust[ioc._source] || 0.5;\n  const severityBase = SCORING_WEIGHTS.severity_score[ioc.severity] || 10;\n  const typeBonus = SCORING_WEIGHTS.ioc_type_bonus[ioc.ioc_type] || 0;\n  const recency = getRecencyMultiplier(ioc.observed_at);\n\n  // Score = (base_severity * trust_factor * recency) + type_bonus\n  // Capped a 100\n  let score = Math.round((severityBase * sourceTrust * recency) + typeBonus);\n  score = Math.min(score, 100);\n\n  return score;\n}\n\nfunction classifyAlertLevel(score) {\n  if (score >= ALERT_THRESHOLDS.critical) return 'critical';\n  if (score >= ALERT_THRESHOLDS.high) return 'high';\n  if (score >= ALERT_THRESHOLDS.medium) return 'medium';\n  return 'low';\n}\n\n// --- Normalizadores por fuente ---\n\nfunction normalizeFortiGate(item) {\n  const rootData = item.json;\n  const iocs = [];\n\n  // FortiOS API puede devolver un objeto con .results[] o .logs[]\n  // O n8n puede haber spliteado los resultados ya.\n  const logEntries = rootData.results || rootData.logs || [rootData];\n\n  for (const data of logEntries) {\n    if (!data || typeof data !== 'object') continue;\n\n    // 1. Extraer IPs de srcip/dstip\n    if (data.srcip && !isPrivateIP(data.srcip)) {\n      iocs.push({\n        ioc_value: data.srcip,\n        ioc_type: 'ip_v4',\n        severity: mapSeverity(data.severity || data.level, 'fortigate'),\n        observed_at: data.date ? `${data.date}T${data.time || '00:00:00'}Z` : new Date().toISOString(),\n        _source: 'fortigate',\n        tags: [data.type, data.subtype, data.action].filter(Boolean),\n        metadata: {\n          fortigate_logid: data.logid,\n          policy_id: data.policyid,\n          action: data.action,\n          service: data.service,\n          dst: data.dstip,\n          attack: data.attack, // Para IPS\n          virus: data.virus    // Para Antivirus\n        }\n      });\n    }\n\n    // 2. Si hay URL en el log (web filter, etc.)\n    if (data.hostname) {\n      iocs.push({\n        ioc_value: data.hostname,\n        ioc_type: 'domain',\n        severity: mapSeverity(data.severity || data.level, 'fortigate'),\n        observed_at: new Date().toISOString(),\n        _source: 'fortigate',\n        tags: ['webfilter', data.catdesc].filter(Boolean),\n        metadata: { url: data.url, category: data.cat }\n      });\n    }\n\n    // 3. Extraer IoCs de mensajes de texto en logs UTM (IPS/Virus)\n    if (data.msg) {\n      // Intentar extraer hashes si es un log de Antivirus\n      for (const match of data.msg.matchAll(IOC_PATTERNS.hash_sha256)) {\n        iocs.push({\n          ioc_value: match[0],\n          ioc_type: 'hash_sha256',\n          severity: mapSeverity(data.severity || data.level, 'fortigate'),\n          observed_at: new Date().toISOString(),\n          _source: 'fortigate',\n          tags: ['virus', data.virus].filter(Boolean),\n          metadata: { virus: data.virus, action: data.action }\n        });\n      }\n    }\n  }\n\n  return iocs;\n}\n\nfunction normalizeWazuh(item) {\n  const rootData = item.json;\n  const iocs = [];\n\n  // Indexer API devuelve { hits: { hits: [ { _source: {} } ] } }\n  // Manager API devolvía { data: { affected_items: [] } } o un item individual\n  let alerts = [];\n  if (rootData.hits?.hits) {\n    alerts = rootData.hits.hits.map(h => h._source);\n  } else if (rootData.data?.affected_items) {\n    alerts = rootData.data.affected_items;\n  } else if (rootData.id && rootData.rule) {\n    alerts = [rootData];\n  }\n\n  for (const alert of alerts) {\n    // Extraer IoCs del campo data (vulnerabilidades) o del root\n    const rawText = JSON.stringify(alert);\n\n    // IPs\n    for (const match of rawText.matchAll(IOC_PATTERNS.ip_v4)) {\n      if (!isPrivateIP(match[0])) {\n        iocs.push({\n          ioc_value: match[0],\n          ioc_type: 'ip_v4',\n          severity: mapSeverity(alert.rule?.level || '0', 'wazuh'),\n          observed_at: alert.timestamp || new Date().toISOString(),\n          _source: 'wazuh',\n          tags: [alert.rule?.groups || [], alert.agent?.name].flat().filter(Boolean),\n          metadata: {\n            rule_id: alert.rule?.id,\n            rule_description: alert.rule?.description,\n            agent: alert.agent?.name,\n            manager: alert.manager?.name,\n            decoder: alert.decoder?.name\n          }\n        });\n      }\n    }\n\n    // CVEs de Wazuh vulnerability detector\n    if (alert.vulnerability?.cve || alert.data?.vulnerability?.cve) {\n      const v = alert.vulnerability || alert.data.vulnerability;\n      iocs.push({\n        ioc_value: v.cve,\n        ioc_type: 'cve',\n        severity: mapSeverity(v.severity || alert.rule?.level, 'wazuh'),\n        observed_at: alert.timestamp || new Date().toISOString(),\n        _source: 'wazuh',\n        tags: ['vulnerability', v.package?.name].filter(Boolean),\n        metadata: {\n          package: v.package,\n          cvss: v.cvss,\n          reference: v.reference\n        }\n      });\n    }\n  }\n\n  return iocs;\n}\n\nfunction normalizeGuardDuty(item) {\n  const rootData = item.json;\n  const iocs = [];\n\n  // GuardDuty API devuelve { Findings: [] } o un finding individual\n  const findings = rootData.Findings || (rootData.Id && rootData.Type ? [rootData] : []);\n\n  for (const finding of findings) {\n    // Extraer IPs de remote/local\n    const remoteIp = finding.Service?.Action?.NetworkConnectionAction?.RemoteIpDetails?.IpAddressV4\n      || finding.Service?.Action?.PortProbeAction?.PortProbeDetails?.[0]?.RemoteIpDetails?.IpAddressV4;\n\n    if (remoteIp && !isPrivateIP(remoteIp)) {\n      iocs.push({\n        ioc_value: remoteIp,\n        ioc_type: 'ip_v4',\n        severity: mapSeverity(finding.Severity, 'guardduty'),\n        observed_at: finding.Service?.EventFirstSeen || new Date().toISOString(),\n        _source: 'guardduty',\n        tags: [finding.Type, finding.Service?.Action?.ActionType].filter(Boolean),\n        metadata: {\n          finding_id: finding.Id,\n          finding_type: finding.Type,\n          resource_type: finding.Resource?.ResourceType,\n          instance_id: finding.Resource?.InstanceDetails?.InstanceId,\n          region: finding.Region,\n          account_id: finding.AccountId,\n          count: finding.Service?.Count\n        }\n      });\n    }\n\n    // Dominios maliciosos (DNS findings)\n    if (finding.Service?.Action?.DnsRequestAction?.Domain) {\n      const domain = finding.Service.Action.DnsRequestAction.Domain;\n      if (!isWhitelistedDomain(domain)) {\n        iocs.push({\n          ioc_value: domain,\n          ioc_type: 'domain',\n          severity: mapSeverity(finding.Severity, 'guardduty'),\n          observed_at: finding.Service?.EventFirstSeen || new Date().toISOString(),\n          _source: 'guardduty',\n          tags: ['dns', finding.Type].filter(Boolean),\n          metadata: { finding_type: finding.Type, protocol: finding.Service?.Action?.DnsRequestAction?.Protocol }\n        });\n      }\n    }\n  }\n\n  return iocs;\n}\n\nfunction normalizeZabbix(item) {\n  const rootData = item.json;\n  const iocs = [];\n\n  // Zabbix JSON-RPC devuelve { result: [] } o un trigger individual\n  const triggers = rootData.result || (rootData.triggerid ? [rootData] : []);\n\n  for (const data of triggers) {\n    // Zabbix triggers con IPs en el nombre o valor\n    const text = `${data.name || ''} ${data.description || ''} ${data.value || ''}`;\n\n    for (const match of text.matchAll(IOC_PATTERNS.ip_v4)) {\n      if (!isPrivateIP(match[0])) {\n        iocs.push({\n          ioc_value: match[0],\n          ioc_type: 'ip_v4',\n          severity: data.priority >= 4 ? 'high' : data.priority >= 2 ? 'medium' : 'low',\n          observed_at: data.lastchange ? new Date(data.lastchange * 1000).toISOString() : new Date().toISOString(),\n          _source: 'zabbix',\n          tags: ['zabbix', data.hosts?.[0]?.host].filter(Boolean),\n          metadata: {\n            trigger_id: data.triggerid,\n            host: data.hosts?.[0]?.host,\n            priority: data.priority,\n            status: data.status\n          }\n        });\n      }\n    }\n  }\n\n  return iocs;\n}\n\nfunction normalizeOSINTFeed(item) {\n  const data = item.json;\n  const results = [];\n\n  // AbuseIPDB format\n  if (data.ipAddress || data.data?.ipAddress) {\n    const ipData = data.data || data;\n    results.push({\n      ioc_value: ipData.ipAddress,\n      ioc_type: 'ip_v4',\n      severity: ipData.abuseConfidenceScore >= 80 ? 'critical'\n        : ipData.abuseConfidenceScore >= 50 ? 'high'\n        : ipData.abuseConfidenceScore >= 25 ? 'medium' : 'low',\n      observed_at: ipData.lastReportedAt || new Date().toISOString(),\n      _source: 'abuseipdb',\n      tags: ['abuseipdb', ipData.isp, ipData.countryCode].filter(Boolean),\n      metadata: {\n        abuse_score: ipData.abuseConfidenceScore,\n        total_reports: ipData.totalReports,\n        isp: ipData.isp,\n        country: ipData.countryCode,\n        usage_type: ipData.usageType\n      }\n    });\n  }\n\n  // AlienVault OTX pulse format\n  if (data.indicators) {\n    for (const ind of data.indicators) {\n      const typeMap = {\n        'IPv4': 'ip_v4', 'IPv6': 'ip_v6', 'domain': 'domain',\n        'URL': 'url', 'FileHash-MD5': 'hash_md5',\n        'FileHash-SHA1': 'hash_sha1', 'FileHash-SHA256': 'hash_sha256',\n        'email': 'email', 'CVE': 'cve'\n      };\n      const mappedType = typeMap[ind.type];\n      if (mappedType) {\n        results.push({\n          ioc_value: ind.indicator,\n          ioc_type: mappedType,\n          severity: 'medium', // OTX no da severity por indicador\n          observed_at: ind.created || new Date().toISOString(),\n          _source: 'otx',\n          tags: data.tags || [],\n          metadata: { pulse_id: data.id, pulse_name: data.name, description: ind.description }\n        });\n      }\n    }\n  }\n\n  return results;\n}\n\n// --- Pipeline principal ---\n\nconst NORMALIZERS = {\n  fortigate: normalizeFortiGate,\n  wazuh: normalizeWazuh,\n  guardduty: normalizeGuardDuty,\n  zabbix: normalizeZabbix,\n  abuseipdb: normalizeOSINTFeed,\n  otx: normalizeOSINTFeed,\n  osint_feed: normalizeOSINTFeed\n};\n\n// Determinar fuente desde el nodo anterior (set via n8n Set node)\nconst firstItem = $input.first();\nif (!firstItem) {\n  // Caso: entrada vacía (Merge no recibió nada)\n  return [];\n}\n\nconst sourceName = firstItem.json._source_name || 'unknown';\nconst normalizer = NORMALIZERS[sourceName];\n\nif (!normalizer) {\n  return [{ json: { error: `No normalizer for source: ${sourceName}`, _source: sourceName } }];\n}\n\n// Normalizar todos los items\nlet allIocs = [];\nconst allItems = $input.all();\n\nif (allItems.length === 0 || (allItems.length === 1 && Object.keys(allItems[0].json).length === 0)) {\n  return [];\n}\n\nfor (const item of allItems) {\n  try {\n    const normalized = normalizer(item);\n    allIocs.push(...normalized);\n  } catch (err) {\n    // Log error pero no detiene el pipeline\n    allIocs.push({\n      ioc_value: 'PARSE_ERROR',\n      ioc_type: 'ip_v4',\n      severity: 'info',\n      _source: sourceName,\n      _error: err.message,\n      _raw: JSON.stringify(item.json).slice(0, 500)\n    });\n  }\n}\n\n// Deduplicar por (value + type) dentro del mismo batch\nconst seen = new Map();\nconst deduped = [];\nfor (const ioc of allIocs) {\n  if (ioc.ioc_value === 'PARSE_ERROR') {\n    deduped.push(ioc);\n    continue;\n  }\n  const key = `${ioc.ioc_type}::${ioc.ioc_value}`;\n  if (!seen.has(key)) {\n    seen.set(key, true);\n    deduped.push(ioc);\n  }\n}\n\n// Calcular score y clasificar\nconst output = deduped.map(ioc => {\n  if (ioc._error) return { json: ioc };\n\n  const score = calculateThreatScore(ioc);\n  const alertLevel = classifyAlertLevel(score);\n\n  return {\n    json: {\n      ioc_value: ioc.ioc_value,\n      ioc_type: ioc.ioc_type,\n      severity: ioc.severity,\n      confidence: score,\n      alert_level: alertLevel,\n      observed_at: ioc.observed_at,\n      source: ioc._source,\n      tags: ioc.tags || [],\n      metadata: ioc.metadata || {},\n      // Campos de control para nodos downstream\n      _should_alert: alertLevel === 'critical' || alertLevel === 'high',\n      _should_persist: score >= ALERT_THRESHOLDS.low,\n      _normalized_at: new Date().toISOString()\n    }\n  };\n});\n\nreturn output;\n"
       },
       "id": "code-normalizer",
       "name": "IoC Normalizer & Scorer",
       "type": "n8n-nodes-base.code",
-      "position": [1000, 500],
+      "position": [
+        1000,
+        500
+      ],
       "typeVersion": 2,
       "notes": "Normaliza, deduplica, y calcula threat score. Código en scripts/ioc_normalizer.js"
     },
@@ -369,39 +577,54 @@
       "parameters": {
         "conditions": {
           "boolean": [
-            { "value1": "={{ $json._should_persist }}", "value2": true }
+            {
+              "value1": "={{ $json._should_persist }}",
+              "value2": true
+            }
           ]
         }
       },
       "id": "if-persist",
       "name": "Should Persist?",
       "type": "n8n-nodes-base.if",
-      "position": [1200, 400],
+      "position": [
+        1200,
+        400
+      ],
       "typeVersion": 2
     },
     {
       "parameters": {
         "conditions": {
           "boolean": [
-            { "value1": "={{ $json._should_alert }}", "value2": true }
+            {
+              "value1": "={{ $json._should_alert }}",
+              "value2": true
+            }
           ]
         }
       },
       "id": "if-alert",
       "name": "Should Alert?",
       "type": "n8n-nodes-base.if",
-      "position": [1200, 600],
+      "position": [
+        1200,
+        600
+      ],
       "typeVersion": 2
     },
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "// === COPIAR CONTENIDO DE scripts/ioc_persistence.js AQUÍ ===\nreturn $input.all();"
+        "jsCode": "// ============================================================\n// NODO: IoC Persistence Layer\n// Tipo: Code Node (JavaScript) en n8n\n// Input: items[] normalizados con _should_persist === true\n// Output: SQL queries para ejecutar via nodo PostgreSQL\n//\n// NOTA: Este nodo genera los queries. El nodo PostgreSQL\n// downstream los ejecuta. No se usa ORM.\n// ============================================================\n\nconst persistItems = $input.all().filter(item => item.json._should_persist);\n\nif (persistItems.length === 0) {\n  return [{ json: { _skip: true, message: 'No items to persist' } }];\n}\n\nconst output = [];\n\nfor (const item of persistItems) {\n  const ioc = item.json;\n\n  // 1. Upsert IoC via función PL/pgSQL\n  output.push({\n    json: {\n      _operation: 'upsert_ioc',\n      query: `SELECT upsert_ioc($1, $2::ioc_type, $3::severity_level, $4::SMALLINT, $5::TEXT[], $6::JSONB)`,\n      params: [\n        ioc.ioc_value,\n        ioc.ioc_type,\n        ioc.severity,\n        ioc.confidence,\n        ioc.tags || [],\n        JSON.stringify(ioc.metadata || {})\n      ],\n      // Datos para el sighting (se ejecuta después del upsert)\n      _sighting: {\n        source: ioc.source,\n        raw_event: ioc.metadata,\n        observed_at: ioc.observed_at\n      }\n    }\n  });\n}\n\nreturn output;\n"
       },
       "id": "code-persist",
       "name": "Generate Persistence Queries",
       "type": "n8n-nodes-base.code",
-      "position": [1400, 400],
+      "position": [
+        1400,
+        400
+      ],
       "typeVersion": 2
     },
     {
@@ -413,35 +636,51 @@
       "id": "pg-upsert",
       "name": "PostgreSQL: Upsert IoC",
       "type": "n8n-nodes-base.postgres",
-      "position": [1600, 400],
+      "position": [
+        1600,
+        400
+      ],
       "typeVersion": 2.5,
       "credentials": {
-        "postgres": { "id": "a0K3DCm6QM9FVDAx", "name": "Postgres account" }
+        "postgres": {
+          "id": "a0K3DCm6QM9FVDAx",
+          "name": "Postgres account"
+        }
       }
     },
     {
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "// === COPIAR CONTENIDO DE scripts/alert_dispatcher.js AQUÍ ===\nreturn $input.all();"
+        "jsCode": "// ============================================================\n// NODO: Alert Dispatcher\n// Tipo: Code Node (JavaScript) en n8n\n// Input: items[] con _should_alert === true\n// Output: items[] formateados para Slack, Teams, o Email\n// ============================================================\n\nconst ALERT_CONFIG = {\n  slack: {\n    webhook_env: 'SLACK_WEBHOOK_URL',  // Desde env vars de n8n\n    channel: '#security-alerts',\n    username: 'DELCOP ThreatBot',\n    icon_emoji: ':shield:'\n  },\n  teams: {\n    webhook_env: 'TEAMS_WEBHOOK_URL'\n  },\n  email: {\n    to: $env.ALERT_EMAIL_TO || 'seguridad@delcop.com.co',\n    from: $env.ALERT_EMAIL_FROM || 'n8n-threatintel@delcop.com.co',\n    subject_prefix: '[DELCOP SGSI]'\n  }\n};\n\nconst SEVERITY_COLORS = {\n  critical: '#FF0000',\n  high: '#FF6600',\n  medium: '#FFaa00',\n  low: '#00CC00',\n  info: '#0088CC'\n};\n\nconst SEVERITY_EMOJI = {\n  critical: '🔴',\n  high: '🟠',\n  medium: '🟡',\n  low: '🟢',\n  info: 'ℹ️'\n};\n\nfunction formatSlackPayload(ioc) {\n  const color = SEVERITY_COLORS[ioc.alert_level] || '#808080';\n  const emoji = SEVERITY_EMOJI[ioc.alert_level] || '❓';\n\n  return {\n    channel: ALERT_CONFIG.slack.channel,\n    username: ALERT_CONFIG.slack.username,\n    icon_emoji: ALERT_CONFIG.slack.icon_emoji,\n    attachments: [{\n      color: color,\n      title: `${emoji} IoC Detectado: ${ioc.ioc_type.toUpperCase()}`,\n      title_link: ioc.ioc_type === 'ip_v4'\n        ? `https://www.abuseipdb.com/check/${ioc.ioc_value}`\n        : ioc.ioc_type === 'cve'\n        ? `https://nvd.nist.gov/vuln/detail/${ioc.ioc_value}`\n        : undefined,\n      fields: [\n        { title: 'Valor', value: `\\`${ioc.ioc_value}\\``, short: true },\n        { title: 'Severidad', value: ioc.severity.toUpperCase(), short: true },\n        { title: 'Score', value: `${ioc.confidence}/100`, short: true },\n        { title: 'Fuente', value: ioc.source, short: true },\n        { title: 'Tags', value: (ioc.tags || []).join(', ') || 'N/A', short: false }\n      ],\n      footer: `DELCOP Threat Intelligence | ${ioc.observed_at}`,\n      ts: Math.floor(new Date(ioc.observed_at).getTime() / 1000)\n    }]\n  };\n}\n\nfunction formatTeamsPayload(ioc) {\n  const color = SEVERITY_COLORS[ioc.alert_level] || '808080';\n  const emoji = SEVERITY_EMOJI[ioc.alert_level] || '❓';\n\n  return {\n    \"@type\": \"MessageCard\",\n    \"@context\": \"http://schema.org/extensions\",\n    themeColor: color.replace('#', ''),\n    summary: `${emoji} IoC: ${ioc.ioc_value}`,\n    sections: [{\n      activityTitle: `${emoji} IoC Detectado: ${ioc.ioc_type.toUpperCase()}`,\n      activitySubtitle: `Fuente: ${ioc.source} | Score: ${ioc.confidence}/100`,\n      facts: [\n        { name: \"Valor\", value: ioc.ioc_value },\n        { name: \"Tipo\", value: ioc.ioc_type },\n        { name: \"Severidad\", value: ioc.severity.toUpperCase() },\n        { name: \"Confianza\", value: `${ioc.confidence}/100` },\n        { name: \"Observado\", value: ioc.observed_at },\n        { name: \"Tags\", value: (ioc.tags || []).join(', ') || 'N/A' }\n      ],\n      markdown: true\n    }],\n    potentialAction: ioc.ioc_type === 'ip_v4' ? [{\n      \"@type\": \"OpenUri\",\n      name: \"Verificar en AbuseIPDB\",\n      targets: [{ os: \"default\", uri: `https://www.abuseipdb.com/check/${ioc.ioc_value}` }]\n    }] : []\n  };\n}\n\nfunction formatEmailPayload(ioc) {\n  const emoji = SEVERITY_EMOJI[ioc.alert_level] || '❓';\n\n  return {\n    to: ALERT_CONFIG.email.to,\n    from: ALERT_CONFIG.email.from,\n    subject: `${ALERT_CONFIG.email.subject_prefix} ${emoji} ${ioc.alert_level.toUpperCase()}: ${ioc.ioc_type} - ${ioc.ioc_value}`,\n    html: `\n      <div style=\"font-family: Arial, sans-serif; max-width: 600px;\">\n        <div style=\"background: ${SEVERITY_COLORS[ioc.alert_level]}; color: white; padding: 12px 16px; border-radius: 4px 4px 0 0;\">\n          <h2 style=\"margin: 0;\">${emoji} Alerta de Amenaza - ${ioc.alert_level.toUpperCase()}</h2>\n        </div>\n        <div style=\"border: 1px solid #ddd; border-top: none; padding: 16px;\">\n          <table style=\"width: 100%; border-collapse: collapse;\">\n            <tr><td style=\"padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;\">Indicador</td>\n                <td style=\"padding: 8px; border-bottom: 1px solid #eee; font-family: monospace;\">${ioc.ioc_value}</td></tr>\n            <tr><td style=\"padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;\">Tipo</td>\n                <td style=\"padding: 8px; border-bottom: 1px solid #eee;\">${ioc.ioc_type}</td></tr>\n            <tr><td style=\"padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;\">Score</td>\n                <td style=\"padding: 8px; border-bottom: 1px solid #eee;\">${ioc.confidence}/100</td></tr>\n            <tr><td style=\"padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;\">Fuente</td>\n                <td style=\"padding: 8px; border-bottom: 1px solid #eee;\">${ioc.source}</td></tr>\n            <tr><td style=\"padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;\">Observado</td>\n                <td style=\"padding: 8px; border-bottom: 1px solid #eee;\">${ioc.observed_at}</td></tr>\n            <tr><td style=\"padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;\">Tags</td>\n                <td style=\"padding: 8px; border-bottom: 1px solid #eee;\">${(ioc.tags || []).join(', ') || 'N/A'}</td></tr>\n          </table>\n          <div style=\"margin-top: 16px; padding: 12px; background: #f5f5f5; border-radius: 4px;\">\n            <strong>Metadata:</strong><br>\n            <pre style=\"font-size: 12px; overflow-x: auto;\">${JSON.stringify(ioc.metadata, null, 2)}</pre>\n          </div>\n        </div>\n        <div style=\"padding: 8px; text-align: center; color: #888; font-size: 12px;\">\n          DELCOP SGSI - Threat Intelligence Automation | n8n\n        </div>\n      </div>\n    `\n  };\n}\n\n// --- Pipeline ---\nconst alertItems = $input.all().filter(item => item.json._should_alert);\n\nif (alertItems.length === 0) {\n  return [{ json: { _no_alerts: true, message: 'No items above alert threshold' } }];\n}\n\n// Generar payloads para todos los canales configurados\nconst output = [];\n\nfor (const item of alertItems) {\n  const ioc = item.json;\n\n  // Slack payload (si configurado)\n  const slackWebhook = $env[ALERT_CONFIG.slack.webhook_env];\n  if (slackWebhook) {\n    output.push({\n      json: {\n        _channel: 'slack',\n        _webhook_url: slackWebhook,\n        payload: formatSlackPayload(ioc),\n        ioc_id: `${ioc.ioc_type}::${ioc.ioc_value}`,\n        alert_level: ioc.alert_level\n      }\n    });\n  }\n\n  // Teams payload (si configurado)\n  const teamsWebhook = $env[ALERT_CONFIG.teams.webhook_env];\n  if (teamsWebhook) {\n    output.push({\n      json: {\n        _channel: 'teams',\n        _webhook_url: teamsWebhook,\n        payload: formatTeamsPayload(ioc),\n        ioc_id: `${ioc.ioc_type}::${ioc.ioc_value}`,\n        alert_level: ioc.alert_level\n      }\n    });\n  }\n\n  // Email solo para critical\n  if (ioc.alert_level === 'critical') {\n    output.push({\n      json: {\n        _channel: 'email',\n        payload: formatEmailPayload(ioc),\n        ioc_id: `${ioc.ioc_type}::${ioc.ioc_value}`,\n        alert_level: ioc.alert_level\n      }\n    });\n  }\n}\n\nreturn output;\n"
       },
       "id": "code-alert",
       "name": "Alert Dispatcher",
       "type": "n8n-nodes-base.code",
-      "position": [1400, 600],
+      "position": [
+        1400,
+        600
+      ],
       "typeVersion": 2
     },
     {
       "parameters": {
         "conditions": {
           "string": [
-            { "value1": "={{ $json._channel }}", "operation": "equals", "value2": "slack" }
+            {
+              "value1": "={{ $json._channel }}",
+              "operation": "equals",
+              "value2": "slack"
+            }
           ]
         }
       },
       "id": "switch-channel",
       "name": "Route by Channel",
       "type": "n8n-nodes-base.switch",
-      "position": [1600, 600],
+      "position": [
+        1600,
+        600
+      ],
       "typeVersion": 3,
       "notes": "Rutas: slack, teams, email"
     },
@@ -452,12 +691,17 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.payload) }}",
-        "options": { "timeout": 10000 }
+        "options": {
+          "timeout": 10000
+        }
       },
       "id": "webhook-slack",
       "name": "POST Slack Webhook",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [1800, 550],
+      "position": [
+        1800,
+        550
+      ],
       "typeVersion": 4.2
     },
     {
@@ -467,12 +711,17 @@
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify($json.payload) }}",
-        "options": { "timeout": 10000 }
+        "options": {
+          "timeout": 10000
+        }
       },
       "id": "webhook-teams",
       "name": "POST Teams Webhook",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [1800, 650],
+      "position": [
+        1800,
+        650
+      ],
       "typeVersion": 4.2
     },
     {
@@ -486,10 +735,16 @@
       "id": "email-alert",
       "name": "Send Email Alert",
       "type": "n8n-nodes-base.emailSend",
-      "position": [1800, 750],
+      "position": [
+        1800,
+        750
+      ],
       "typeVersion": 2.1,
       "credentials": {
-        "smtp": { "id": "cFZPbwEu9RSx0KY9", "name": "SMTP account" }
+        "smtp": {
+          "id": "cFZPbwEu9RSx0KY9",
+          "name": "SMTP account"
+        }
       }
     },
     {
@@ -501,51 +756,369 @@
       "id": "pg-audit-log",
       "name": "PostgreSQL: Audit Log",
       "type": "n8n-nodes-base.postgres",
-      "position": [2000, 500],
+      "position": [
+        2000,
+        500
+      ],
       "typeVersion": 2.5,
       "credentials": {
-        "postgres": { "id": "a0K3DCm6QM9FVDAx", "name": "Postgres account" }
+        "postgres": {
+          "id": "a0K3DCm6QM9FVDAx",
+          "name": "Postgres account"
+        }
       }
     }
   ],
   "connections": {
-    "Cron: FortiGate (5min)": { "main": [[{ "node": "GET FortiGate Logs", "type": "main", "index": 0 }, { "node": "GET FortiGate IPS Logs", "type": "main", "index": 0 }, { "node": "GET FortiGate Antivirus Logs", "type": "main", "index": 0 }]] },
-    "Cron: Wazuh (2min)": { "main": [[{ "node": "GET Wazuh Alerts", "type": "main", "index": 0 }]] },
-    "Cron: GuardDuty (5min)": { "main": [[{ "node": "GET GuardDuty Findings", "type": "main", "index": 0 }]] },
-    "Cron: Zabbix (5min)": { "main": [[{ "node": "GET Zabbix Triggers", "type": "main", "index": 0 }]] },
-    "Cron: OSINT Feeds (15min)": { "main": [[{ "node": "GET AbuseIPDB Blacklist", "type": "main", "index": 0 }, { "node": "GET OTX Pulses", "type": "main", "index": 0 }]] },
-    "GET FortiGate Logs": { "main": [[{ "node": "Set Source: FortiGate", "type": "main", "index": 0 }]] },
-    "GET FortiGate IPS Logs": { "main": [[{ "node": "Set Source: FortiGate", "type": "main", "index": 0 }]] },
-    "GET FortiGate Antivirus Logs": { "main": [[{ "node": "Set Source: FortiGate", "type": "main", "index": 0 }]] },
-    "GET Wazuh Alerts": { "main": [[{ "node": "Set Source: Wazuh", "type": "main", "index": 0 }]] },
-    "GET GuardDuty Findings": { "main": [[{ "node": "Set Source: GuardDuty", "type": "main", "index": 0 }]] },
-    "GET Zabbix Triggers": { "main": [[{ "node": "Set Source: Zabbix", "type": "main", "index": 0 }]] },
-    "GET AbuseIPDB Blacklist": { "main": [[{ "node": "Set Source: AbuseIPDB", "type": "main", "index": 0 }]] },
-    "GET OTX Pulses": { "main": [[{ "node": "Set Source: OTX", "type": "main", "index": 0 }]] },
-    "Set Source: FortiGate": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
-    "Set Source: Wazuh": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
-    "Set Source: GuardDuty": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
-    "Set Source: Zabbix": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
-    "Set Source: AbuseIPDB": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
-    "Set Source: OTX": { "main": [[{ "node": "Merge All Sources", "type": "main", "index": 0 }]] },
-    "Merge All Sources": { "main": [[{ "node": "IoC Normalizer & Scorer", "type": "main", "index": 0 }]] },
-    "IoC Normalizer & Scorer": { "main": [[{ "node": "Should Persist?", "type": "main", "index": 0 }, { "node": "Should Alert?", "type": "main", "index": 0 }]] },
-    "Should Persist?": { "main": [[{ "node": "Generate Persistence Queries", "type": "main", "index": 0 }], []] },
-    "Should Alert?": { "main": [[{ "node": "Alert Dispatcher", "type": "main", "index": 0 }], []] },
-    "Generate Persistence Queries": { "main": [[{ "node": "PostgreSQL: Upsert IoC", "type": "main", "index": 0 }]] },
-    "Alert Dispatcher": { "main": [[{ "node": "Route by Channel", "type": "main", "index": 0 }]] },
-    "Route by Channel": { "main": [[{ "node": "POST Slack Webhook", "type": "main", "index": 0 }], [{ "node": "POST Teams Webhook", "type": "main", "index": 0 }], [{ "node": "Send Email Alert", "type": "main", "index": 0 }]] },
-    "PostgreSQL: Upsert IoC": { "main": [[{ "node": "PostgreSQL: Audit Log", "type": "main", "index": 0 }]] }
+    "Cron: FortiGate (5min)": {
+      "main": [
+        [
+          {
+            "node": "GET FortiGate Logs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET FortiGate IPS Logs",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET FortiGate Antivirus Logs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron: Wazuh (2min)": {
+      "main": [
+        [
+          {
+            "node": "GET Wazuh Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron: GuardDuty (5min)": {
+      "main": [
+        [
+          {
+            "node": "GET GuardDuty Findings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron: Zabbix (5min)": {
+      "main": [
+        [
+          {
+            "node": "GET Zabbix Triggers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cron: OSINT Feeds (15min)": {
+      "main": [
+        [
+          {
+            "node": "GET AbuseIPDB Blacklist",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "GET OTX Pulses",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET FortiGate Logs": {
+      "main": [
+        [
+          {
+            "node": "Set Source: FortiGate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET FortiGate IPS Logs": {
+      "main": [
+        [
+          {
+            "node": "Set Source: FortiGate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET FortiGate Antivirus Logs": {
+      "main": [
+        [
+          {
+            "node": "Set Source: FortiGate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Wazuh Alerts": {
+      "main": [
+        [
+          {
+            "node": "Set Source: Wazuh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET GuardDuty Findings": {
+      "main": [
+        [
+          {
+            "node": "Set Source: GuardDuty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET Zabbix Triggers": {
+      "main": [
+        [
+          {
+            "node": "Set Source: Zabbix",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET AbuseIPDB Blacklist": {
+      "main": [
+        [
+          {
+            "node": "Set Source: AbuseIPDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GET OTX Pulses": {
+      "main": [
+        [
+          {
+            "node": "Set Source: OTX",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Source: FortiGate": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Source: Wazuh": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Source: GuardDuty": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Source: Zabbix": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Source: AbuseIPDB": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Source: OTX": {
+      "main": [
+        [
+          {
+            "node": "Merge All Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge All Sources": {
+      "main": [
+        [
+          {
+            "node": "IoC Normalizer & Scorer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IoC Normalizer & Scorer": {
+      "main": [
+        [
+          {
+            "node": "Should Persist?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Should Alert?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Persist?": {
+      "main": [
+        [
+          {
+            "node": "Generate Persistence Queries",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Should Alert?": {
+      "main": [
+        [
+          {
+            "node": "Alert Dispatcher",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Generate Persistence Queries": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL: Upsert IoC",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert Dispatcher": {
+      "main": [
+        [
+          {
+            "node": "Route by Channel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Channel": {
+      "main": [
+        [
+          {
+            "node": "POST Slack Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "POST Teams Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Email Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL: Upsert IoC": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL: Audit Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
   "settings": {
     "executionOrder": "v1",
     "saveManualExecutions": true,
     "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": "CONFIGURAR_ERROR_WORKFLOW_ID"
+    "errorWorkflow": "e7c2a3b1-4d5e-6f7a-8b9c-0d1e2f3a4b5c"
   },
   "tags": [
-    { "name": "threat-intelligence" },
-    { "name": "sgsi" },
-    { "name": "security" }
+    {
+      "name": "threat-intelligence"
+    },
+    {
+      "name": "sgsi"
+    },
+    {
+      "name": "security"
+    }
   ]
 }

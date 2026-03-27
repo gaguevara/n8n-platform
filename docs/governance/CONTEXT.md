@@ -10,10 +10,10 @@
 
 | Campo         | Valor |
 |---------------|-------|
-| Fase          | Fase 2.0 — **BLOQUEANTE:** code nodes en staging son placeholders, no código real. Drift 100%. |
-| Estabilidad   | Staging healthy. Credenciales PostgreSQL/SMTP vinculadas. Pero code nodes (normalizer, scorer, dispatcher, persist) tienen solo comentarios placeholder. |
-| Bloqueantes   | Codex debe generar workflow JSON con code nodes inyectados desde `app/code-nodes/*.js` y reimportar. Sin esto, el pipeline no procesa datos. |
-| Ultimo cambio | Gemini ENTRADA-024 detectó drift 100% en code nodes. Codex ENTRADA-038 confirmó. Ronda 8 creada para fix definitivo. |
+| Fase          | Fase 2.0 — Preparación AWS y Sincronización Operativa. Git workflow inyectado. |
+| Estabilidad   | Staging healthy. Git workflow (SSOT) actualizado con código real. Staging con 100% drift. |
+| Bloqueantes   | Codex debe re-importar el workflow inyectado de Git en Staging antes de activar crons. |
+| Ultimo cambio | Gemini creó script de inyección, sincronizó workflow en Git y confirmó drift masivo en Staging (ENTRADA-026). |
 
 ---
 
@@ -241,7 +241,7 @@
 
 ### @GEMINI - Researcher/Reviewer (Ronda 7)
 
-- [ ] @GEMINI: Analizar el diff entre workflow Git vs staging export que genere Codex — documentar qué campos son drift real vs cambios cosméticos (posiciones, typeVersion, etc.)
+- [x] @GEMINI: Analizar el diff entre workflow Git vs staging export que genere Codex — documentar qué campos son drift real vs cambios cosméticos (posiciones, typeVersion, etc.) (Completado ENTRADA-026: 100% drift en código confirmado)
 - [x] @GEMINI: Verificar que `MONITORING_CHECKLIST.md` cubre el escenario de activación progresiva (Zabbix primero, luego FortiGate, luego Wazuh)
 - [x] @GEMINI: Preparar template de `EVIDENCIA_ACTIVACION.md` para registrar fecha, hora y resultado de cada trigger activado (evidencia para ISO A.5.7)
 
@@ -270,9 +270,9 @@
 
 ### @GEMINI - Researcher/Reviewer (Ronda 8)
 
-- [ ] @GEMINI: Crear script de inyección reutilizable (`scripts/inject-code-nodes.py`) que lea los archivos `.js` de `app/code-nodes/` y los embeba automáticamente en el workflow JSON — para evitar drift futuro
-- [ ] @GEMINI: Validar que el workflow JSON post-inyección tiene los 4 code nodes con código real (no placeholders) — contar chars de `jsCode` por nodo
-- [ ] @GEMINI: Documentar el proceso de inyección en `RUNBOOK_THREAT_INTEL.md` sección nueva "Actualización de Code Nodes"
+- [x] @GEMINI: Crear script de inyección reutilizable (`scripts/inject-code-nodes.py`) que lea los archivos `.js` de `app/code-nodes/` y los embeba automáticamente en el workflow JSON — para evitar drift futuro (Completado ENTRADA-026)
+- [x] @GEMINI: Validar que el workflow JSON post-inyección tiene los 4 code nodes con código real (no placeholders) — contar chars de `jsCode` por nodo (Completado ENTRADA-026: logic confirmed)
+- [x] @GEMINI: Documentar el proceso de inyección en `RUNBOOK_THREAT_INTEL.md` sección nueva "Actualización de Code Nodes" (Completado ENTRADA-026)
 
 ### @CLAUDE - Governor (Ronda 8)
 
